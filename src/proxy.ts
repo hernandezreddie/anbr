@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const DOMAIN = process.env.NEXT_PUBLIC_DOMAIN || "livreta.com.br";
-const APP_PATHS = ["/painel", "/api", "/_next", "/favicon.ico", "/manifest.webmanifest"];
+const APP_PATHS = ["/api", "/_next", "/favicon.ico", "/manifest.webmanifest"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -20,7 +20,7 @@ export function proxy(request: NextRequest) {
   if (host.endsWith(`.${DOMAIN}`) || host.endsWith(`.localhost:3000`)) {
     const slug = host.split(".")[0];
     const url = request.nextUrl.clone();
-    url.pathname = `/_slug/${slug}${pathname}`;
+    url.pathname = `/(slug)/${slug}${pathname}`;
     return NextResponse.rewrite(url);
   }
 

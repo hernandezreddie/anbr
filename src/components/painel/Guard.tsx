@@ -13,7 +13,7 @@ export default async function Guard({
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(`/_slug/${slug}/painel/login`);
+    redirect(`/${slug}/painel/login`);
   }
 
   const { data: profissional } = await supabase
@@ -23,7 +23,7 @@ export default async function Guard({
     .single();
 
   if (!profissional) {
-    redirect(`/_slug/${slug}/painel/login`);
+    redirect(`/${slug}/painel/login`);
   }
 
   return <>{children(profissional as Profissional)}</>;

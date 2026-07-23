@@ -21,7 +21,7 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
             Agende seu serviço com {profissional.primeiro_nome} — orçamento em segundos, pagamento via Pix, sem taxa de aplicativo.
           </p>
           <a
-            href={`/_slug/${profissional.slug}/reservar`}
+            href={`/${profissional.slug}/reservar`}
             className="btn-emerald inline-flex items-center gap-2 px-8 py-4 text-lg"
             style={{ backgroundColor: primary }}
           >

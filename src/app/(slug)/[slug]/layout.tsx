@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${config.profissional.nome} | Agendamento Online`,
     description: config.profissional.slogan,
-    manifest: `/_slug/${slug}/manifest.webmanifest`,
+    manifest: `/${slug}/manifest.webmanifest`,
   };
 }
 

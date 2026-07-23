@@ -20,7 +20,7 @@ export default function Hero({ config }: { config: ProfissionalConfig }) {
             Agende online com {config.profissional.primeiro_nome}. Orçamento em segundos, pagamento via Pix.
           </p>
           <a
-            href={`/_slug/${config.profissional.slug}/reservar`}
+            href={`/${config.profissional.slug}/reservar`}
             className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:bg-violet-700 hover:shadow-xl"
           >
             Quero agendar
