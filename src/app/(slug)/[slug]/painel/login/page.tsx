@@ -1,28 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
-export default function PainelLogin({ params }: { params: Promise<{ slug: string }> }) {
+export default function PainelLogin() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const params = useParams();
+  const slug = params.slug as string;
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) router.replace(`/${slug}/painel`);
+    });
+  }, [slug]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro("");
+    setLoading(true);
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
 
     if (error) {
       setErro("Email ou senha incorretos");
+      setLoading(false);
       return;
     }
 
-    router.refresh();
+    await supabase.auth.getSession();
+    router.push(`/${slug}/painel`);
   };
 
   return (
@@ -35,9 +48,7 @@ export default function PainelLogin({ params }: { params: Promise<{ slug: string
         </div>
 
         {erro && (
-          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-            {erro}
-          </div>
+          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{erro}</div>
         )}
 
         <div className="space-y-4">
@@ -47,7 +58,8 @@ export default function PainelLogin({ params }: { params: Promise<{ slug: string
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-xl border border-line bg-paper px-4 py-3 outline-none transition-all focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            disabled={loading}
+            className="w-full rounded-xl border border-line bg-paper px-4 py-3 outline-none transition-all focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:opacity-50"
           />
           <input
             type="password"
@@ -55,13 +67,15 @@ export default function PainelLogin({ params }: { params: Promise<{ slug: string
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             required
-            className="w-full rounded-xl border border-line bg-paper px-4 py-3 outline-none transition-all focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            disabled={loading}
+            className="w-full rounded-xl border border-line bg-paper px-4 py-3 outline-none transition-all focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:opacity-50"
           />
           <button
             type="submit"
-            className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]"
+            disabled={loading}
+            className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-50"
           >
-            Entrar
+            {loading ? "Entrando..." : "Entrar"}
           </button>
         </div>
       </form>
