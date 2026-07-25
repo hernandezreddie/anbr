@@ -161,8 +161,13 @@ ALTER TABLE pagamentos ENABLE ROW LEVEL SECURITY;
 
 -- ========== CUSTOM ACCESS TOKEN HOOK ==========
 -- Injeta profissional_id no JWT do usuário logado
+-- SECURITY DEFINER é obrigatório: supabase_auth_admin nāo tem acesso a public.profiles
 CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
-RETURNS jsonb LANGUAGE plpgsql AS $$
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
   claims jsonb;
   user_profissional_id uuid;
@@ -173,11 +178,7 @@ BEGIN
 
   claims := event -> 'claims';
   IF user_profissional_id IS NOT NULL THEN
-    claims := jsonb_set(
-      claims,
-      '{app_metadata, profissional_id}',
-      to_jsonb(user_profissional_id::text)
-    );
+    claims := jsonb_set(claims, '{app_metadata, profissional_id}', to_jsonb(user_profissional_id::text));
   END IF;
 
   event := jsonb_set(event, '{claims}', claims);
