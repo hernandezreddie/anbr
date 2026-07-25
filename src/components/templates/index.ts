@@ -2,6 +2,8 @@ import HeroClassico from "@/components/templates/classico/Hero";
 import ServicosClassico from "@/components/templates/classico/Servicos";
 import CtaClassico from "@/components/templates/classico/CtaButton";
 import HeroModerno from "@/components/templates/moderno/Hero";
+import ServicosModerno from "@/components/templates/moderno/Servicos";
+import CtaModerno from "@/components/templates/moderno/CtaButton";
 
 export const TEMPLATES = {
   1: {
@@ -9,7 +11,7 @@ export const TEMPLATES = {
     nome: "Clássico",
     slug: "classico",
     colors: {
-      primary: "#059669",
+      primary: "#059673",
       secondary: "#1c1917",
       bg: "#faf8f5",
       paper: "#ffffff",
@@ -43,8 +45,8 @@ export const TEMPLATES = {
       body: "Inter",
     },
     Hero: HeroModerno,
-    Servicos: ServicosClassico,
-    CtaButton: CtaClassico,
+    Servicos: ServicosModerno,
+    CtaButton: CtaModerno,
   },
 } as const;
 
