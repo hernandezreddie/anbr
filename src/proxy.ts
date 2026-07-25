@@ -7,24 +7,29 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get("host") || "";
 
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", pathname);
+
   if (APP_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
+    return response;
   }
 
   const host = hostname.replace(/:\d+$/, "").toLowerCase();
 
   if (host === DOMAIN || host === `www.${DOMAIN}` || host === "localhost:3000") {
-    return NextResponse.next();
+    return response;
   }
 
   if (host.endsWith(`.${DOMAIN}`) || host.endsWith(`.localhost:3000`)) {
     const slug = host.split(".")[0];
     const url = request.nextUrl.clone();
     url.pathname = `/(slug)/${slug}${pathname}`;
-    return NextResponse.rewrite(url);
+    const rewrite = NextResponse.rewrite(url);
+    rewrite.headers.set("x-pathname", pathname);
+    return rewrite;
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

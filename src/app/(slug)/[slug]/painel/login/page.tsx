@@ -26,9 +26,13 @@ export default function PainelLogin({ params }: { params: Promise<{ slug: string
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <form onSubmit={handleLogin} className="card w-full max-w-sm p-8">
-        <h1 className="mb-6 text-2xl font-semibold">Acessar painel</h1>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 to-white">
+      <form onSubmit={handleLogin} className="card w-full max-w-sm p-8 shadow-lg">
+        <div className="mb-6 text-center">
+          <div className="mb-3 text-4xl">⚡</div>
+          <h1 className="text-2xl font-bold tracking-tight">Acessar painel</h1>
+          <p className="mt-1 text-sm text-ink-soft">Entre com seus dados de acesso</p>
+        </div>
 
         {erro && (
           <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
@@ -43,7 +47,7 @@ export default function PainelLogin({ params }: { params: Promise<{ slug: string
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-xl border border-line bg-paper px-4 py-3 outline-none focus:border-emerald-600"
+            className="w-full rounded-xl border border-line bg-paper px-4 py-3 outline-none transition-all focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
           />
           <input
             type="password"
@@ -51,12 +55,11 @@ export default function PainelLogin({ params }: { params: Promise<{ slug: string
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             required
-            className="w-full rounded-xl border border-line bg-paper px-4 py-3 outline-none focus:border-emerald-600"
+            className="w-full rounded-xl border border-line bg-paper px-4 py-3 outline-none transition-all focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
           />
           <button
             type="submit"
-            className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition-all hover:bg-emerald-700"
-            style={{ backgroundColor: "var(--color-primary)" }}
+            className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]"
           >
             Entrar
           </button>
