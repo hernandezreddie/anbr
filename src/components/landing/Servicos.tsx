@@ -10,8 +10,8 @@ function precoLabel(s: ProfissionalConfig["servicos"][number]) {
   if (s.tipo_preco === "fixo") {
     return formatPreco(s.preco_fixo) + (s.duracao_minutos ? ` · ${s.duracao_minutos}min` : "");
   }
-  return `A partir de ${formatPreco(s.valor_hora * s.horas_minimas)}`;
-}
+    return `R$ ${s.valor_hora.toFixed(2).replace(".", ",")}/h · a partir de ${formatPreco(s.valor_hora * s.horas_minimas)}`;
+  }
 
 export function Servicos({ config }: { config: ProfissionalConfig }) {
   return (
