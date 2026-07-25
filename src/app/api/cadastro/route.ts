@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { nome, email, senha, slug, whatsapp, cidade, pix_chave } = body;
+  const { nome, email, senha, slug, whatsapp, cidade, pix_chave, servicos, slogan, template_id } = body;
 
   if (!nome || !email || !senha || !slug) {
     return Response.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     .insert({
       slug,
       nome,
-      slogan: `${nome} — Profissional de confiança`,
+      slogan: slogan || `${nome} — Profissional de confiança`,
       cidade: cidade || "",
       email,
       whatsapp: whatsapp || "",
@@ -47,8 +47,8 @@ export async function POST(request: Request) {
 
   await supabase.from("configuracoes").insert({
     profissional_id: prof.id,
-    template_id: 1,
-    slogan: `${nome} — Profissional de confiança`,
+    template_id: template_id || 1,
+    slogan: slogan || `${nome} — Profissional de confiança`,
   });
 
   await supabase.from("profiles").insert({
@@ -57,12 +57,30 @@ export async function POST(request: Request) {
     role: "owner",
   });
 
-  const servicosPadrao = [
-    { nome: "Serviço Básico", descricao: "Atendimento padrão", descricao_curta: "Serviço essencial", horas_base: 2, valor_hora: 25, horas_minimas: 2, ordem: 1 },
-    { nome: "Serviço Completo", descricao: "Atendimento completo e detalhado", descricao_curta: "Recomendado", horas_base: 3, valor_hora: 30, horas_minimas: 3, ordem: 2 },
-  ];
-  for (const s of servicosPadrao) {
-    await supabase.from("servicos").insert({ profissional_id: prof.id, ...s });
+  if (servicos && servicos.length > 0) {
+    for (const s of servicos) {
+      await supabase.from("servicos").insert({
+        profissional_id: prof.id,
+        nome: s.nome || "Serviço",
+        descricao: s.descricao || "",
+        descricao_curta: s.descricao_curta || s.descricao || "",
+        horas_base: s.tipo_preco === "por_hora" ? (s.horas_base || 2) : 0,
+        valor_hora: s.tipo_preco === "por_hora" ? (s.valor_hora || 25) : 0,
+        horas_minimas: s.tipo_preco === "por_hora" ? (s.horas_minimas || 2) : 0,
+        preco_fixo: s.tipo_preco === "fixo" ? (s.preco_fixo || 0) : 0,
+        duracao_minutos: s.duracao_minutos || 60,
+        tipo_preco: s.tipo_preco || "por_hora",
+        ordem: s.ordem || 1,
+      });
+    }
+  } else {
+    const servicosPadrao = [
+      { nome: "Serviço Básico", descricao: "Atendimento padrão", descricao_curta: "Serviço essencial", horas_base: 2, valor_hora: 25, horas_minimas: 2, tipo_preco: "por_hora", preco_fixo: 0, duracao_minutos: 60, ordem: 1 },
+      { nome: "Serviço Completo", descricao: "Atendimento completo e detalhado", descricao_curta: "Recomendado", horas_base: 3, valor_hora: 30, horas_minimas: 3, tipo_preco: "por_hora", preco_fixo: 0, duracao_minutos: 60, ordem: 2 },
+    ];
+    for (const s of servicosPadrao) {
+      await supabase.from("servicos").insert({ profissional_id: prof.id, ...s });
+    }
   }
 
   const frequenciasPadrao = [

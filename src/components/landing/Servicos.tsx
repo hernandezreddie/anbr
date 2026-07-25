@@ -2,6 +2,17 @@
 
 import type { ProfissionalConfig } from "@/types";
 
+function formatPreco(valor: number) {
+  return "R$ " + valor.toFixed(2).replace(".", ",");
+}
+
+function precoLabel(s: ProfissionalConfig["servicos"][number]) {
+  if (s.tipo_preco === "fixo") {
+    return formatPreco(s.preco_fixo) + (s.duracao_minutos ? ` · ${s.duracao_minutos}min` : "");
+  }
+  return `A partir de ${formatPreco(s.valor_hora * s.horas_minimas)}`;
+}
+
 export function Servicos({ config }: { config: ProfissionalConfig }) {
   return (
     <section className="bg-ivory py-16">
@@ -13,7 +24,7 @@ export function Servicos({ config }: { config: ProfissionalConfig }) {
               <h3 className="mb-2 text-xl font-semibold">{s.nome}</h3>
               <p className="mb-4 text-ink-soft">{s.descricao}</p>
               <p className="text-lg font-semibold" style={{ color: config.configuracao.cor_primaria }}>
-                A partir de R$ {(s.valor_hora * s.horas_minimas).toFixed(2).replace(".", ",")}
+                {precoLabel(s)}
               </p>
             </div>
           ))}

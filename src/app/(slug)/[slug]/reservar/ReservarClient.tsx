@@ -18,13 +18,14 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
 
   const servico = config.servicos.find((s) => s.id === servicoId);
   const frequencia = config.frequencias.find((f) => f.slug === freqId) || null;
+  const isPrecoFixo = servico?.tipo_preco === "fixo";
 
-  const horasBase = servico
+  const horasBase = servico && !isPrecoFixo
     ? round05(servico.horas_base + quartos * 0.75 + banheiros * 0.75)
     : 0;
 
   const adicionaisFiltrados = config.adicionais.filter(
-    (a) => !servicoId || a.servico_id === servicoId || a.servico_id === servicoId,
+    (a) => a.servico_id === servicoId,
   );
 
   const orcamento = servico
@@ -40,9 +41,13 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const handleSubmit = () => {
     if (!orcamento || !nome) return;
 
+    const extras = isPrecoFixo && orcamento.duracao_minutos
+      ? ` (${orcamento.duracao_minutos}min)`
+      : ` (${orcamento.horas}h)`;
+
     const msg = mensagemReserva(config.profissional.primeiro_nome, {
       nome,
-      servico: orcamento.servico_nome,
+      servico: orcamento.servico_nome + extras,
       adicionais: adicionaisSel
         .map((id) => config.adicionais.find((a) => a.id === id)?.nome)
         .filter(Boolean) as string[],
@@ -81,80 +86,78 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
             </div>
           </section>
 
-          <section>
-            <h2 className="mb-4 text-lg font-medium">2. Cômodos</h2>
-            <div className="flex gap-8">
-              <div>
-                <label className="text-sm text-ink-soft">Quartos</label>
-                <div className="mt-1 flex items-center gap-3">
-                  <button
-                    onClick={() => setQuartos(Math.max(0, quartos - 1))}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border"
-                  >
-                    -
-                  </button>
-                  <span className="w-6 text-center font-medium">{quartos}</span>
-                  <button
-                    onClick={() => setQuartos(quartos + 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border"
-                  >
-                    +
-                  </button>
+          {servico && !isPrecoFixo && (
+            <section>
+              <h2 className="mb-4 text-lg font-medium">2. Cômodos</h2>
+              <div className="flex gap-8">
+                <div>
+                  <label className="text-sm text-ink-soft">Quartos</label>
+                  <div className="mt-1 flex items-center gap-3">
+                    <button
+                      onClick={() => setQuartos(Math.max(0, quartos - 1))}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border"
+                    >-</button>
+                    <span className="w-6 text-center font-medium">{quartos}</span>
+                    <button
+                      onClick={() => setQuartos(quartos + 1)}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border"
+                    >+</button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-ink-soft">Banheiros</label>
+                  <div className="mt-1 flex items-center gap-3">
+                    <button
+                      onClick={() => setBanheiros(Math.max(0, banheiros - 1))}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border"
+                    >-</button>
+                    <span className="w-6 text-center font-medium">{banheiros}</span>
+                    <button
+                      onClick={() => setBanheiros(banheiros + 1)}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border"
+                    >+</button>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="text-sm text-ink-soft">Banheiros</label>
-                <div className="mt-1 flex items-center gap-3">
+            </section>
+          )}
+
+          {adicionaisFiltrados.length > 0 && (
+            <section>
+              <h2 className="mb-4 text-lg font-medium">{isPrecoFixo ? "2." : "3."} Adicionais</h2>
+              <div className="flex flex-wrap gap-2">
+                {adicionaisFiltrados.map((a) => (
                   <button
-                    onClick={() => setBanheiros(Math.max(0, banheiros - 1))}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border"
+                    key={a.id}
+                    onClick={() =>
+                      setAdicionaisSel((prev) =>
+                        prev.includes(a.id)
+                          ? prev.filter((id) => id !== a.id)
+                          : [...prev, a.id],
+                      )
+                    }
+                    className={`rounded-full border px-4 py-2 text-sm transition-all ${
+                      adicionaisSel.includes(a.id)
+                        ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                        : "border-line text-ink-soft hover:border-ink"
+                    }`}
                   >
-                    -
+                    {a.nome}
+                    {a.preco > 0 && (
+                      <span className="ml-1">
+                        +R$ {a.preco.toFixed(2).replace(".", ",")}
+                      </span>
+                    )}
                   </button>
-                  <span className="w-6 text-center font-medium">{banheiros}</span>
-                  <button
-                    onClick={() => setBanheiros(banheiros + 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border"
-                  >
-                    +
-                  </button>
-                </div>
+                ))}
               </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           <section>
-            <h2 className="mb-4 text-lg font-medium">3. Adicionais</h2>
-            <div className="flex flex-wrap gap-2">
-              {config.adicionais.map((a) => (
-                <button
-                  key={a.id}
-                  onClick={() =>
-                    setAdicionaisSel((prev) =>
-                      prev.includes(a.id)
-                        ? prev.filter((id) => id !== a.id)
-                        : [...prev, a.id],
-                    )
-                  }
-                  className={`rounded-full border px-4 py-2 text-sm transition-all ${
-                    adicionaisSel.includes(a.id)
-                      ? "border-emerald-600 bg-emerald-50 text-emerald-700"
-                      : "border-line text-ink-soft hover:border-ink"
-                  }`}
-                >
-                  {a.nome}
-                  {a.preco > 0 && (
-                    <span className="ml-1">
-                      +R$ {a.preco.toFixed(2).replace(".", ",")}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h2 className="mb-4 text-lg font-medium">4. Frequência</h2>
+            <h2 className="mb-4 text-lg font-medium">
+              {isPrecoFixo ? "3." : "4."} Frequência
+            </h2>
             <div className="flex flex-wrap gap-2">
               {config.frequencias.map((f) => (
                 <button
@@ -176,7 +179,9 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
           </section>
 
           <section>
-            <h2 className="mb-4 text-lg font-medium">5. Seus dados</h2>
+            <h2 className="mb-4 text-lg font-medium">
+              {isPrecoFixo ? "4." : "5."} Seus dados
+            </h2>
             <div className="space-y-4">
               <input
                 type="text"
@@ -205,12 +210,19 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                   <span className="text-ink-soft">Serviço</span>
                   <span>{orcamento.servico_nome}</span>
                 </div>
+                {isPrecoFixo && orcamento.duracao_minutos ? (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-ink-soft">Duração</span>
+                    <span>{orcamento.duracao_minutos}min</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-ink-soft">Duração</span>
+                    <span>{orcamento.horas}h</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
-                  <span className="text-ink-soft">Duração</span>
-                  <span>{orcamento.horas}h</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-ink-soft">Valor base</span>
+                  <span className="text-ink-soft">Valor</span>
                   <span>R$ {orcamento.bruto.toFixed(2).replace(".", ",")}</span>
                 </div>
                 {orcamento.desconto > 0 && (

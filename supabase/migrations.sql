@@ -49,7 +49,10 @@ CREATE TABLE IF NOT EXISTS servicos (
   horas_extras DECIMAL(5,2) DEFAULT 0,
   horas_minimas DECIMAL(5,2) DEFAULT 2,
   ativo BOOLEAN DEFAULT true,
-  ordem INT DEFAULT 0
+  ordem INT DEFAULT 0,
+  tipo_preco TEXT DEFAULT 'por_hora' CHECK (tipo_preco IN ('por_hora', 'fixo')),
+  preco_fixo DECIMAL(10,2) DEFAULT 0,
+  duracao_minutos INT DEFAULT 60
 );
 
 -- 4. Adicionais por serviço

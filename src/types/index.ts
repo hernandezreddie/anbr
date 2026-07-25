@@ -27,6 +27,8 @@ export interface ConfiguracaoVisual {
   slogan: string
 }
 
+export type TipoPreco = "por_hora" | "fixo";
+
 export interface Servico {
   id: string
   profissional_id: string
@@ -40,6 +42,9 @@ export interface Servico {
   horas_minimas: number
   ativo: boolean
   ordem: number
+  tipo_preco: TipoPreco
+  preco_fixo: number
+  duracao_minutos: number
 }
 
 export interface Adicional {
