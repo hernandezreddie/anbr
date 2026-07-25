@@ -20,8 +20,8 @@ export function Servicos({ config }: { config: ProfissionalConfig }) {
     <section className="py-20">
       <div className="container-x">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Meus serviços</h2>
-          <p className="mt-3 text-lg text-ink-soft">
+          <h2 className="animate-fade-in-up text-3xl font-bold tracking-tight">Meus serviços</h2>
+          <p className="mt-3 animate-fade-in-up delay-100 text-lg text-ink-soft">
             Escolha o serviço ideal para você
           </p>
         </div>
@@ -29,10 +29,11 @@ export function Servicos({ config }: { config: ProfissionalConfig }) {
           {config.servicos.map((s, i) => (
             <div
               key={s.id}
-              className="group card relative overflow-hidden p-6 transition-all hover:shadow-md hover:-translate-y-0.5"
+              className="group card relative overflow-hidden p-6 transition-all hover:shadow-md hover:-translate-y-0.5 animate-fade-in-up"
+              style={{ animationDelay: `${(i + 1) * 100}ms` }}
             >
               <div
-                className="absolute left-0 top-0 h-1 w-full"
+                className="absolute left-0 top-0 h-1 w-full transition-all group-hover:h-1.5"
                 style={{ backgroundColor: config.configuracao.cor_primaria, opacity: 0.6 }}
               />
               <div className="flex items-start justify-between gap-4">

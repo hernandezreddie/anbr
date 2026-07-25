@@ -20,22 +20,23 @@ export default function ServicosModerno({ config }: { config: ProfissionalConfig
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-white to-violet-50 py-20">
-      <div className="absolute right-0 top-0 -mr-40 -mt-40 h-80 w-80 rounded-full bg-violet-200/30 blur-3xl" />
+      <div className="absolute right-0 top-0 -mr-40 -mt-40 h-80 w-80 animate-float rounded-full bg-violet-200/30 blur-3xl" style={{ animationDelay: "1s" }} />
       <div className="container-x relative">
         <div className="mx-auto max-w-2xl text-center">
-          <div className="mb-3 inline-block rounded-full bg-violet-100 px-4 py-1 text-sm font-medium text-violet-700">
+          <div className="mb-3 animate-fade-in-up inline-block rounded-full bg-violet-100 px-4 py-1 text-sm font-medium text-violet-700">
             Serviços
           </div>
-          <h2 className="text-3xl font-bold tracking-tight">Meus serviços</h2>
-          <p className="mt-3 text-lg text-ink-soft">
+          <h2 className="animate-fade-in-up delay-100 text-3xl font-bold tracking-tight">Meus serviços</h2>
+          <p className="mt-3 animate-fade-in-up delay-200 text-lg text-ink-soft">
             Escolha o serviço ideal para você
           </p>
         </div>
         <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2">
-          {config.servicos.map((s) => (
+          {config.servicos.map((s, i) => (
             <div
               key={s.id}
-              className="group card relative overflow-hidden border-0 bg-white/80 p-6 shadow-md backdrop-blur-sm transition-all hover:shadow-xl hover:-translate-y-1"
+              className="group card relative overflow-hidden border-0 bg-white/80 p-6 shadow-md backdrop-blur-sm transition-all hover:shadow-xl hover:-translate-y-1 animate-fade-in-up"
+              style={{ animationDelay: `${(i + 1) * 150}ms` }}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">

@@ -15,6 +15,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+const googleFonts = ["Fraunces", "Inter", "Playfair Display", "DM Sans"];
+
+function fontUrl(name: string) {
+  const encoded = name.replace(/ /g, "+");
+  return `https://fonts.googleapis.com/css2?family=${encoded}:wght@400;500;600;700&display=swap`;
+}
+
 export default async function SlugLayout({
   children,
   params,
@@ -30,21 +37,32 @@ export default async function SlugLayout({
   const template = TEMPLATES[config.configuracao.template_id as keyof typeof TEMPLATES] || TEMPLATES[1];
   const c = template.colors;
 
+  const headingFont = config.configuracao.fonte_titulo || template.fonts.heading;
+  const bodyFont = config.configuracao.fonte_corpo || template.fonts.body;
+
+  const fontsToLoad = [headingFont, bodyFont].filter((f) => googleFonts.includes(f));
+  const uniqueFonts = [...new Set(fontsToLoad)];
+
   return (
-    <div
-      style={{
-        "--color-primary": c.primary,
-        "--color-secondary": c.secondary,
-        "--color-bg": c.bg,
-        "--color-paper": c.paper,
-        "--color-ink": c.ink,
-        "--color-ink-soft": c.ink_soft,
-        "--color-line": c.line,
-        "--font-heading": template.fonts.heading,
-        "--font-body": template.fonts.body,
-      } as React.CSSProperties}
-    >
-      {children}
-    </div>
+    <>
+      {uniqueFonts.map((f) => (
+        <link key={f} rel="stylesheet" href={fontUrl(f)} />
+      ))}
+      <div
+        style={{
+          "--color-primary": config.configuracao.cor_primaria || c.primary,
+          "--color-secondary": config.configuracao.cor_secundaria || c.secondary,
+          "--color-bg": c.bg,
+          "--color-paper": c.paper,
+          "--color-ink": c.ink,
+          "--color-ink-soft": c.ink_soft,
+          "--color-line": c.line,
+          "--font-heading": headingFont,
+          "--font-body": bodyFont,
+        } as React.CSSProperties}
+      >
+        {children}
+      </div>
+    </>
   );
 }
