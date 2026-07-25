@@ -1,16 +1,27 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+
 export default function SucessoPage() {
+  const params = useSearchParams();
+  const slug = params.get("slug");
+
   return (
     <div className="container-x py-20 text-center">
       <div className="mx-auto max-w-lg">
         <div className="mb-6 text-6xl">🎉</div>
         <h1 className="mb-4 text-3xl font-semibold">Sistema criado com sucesso!</h1>
         <p className="mb-8 text-lg text-ink-soft">
-          Seu sistema de agendamento já está disponível. Verifique seu email para
-          confirmar sua conta e fazer login no painel administrativo.
+          Seu sistema de agendamento já está disponível.
         </p>
-        <p className="text-sm text-ink-soft">
-          Seu endereço: <strong>seu-subdominio.livreta.com.br</strong>
-        </p>
+        {slug && (
+          <a
+            href={`https://livreta.vercel.app/${slug}`}
+            className="mb-4 block text-lg font-semibold text-emerald-600 underline"
+          >
+            https://livreta.vercel.app/{slug}
+          </a>
+        )}
       </div>
     </div>
   );

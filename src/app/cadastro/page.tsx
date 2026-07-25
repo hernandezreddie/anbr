@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function CadastroPage() {
@@ -37,25 +36,21 @@ export default function CadastroPage() {
 
   const handleSubmit = async () => {
     setErro("");
-    const supabase = createClient();
 
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.senha,
-      options: {
-        data: {
-          nome: form.nome,
-          slug: form.slug,
-        },
-      },
+    const res = await fetch("/api/cadastro", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
     });
 
-    if (error) {
-      setErro(error.message);
+    const data = await res.json();
+
+    if (!res.ok) {
+      setErro(data.error || "Erro ao criar sistema");
       return;
     }
 
-    router.push(`/cadastro/sucesso`);
+    router.push(`/cadastro/sucesso?slug=${data.slug}`);
   };
 
   return (

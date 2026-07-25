@@ -1,0 +1,79 @@
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const { nome, email, senha, slug, whatsapp, cidade, pix_chave } = body;
+
+  if (!nome || !email || !senha || !slug) {
+    return Response.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password: senha,
+    email_confirm: true,
+    user_metadata: { nome, slug },
+  });
+
+  if (authError || !authUser.user) {
+    return Response.json({ error: authError?.message || "Erro ao criar usuário" }, { status: 400 });
+  }
+
+  const pix_nome = nome.toUpperCase();
+  const pix_cidade = cidade?.toUpperCase() || "NAO INFORMADA";
+
+  const { data: prof, error: profError } = await supabase
+    .from("profissionais")
+    .insert({
+      slug,
+      nome,
+      slogan: `${nome} — Profissional de confiança`,
+      cidade: cidade || "",
+      email,
+      whatsapp: whatsapp || "",
+      pix_chave: pix_chave || email,
+      pix_nome,
+      pix_cidade,
+    })
+    .select()
+    .single();
+
+  if (profError || !prof) {
+    await supabase.auth.admin.deleteUser(authUser.user.id);
+    return Response.json({ error: profError?.message || "Erro ao criar profissional" }, { status: 500 });
+  }
+
+  await supabase.from("configuracoes").insert({
+    profissional_id: prof.id,
+    template_id: 1,
+    slogan: `${nome} — Profissional de confiança`,
+  });
+
+  await supabase.from("profiles").insert({
+    id: authUser.user.id,
+    profissional_id: prof.id,
+    role: "owner",
+  });
+
+  const servicosPadrao = [
+    { nome: "Serviço Básico", descricao: "Atendimento padrão", descricao_curta: "Serviço essencial", horas_base: 2, valor_hora: 25, horas_minimas: 2, ordem: 1 },
+    { nome: "Serviço Completo", descricao: "Atendimento completo e detalhado", descricao_curta: "Recomendado", horas_base: 3, valor_hora: 30, horas_minimas: 3, ordem: 2 },
+  ];
+  for (const s of servicosPadrao) {
+    await supabase.from("servicos").insert({ profissional_id: prof.id, ...s });
+  }
+
+  const frequenciasPadrao = [
+    { nome: "Pontual", slug: "pontual", desconto: 0, ordem: 1 },
+    { nome: "Mensal", slug: "mensal", desconto: 5, ordem: 2 },
+    { nome: "Quinzenal", slug: "quinzenal", desconto: 10, ordem: 3 },
+    { nome: "Semanal", slug: "semanal", desconto: 15, ordem: 4 },
+  ];
+  for (const f of frequenciasPadrao) {
+    await supabase.from("frequencias").insert({ profissional_id: prof.id, ...f });
+  }
+
+  return Response.json({ slug, nome });
+}
