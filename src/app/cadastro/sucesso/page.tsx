@@ -1,8 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function SucessoPage() {
+function SucessoContent() {
   const params = useSearchParams();
   const slug = params.get("slug");
 
@@ -24,5 +25,13 @@ export default function SucessoPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SucessoPage() {
+  return (
+    <Suspense>
+      <SucessoContent />
+    </Suspense>
   );
 }
