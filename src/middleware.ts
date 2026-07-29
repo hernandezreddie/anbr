@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const DOMAIN = process.env.NEXT_PUBLIC_DOMAIN || "livreta.com.br";
 const APP_PATHS = ["/api", "/_next", "/favicon.ico", "/manifest.webmanifest"];
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get("host") || "";
 
@@ -20,7 +20,7 @@ export function proxy(request: NextRequest) {
     return response;
   }
 
-  if (host.endsWith(`.${DOMAIN}`) || host.endsWith(`.localhost:3000`)) {
+  if (host.endsWith(`.${DOMAIN}`) || host.endsWith(".localhost:3000")) {
     const slug = host.split(".")[0];
     const url = request.nextUrl.clone();
     url.pathname = `/(slug)/${slug}${pathname}`;

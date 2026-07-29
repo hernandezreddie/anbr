@@ -1,8 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
 
 const supabase = createClient(
-  'https://ifsjouhcndmcfqjfawta.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmc2pvdWhjbmRtY2ZxamZhd3RhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDgyNjQzNSwiZXhwIjoyMTAwNDAyNDM1fQ.FyAsc2Tjc1z3rPa_QER1AmgIT-Pdmwnc09v2hSqL4xo'
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 const sql = `
