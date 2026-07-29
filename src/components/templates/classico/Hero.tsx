@@ -1,2 +1,1 @@
-import { Hero } from "@/components/landing/Hero";
-export default Hero;
+export { Hero } from "@/components/landing/Hero";

@@ -1,2 +1,1 @@
-import { Servicos } from "@/components/landing/Servicos";
-export default Servicos;
+export { Servicos } from "@/components/landing/Servicos";

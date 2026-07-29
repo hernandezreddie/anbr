@@ -15,7 +15,7 @@ function precoLabel(s: ProfissionalConfig["servicos"][number]) {
   return `${formatPreco(s.valor_hora)}/h`;
 }
 
-export default function ServicosModerno({ config }: { config: ProfissionalConfig }) {
+export function Servicos({ config }: { config: ProfissionalConfig }) {
   const primary = config.configuracao.cor_primaria;
 
   return (

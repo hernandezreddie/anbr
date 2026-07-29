@@ -130,9 +130,14 @@ export interface TemplateVisual {
     heading: string
     body: string
   }
+  Nav: React.ComponentType<{ config: ProfissionalConfig }>
   Hero: React.ComponentType<{ config: ProfissionalConfig }>
+  Confianca: React.ComponentType<{ config: ProfissionalConfig }>
   Servicos: React.ComponentType<{ config: ProfissionalConfig }>
-  CtaButton: React.ComponentType<{ config: ProfissionalConfig }>
+  Depoimentos: React.ComponentType<{ config: ProfissionalConfig }>
+  CtaFinal: React.ComponentType<{ config: ProfissionalConfig }>
+  Footer: React.ComponentType<{ config: ProfissionalConfig }>
+  WhatsAppFloat: React.ComponentType<{ config: ProfissionalConfig }>
 }
 
 export interface ProfissionalConfig {

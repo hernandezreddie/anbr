@@ -1,0 +1,1 @@
+export { Nav } from "@/components/landing/Nav";

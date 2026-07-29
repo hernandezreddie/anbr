@@ -1,9 +1,19 @@
-import HeroClassico from "@/components/templates/classico/Hero";
-import ServicosClassico from "@/components/templates/classico/Servicos";
-import CtaClassico from "@/components/templates/classico/CtaButton";
-import HeroModerno from "@/components/templates/moderno/Hero";
-import ServicosModerno from "@/components/templates/moderno/Servicos";
-import CtaModerno from "@/components/templates/moderno/CtaButton";
+import { Nav as NavClassico } from "@/components/templates/classico/Nav";
+import { Hero as HeroClassico } from "@/components/templates/classico/Hero";
+import { Confianca as ConfiancaClassico } from "@/components/templates/classico/Confianca";
+import { Servicos as ServicosClassico } from "@/components/templates/classico/Servicos";
+import { Depoimentos as DepoimentosClassico } from "@/components/templates/classico/Depoimentos";
+import { CtaFinal as CtaFinalClassico } from "@/components/templates/classico/CtaFinal";
+import { Footer as FooterClassico } from "@/components/templates/classico/Footer";
+import { WhatsAppFloat as WhatsAppFloatClassico } from "@/components/templates/classico/WhatsAppFloat";
+import { Nav as NavModerno } from "@/components/templates/moderno/Nav";
+import { Hero as HeroModerno } from "@/components/templates/moderno/Hero";
+import { Confianca as ConfiancaModerno } from "@/components/templates/moderno/Confianca";
+import { Servicos as ServicosModerno } from "@/components/templates/moderno/Servicos";
+import { Depoimentos as DepoimentosModerno } from "@/components/templates/moderno/Depoimentos";
+import { CtaFinal as CtaFinalModerno } from "@/components/templates/moderno/CtaFinal";
+import { Footer as FooterModerno } from "@/components/templates/moderno/Footer";
+import { WhatsAppFloat as WhatsAppFloatModerno } from "@/components/templates/moderno/WhatsAppFloat";
 
 export const TEMPLATES = {
   1: {
@@ -23,9 +33,14 @@ export const TEMPLATES = {
       heading: "Fraunces",
       body: "Inter",
     },
+    Nav: NavClassico,
     Hero: HeroClassico,
+    Confianca: ConfiancaClassico,
     Servicos: ServicosClassico,
-    CtaButton: CtaClassico,
+    Depoimentos: DepoimentosClassico,
+    CtaFinal: CtaFinalClassico,
+    Footer: FooterClassico,
+    WhatsAppFloat: WhatsAppFloatClassico,
   },
   2: {
     id: 2,
@@ -44,9 +59,14 @@ export const TEMPLATES = {
       heading: "Inter",
       body: "Inter",
     },
+    Nav: NavModerno,
     Hero: HeroModerno,
+    Confianca: ConfiancaModerno,
     Servicos: ServicosModerno,
-    CtaButton: CtaModerno,
+    Depoimentos: DepoimentosModerno,
+    CtaFinal: CtaFinalModerno,
+    Footer: FooterModerno,
+    WhatsAppFloat: WhatsAppFloatModerno,
   },
 } as const;
 

@@ -2,7 +2,7 @@
 
 import type { ProfissionalConfig } from "@/types";
 
-export default function Hero({ config }: { config: ProfissionalConfig }) {
+export function Hero({ config }: { config: ProfissionalConfig }) {
   const { profissional, configuracao } = config;
   const primary = configuracao.cor_primaria;
 

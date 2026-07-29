@@ -11,9 +11,17 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
   const template = TEMPLATES[config.configuracao.template_id as keyof typeof TEMPLATES] || TEMPLATES[1];
 
   return (
-    <main>
-      <template.Hero config={config} />
-      <template.Servicos config={config} />
-    </main>
+    <>
+      <template.Nav config={config} />
+      <main>
+        <template.Hero config={config} />
+        <template.Confianca config={config} />
+        <template.Servicos config={config} />
+        <template.Depoimentos config={config} />
+        <template.CtaFinal config={config} />
+      </main>
+      <template.Footer config={config} />
+      <template.WhatsAppFloat config={config} />
+    </>
   );
 }
