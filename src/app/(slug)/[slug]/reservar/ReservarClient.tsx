@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import type { ProfissionalConfig, Servico, Adicional, Frequencia } from "@/types";
 import { estimar } from "@/lib/precos";
 import { mensagemReserva, linkWhatsApp } from "@/lib/whatsapp";
+import { Calendar, Clock, CalendarX } from "lucide-react";
 
 const round05 = (n: number) => Math.round(n * 2) / 2;
 
@@ -14,7 +15,11 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const [adicionaisSel, setAdicionaisSel] = useState<string[]>([]);
   const [freqId, setFreqId] = useState<string>("pontual");
   const [nome, setNome] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [endereco, setEndereco] = useState("");
+  const [data, setData] = useState("");
+  const [hora, setHora] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const servico = config.servicos.find((s) => s.id === servicoId);
   const frequencia = config.frequencias.find((f) => f.slug === freqId) || null;
@@ -38,19 +43,48 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
       })
     : null;
 
-  const handleSubmit = () => {
-    if (!orcamento || !nome) return;
+  const handleSubmit = async () => {
+    if (!orcamento || !nome || !whatsapp || !data || !hora) return;
+    setSubmitting(true);
 
     const extras = isPrecoFixo && orcamento.duracao_minutos
       ? ` (${orcamento.duracao_minutos}min)`
       : ` (${orcamento.horas}h)`;
 
+    const adicionaisNomes = adicionaisSel
+      .map((id) => config.adicionais.find((a) => a.id === id)?.nome)
+      .filter(Boolean) as string[];
+
+    // Save to DB first
+    try {
+      const res = await fetch("/api/agendamentos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: config.profissional.slug,
+          servico_id: servicoId,
+          adicionais: adicionaisNomes,
+          frequencia,
+          horas: orcamento.horas,
+          valor: orcamento.total,
+          data,
+          hora,
+          cliente_nome: nome,
+          cliente_whatsapp: whatsapp,
+          cliente_endereco: endereco,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Falha ao salvar agendamento");
+    } catch (err) {
+      console.error("Erro ao salvar:", err);
+      // Continue to WhatsApp even if DB save fails
+    }
+
     const msg = mensagemReserva(config.profissional.primeiro_nome, {
       nome,
       servico: orcamento.servico_nome + extras,
-      adicionais: adicionaisSel
-        .map((id) => config.adicionais.find((a) => a.id === id)?.nome)
-        .filter(Boolean) as string[],
+      adicionais: adicionaisNomes,
       horas: orcamento.horas,
       endereco,
       frequencia: frequencia?.nome || "Pontual",
@@ -58,7 +92,21 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
     });
 
     window.open(linkWhatsApp(msg, config.profissional.whatsapp), "_blank");
+    setSubmitting(false);
   };
+
+  // Generate available hours (8h-18h, 30min intervals)
+  const horarios = useMemo(() => {
+    const slots: string[] = [];
+    for (let h = 8; h <= 18; h++) {
+      slots.push(`${h.toString().padStart(2, "0")}:00`);
+      if (h < 18) slots.push(`${h.toString().padStart(2, "0")}:30`);
+    }
+    return slots;
+  }, []);
+
+  // Min date = today
+  const minDate = new Date().toISOString().split("T")[0];
 
   return (
     <div className="container-x py-12">
@@ -180,7 +228,44 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
 
           <section>
             <h2 className="mb-4 text-lg font-medium">
-              {isPrecoFixo ? "4." : "5."} Seus dados
+              {isPrecoFixo ? "4." : "5."} Data e horário
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm text-ink-soft mb-1">Data</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-ink-soft" />
+                  <input
+                    type="date"
+                    value={data}
+                    onChange={(e) => setData(e.target.value)}
+                    min={minDate}
+                    className="w-full pl-10 rounded-xl border border-line bg-paper px-4 py-3 outline-none transition-all focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-ink-soft mb-1">Horário</label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-ink-soft" />
+                  <select
+                    value={hora}
+                    onChange={(e) => setHora(e.target.value)}
+                    className="w-full pl-10 rounded-xl border border-line bg-paper px-4 py-3 outline-none transition-all focus:border-emerald-600 appearance-none"
+                  >
+                    <option value="">Selecione</option>
+                    {horarios.map((h) => (
+                      <option key={h} value={h}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="mb-4 text-lg font-medium">
+              {isPrecoFixo ? "5." : "6."} Seus dados
             </h2>
             <div className="space-y-4">
               <input
@@ -189,6 +274,14 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 className="w-full rounded-xl border border-line bg-paper px-4 py-3 outline-none transition-all focus:border-emerald-600"
+              />
+              <input
+                type="tel"
+                placeholder="WhatsApp (com DDD)"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ""))}
+                className="w-full rounded-xl border border-line bg-paper px-4 py-3 outline-none transition-all focus:border-emerald-600"
+                maxLength={11}
               />
               <input
                 type="text"
@@ -231,6 +324,18 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                     <span>-R$ {orcamento.desconto.toFixed(2).replace(".", ",")}</span>
                   </div>
                 )}
+                {data && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-ink-soft">Data</span>
+                    <span>{new Date(data + "T00:00:00").toLocaleDateString("pt-BR")}</span>
+                  </div>
+                )}
+                {hora && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-ink-soft">Horário</span>
+                    <span>{hora}</span>
+                  </div>
+                )}
                 <hr className="border-line" />
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total</span>
@@ -238,10 +343,10 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                 </div>
                 <button
                   onClick={handleSubmit}
-                  disabled={!nome}
+                  disabled={!nome || !whatsapp || !data || !hora || submitting}
                   className="mt-4 w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition-all hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Enviar orçamento via WhatsApp
+                  {submitting ? "Salvando..." : "Enviar orçamento via WhatsApp"}
                 </button>
               </div>
             ) : (
