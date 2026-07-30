@@ -7,10 +7,8 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
   const primary = configuracao.cor_primaria;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-white via-violet-50 to-white">
-      <div className="absolute -left-32 -top-32 h-96 w-96 animate-float rounded-full bg-violet-200/20 blur-3xl" style={{ animationDelay: "0s" }} />
-      <div className="absolute -bottom-32 -right-32 h-96 w-96 animate-float rounded-full bg-purple-200/20 blur-3xl" style={{ animationDelay: "1.5s" }} />
-      <div className="container-x relative py-24 md:py-32">
+    <section className="relative overflow-hidden py-24 md:py-32">
+      <div className="container-x relative">
         <div className="mx-auto max-w-3xl text-center">
           {configuracao.logo_url && (
             <div className="mb-8 animate-fade-in">
@@ -21,8 +19,9 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
               />
             </div>
           )}
-          <div className="mb-6 animate-fade-in-up inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/60 px-4 py-1.5 text-sm font-medium text-violet-700 shadow-sm backdrop-blur-sm">
-            <span className="h-2 w-2 animate-pulse-dot rounded-full bg-violet-500" />
+          <div className="mb-6 animate-fade-in-up inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium shadow-sm backdrop-blur-sm"
+            style={{ borderColor: primary + "40", backgroundColor: primary + "15", color: primary }}>
+            <span className="h-2 w-2 animate-pulse-dot rounded-full" style={{ backgroundColor: primary }} />
             {profissional.cidade}
           </div>
           <h1
@@ -31,7 +30,7 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
           >
             {profissional.slogan || `${profissional.primeiro_nome} — Profissional de confiança`}
           </h1>
-          <p className="mb-10 animate-fade-in-up delay-200 text-lg text-gray-500 md:text-xl leading-relaxed max-w-2xl mx-auto">
+          <p className="mb-10 animate-fade-in-up delay-200 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto" style={{ color: "var(--color-ink-soft)" }}>
             Agende online com {profissional.primeiro_nome}. Orçamento em segundos, pagamento via Pix, sem complicação.
           </p>
           <div className="flex animate-fade-in-up delay-300 flex-wrap items-center justify-center gap-4">
@@ -46,7 +45,8 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
             <a
               href={`https://wa.me/${profissional.whatsapp}`}
               target="_blank"
-              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-8 py-4 text-lg font-semibold text-gray-800 shadow-sm backdrop-blur-sm transition-all hover:bg-white hover:shadow-md"
+              className="inline-flex items-center gap-2 rounded-full border px-8 py-4 text-lg font-semibold shadow-sm backdrop-blur-sm transition-all hover:shadow-md"
+              style={{ borderColor: primary + "40", backgroundColor: primary + "10", color: primary }}
             >
               Tirar dúvidas
             </a>

@@ -13,8 +13,9 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Livreta | Sistema de Agendamento para Profissionais",
+  title: "AN.BR | Sistema de Agendamento para Profissionais",
   description: "Crie seu próprio sistema de agendamento online em 5 minutos",
+  icons: "/favicon.svg",
 };
 
 export default function RootLayout({

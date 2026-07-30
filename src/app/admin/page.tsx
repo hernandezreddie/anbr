@@ -59,7 +59,7 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="font-serif text-lg font-semibold">⚡ Livreta · Admin</span>
+          <span className="font-serif text-lg font-semibold">AN.BR · Admin</span>
           <form action="/auth/signout" method="post">
             <button className="text-sm text-ink-soft hover:text-ink">Sair</button>
           </form>

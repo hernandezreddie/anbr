@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS configuracoes (
   fonte_titulo TEXT DEFAULT 'Fraunces',
   fonte_corpo TEXT DEFAULT 'Inter',
   logo_url TEXT DEFAULT '',
-  slogan TEXT DEFAULT ''
+  slogan TEXT DEFAULT '',
+  fundo_estilo TEXT DEFAULT 'none'
 );
 
 -- 3. Serviços do profissional
@@ -104,6 +105,7 @@ CREATE TABLE IF NOT EXISTS agendamentos (
   cliente_endereco TEXT DEFAULT '',
   cliente_lat DECIMAL(10,7),
   cliente_lng DECIMAL(10,7),
+  servico_nome TEXT,
   data DATE NOT NULL,
   hora TIME NOT NULL,
   data2 DATE,
@@ -113,6 +115,11 @@ CREATE TABLE IF NOT EXISTS agendamentos (
   execucao TEXT,
   recorrencia TEXT,
   adicionais JSONB DEFAULT '[]',
+  observacoes TEXT DEFAULT '',
+  endereco TEXT DEFAULT '',
+  origem TEXT DEFAULT 'web',
+  serie_id UUID,
+  data_original DATE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -322,16 +329,23 @@ CREATE POLICY "profiles_self_select" ON profiles
   FOR SELECT TO authenticated
   USING (id = auth.uid());
 
--- Admin/owner pode ver todos os profiles
+-- Admin/owner pode ver todos os profiles (security definer evita recursion)
 DROP POLICY IF EXISTS "profiles_admin_select" ON profiles;
+CREATE OR REPLACE FUNCTION public.is_admin_or_owner()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid()
+    AND role IN ('owner', 'admin')
+  );
+$$;
 CREATE POLICY "profiles_admin_select" ON profiles
   FOR SELECT TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.role IN ('owner', 'admin')
-    )
-  );
+  USING (public.is_admin_or_owner());
 
 -- Push subscriptions: cada user só vê/gerencia a própria
 DROP POLICY IF EXISTS "push_subscriptions_self" ON push_subscriptions;

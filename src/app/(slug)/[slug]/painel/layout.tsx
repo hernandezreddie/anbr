@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { SidebarClient } from "./SidebarClient";
-import { PushSubscriber } from "@/components/PushSubscriber";
+import { fundoStyle, type FundoEstilo } from "@/lib/backgrounds";
+import { PainelAuthGate } from "./PainelAuthGate";
 
 export default async function PainelLayout({
   children,
@@ -12,45 +10,17 @@ export default async function PainelLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const hdrs = await headers();
-  const xPathname = hdrs.get("x-pathname") || "";
-  const isLoginPage = xPathname.endsWith("/painel/login");
 
-  if (!isLoginPage) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      redirect(`/${slug}/painel/login`);
-    }
-
-    // Check via profiles table (links auth.users to profissional)
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("profissional_id, role, profissionais(slug)")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile) {
-      redirect(`/${slug}/painel/login`);
-    }
-
-    // If the slug doesn't match this user's tenant, redirect
-    const prof = Array.isArray(profile.profissionais)
-      ? profile.profissionais[0]
-      : profile.profissionais;
-    if (prof && prof.slug !== slug) {
-      redirect(`/${prof.slug}/painel`);
-    }
-  }
+  const supabase = await createClient();
+  const { data: config } = await supabase
+    .from("configuracoes")
+    .select("cor_primaria, fundo_estilo")
+    .single();
+  const fundo = fundoStyle((config?.fundo_estilo || "none") as FundoEstilo, config?.cor_primaria || "#059669");
 
   return (
-    <div className="flex min-h-screen">
-      {!isLoginPage && <PushSubscriber />}
-      {!isLoginPage && <SidebarClient slug={slug} />}
-      <main className="flex-1 overflow-auto">
-        <div className={isLoginPage ? "" : "container-x py-8 pb-24 lg:pb-8"}>{children}</div>
-      </main>
+    <div className="flex min-h-screen" style={fundo as React.CSSProperties}>
+      <PainelAuthGate slug={slug}>{children}</PainelAuthGate>
     </div>
   );
 }

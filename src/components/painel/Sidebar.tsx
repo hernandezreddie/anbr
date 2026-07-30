@@ -18,7 +18,7 @@ export function Sidebar({ slug }: { slug: string }) {
       <div className="sticky top-0 flex h-screen flex-col border-r border-line bg-paper">
         <div className="flex items-center gap-2 border-b border-line px-6 py-5">
           <span className="text-xl">⚡</span>
-          <span className="text-lg font-bold">Livreta</span>
+          <span className="text-lg font-bold">AN.BR</span>
         </div>
         <nav className="flex-1 space-y-1 p-4">
           {links.map((link) => {

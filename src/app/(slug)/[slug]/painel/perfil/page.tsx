@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
+import { Plus, Trash2, Save } from "lucide-react";
+import { motion } from "framer-motion";
+import { FUNDOS, fundoStyle, type FundoEstilo } from "@/lib/backgrounds";
 
 type Servico = {
   id: string;
@@ -13,7 +16,26 @@ type Servico = {
   preco_fixo: number;
   horas_minimas: number;
   duracao_minutos: number;
+  multiplicador: number;
+  horas_extras: number;
   ativo: boolean;
+  ordem: number;
+};
+
+type Adicional = {
+  id: string;
+  nome: string;
+  descricao: string;
+  preco: number;
+  horas: number;
+  ativo: boolean;
+};
+
+type Frequencia = {
+  id: string;
+  nome: string;
+  slug: string;
+  desconto: number;
   ordem: number;
 };
 
@@ -25,6 +47,18 @@ type Configuracao = {
   fonte_corpo: string;
   logo_url: string;
   slogan: string;
+  fundo_estilo: string;
+};
+
+type Profissional = {
+  id: string;
+  nome: string;
+  slogan: string;
+  cidade: string;
+  whatsapp: string;
+  pix_chave: string;
+  pix_nome: string;
+  pix_cidade: string;
 };
 
 const fontes = [
@@ -34,54 +68,211 @@ const fontes = [
   { value: "DM Sans", label: "DM Sans (limpo)" },
 ];
 
+const inp = "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-600";
+const inpMini = "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600";
+
+function CardSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-neutral-900">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
 export default function PerfilPage() {
   const pathname = usePathname();
   const slug = pathname.split("/")[1];
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [profissional, setProfissional] = useState<Profissional | null>(null);
   const [servicos, setServicos] = useState<Servico[]>([]);
+  const [adicionais, setAdicionais] = useState<Adicional[]>([]);
+  const [frequencias, setFrequencias] = useState<Frequencia[]>([]);
   const [config, setConfig] = useState<Configuracao | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [saving, setSaving] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [confirmarDelete, setConfirmarDelete] = useState<{ tipo: string; id: string } | null>(null);
+
+  const flash = (m: string) => {
+    setMsg(m);
+    setTimeout(() => setMsg(""), 2500);
+  };
 
   const carregar = async () => {
-    const [servicosRes, configRes] = await Promise.all([
+    const [profRes, servicosRes, adicionaisRes, frequenciasRes, configRes] = await Promise.all([
+      supabase.from("profissionais").select("*").single(),
       supabase.from("servicos").select("*").order("ordem"),
+      supabase.from("adicionais").select("*").order("nome"),
+      supabase.from("frequencias").select("*").order("ordem"),
       supabase.from("configuracoes").select("*").single(),
     ]);
+    if (profRes.data) setProfissional(profRes.data as Profissional);
     if (servicosRes.data) setServicos(servicosRes.data as Servico[]);
+    if (adicionaisRes.data) setAdicionais(adicionaisRes.data as Adicional[]);
+    if (frequenciasRes.data) setFrequencias(frequenciasRes.data as Frequencia[]);
     if (configRes.data) setConfig(configRes.data as Configuracao);
   };
 
   useEffect(() => { carregar(); }, []);
 
-  const updateServico = async (id: string, field: string, value: any) => {
-    setSaving(id);
-    const { error } = await supabase.from("servicos").update({ [field]: value }).eq("id", id);
-    if (!error) {
-      setServicos((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
-      setMsg("Salvo!");
-    } else {
-      setMsg("Erro ao salvar");
-    }
-    setTimeout(() => setMsg(""), 2000);
-    setSaving(null);
-  };
+  const hasChanges = profissional || config;
 
-  const updateConfig = async (field: string, value: string) => {
-    if (!config) return;
-    setConfig((prev) => prev ? { ...prev, [field]: value } : null);
-    const res = await fetch("/api/config/atualizar", {
+  async function salvarTudo() {
+    if (!profissional || !config) return;
+    setSaving(true);
+
+    const TIMEOUT = 10000; // 10s
+
+    const profPromise = supabase.from("profissionais").update({
+      nome: profissional.nome,
+      slogan: profissional.slogan,
+      cidade: profissional.cidade,
+      whatsapp: profissional.whatsapp,
+      pix_chave: profissional.pix_chave,
+      pix_nome: profissional.pix_nome,
+      pix_cidade: profissional.pix_cidade,
+    }).eq("id", profissional.id);
+
+    const configPromise = fetch("/api/config/atualizar", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profissional_id: config.profissional_id, [field]: value }),
+      body: JSON.stringify({
+        profissional_id: config.profissional_id,
+        cor_primaria: config.cor_primaria,
+        cor_secundaria: config.cor_secundaria,
+        fonte_titulo: config.fonte_titulo,
+        fonte_corpo: config.fonte_corpo,
+        fundo_estilo: config.fundo_estilo || "none",
+      }),
     });
-    if (res.ok) setMsg("Salvo!");
-    else setMsg("Erro ao salvar");
-    setTimeout(() => setMsg(""), 2000);
-  };
+
+    function withTimeout(p: any, label: string): Promise<any> {
+      return Promise.race([
+        Promise.resolve(p),
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timeout`)), TIMEOUT)),
+      ]);
+    }
+
+    try {
+      const [profRes, configRes] = await Promise.all([
+        withTimeout(profPromise, "profissionais"),
+        withTimeout(configPromise, "config"),
+      ]);
+
+      if ((profRes as any).error) throw new Error((profRes as any).error.message);
+      if (!(configRes as Response).ok) {
+        const err = await (configRes as Response).json().catch(() => ({}));
+        throw new Error(err.error || "configurações não salvaram");
+      }
+
+      flash("Tudo salvo! ✔");
+      carregar();
+    } catch (e: any) {
+      flash("Erro ao salvar: " + (e.message || e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function updateProfField(field: keyof Profissional, value: string) {
+    setProfissional((prev) => prev ? { ...prev, [field]: value } : null);
+  }
+
+  function updateConfigField(field: keyof Configuracao, value: string) {
+    setConfig((prev) => prev ? { ...prev, [field]: value } : null);
+  }
+
+  async function updateServico(id: string, field: string, value: any) {
+    await supabase.from("servicos").update({ [field]: value }).eq("id", id);
+    setServicos((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+  }
+
+  async function addServico() {
+    if (!profissional) return;
+    const { data } = await supabase.from("servicos").insert({
+      profissional_id: profissional.id,
+      nome: "Novo serviço",
+      descricao: "",
+      tipo_preco: "por_hora",
+      valor_hora: 0,
+      preco_fixo: 0,
+      horas_minimas: 0,
+      duracao_minutos: 60,
+      multiplicador: 1,
+      horas_extras: 0,
+      ativo: true,
+      ordem: servicos.length,
+    }).select().single();
+    if (data) {
+      setServicos((prev) => [...prev, data as Servico]);
+      flash("Serviço criado!");
+    }
+  }
+
+  async function deleteServico(id: string) {
+    await supabase.from("servicos").delete().eq("id", id);
+    setServicos((prev) => prev.filter((s) => s.id !== id));
+    setConfirmarDelete(null);
+    flash("Serviço excluído");
+  }
+
+  async function addAdicional() {
+    if (!profissional) return;
+    const { data } = await supabase.from("adicionais").insert({
+      profissional_id: profissional.id,
+      nome: "Novo adicional",
+      descricao: "",
+      preco: 0,
+      horas: 0,
+      ativo: true,
+    }).select().single();
+    if (data) {
+      setAdicionais((prev) => [...prev, data as Adicional]);
+      flash("Adicional criado!");
+    }
+  }
+
+  async function updateAdicional(id: string, field: string, value: any) {
+    await supabase.from("adicionais").update({ [field]: value }).eq("id", id);
+    setAdicionais((prev) => prev.map((a) => (a.id === id ? { ...a, [field]: value } : a)));
+  }
+
+  async function deleteAdicional(id: string) {
+    await supabase.from("adicionais").delete().eq("id", id);
+    setAdicionais((prev) => prev.filter((a) => a.id !== id));
+    setConfirmarDelete(null);
+    flash("Adicional excluído");
+  }
+
+  async function addFrequencia() {
+    if (!profissional) return;
+    const { data } = await supabase.from("frequencias").insert({
+      profissional_id: profissional.id,
+      nome: "Nova frequência",
+      slug: "nova",
+      desconto: 0,
+      ordem: frequencias.length,
+    }).select().single();
+    if (data) {
+      setFrequencias((prev) => [...prev, data as Frequencia]);
+      flash("Frequência criada!");
+    }
+  }
+
+  async function updateFrequencia(id: string, field: string, value: any) {
+    await supabase.from("frequencias").update({ [field]: value }).eq("id", id);
+    setFrequencias((prev) => prev.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
+  }
+
+  async function deleteFrequencia(id: string) {
+    await supabase.from("frequencias").delete().eq("id", id);
+    setFrequencias((prev) => prev.filter((f) => f.id !== id));
+    setConfirmarDelete(null);
+    flash("Frequência excluída");
+  }
 
   const uploadLogo = async (file: File) => {
     if (!config) return;
@@ -94,11 +285,8 @@ export default function PerfilPage() {
     const data = await res.json();
     if (res.ok) {
       setConfig((prev) => prev ? { ...prev, logo_url: data.url } : null);
-      setMsg("Logo atualizado!");
-    } else {
-      setMsg(data.error || "Erro ao enviar logo");
-    }
-    setTimeout(() => setMsg(""), 2000);
+      flash("Logo atualizado!");
+    } else flash(data.error || "Erro ao enviar logo");
     setUploading(false);
   };
 
@@ -108,150 +296,401 @@ export default function PerfilPage() {
     await fetch("/api/config/atualizar", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profissional_id: config.profissional_id, logo_url: "" }),
+      body: JSON.stringify({ profissional_id: config!.profissional_id, logo_url: "" }),
     });
-    setMsg("Logo removido");
-    setTimeout(() => setMsg(""), 2000);
+    flash("Logo removido");
   };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Meu Perfil</h1>
-        <p className="mt-1 text-ink-soft">Personalize sua página profissional</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">Perfil</h1>
+          <p className="mt-1 text-sm text-neutral-500">Personalize sua página e gerencie serviços</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              updateConfigField("fundo_estilo", "none");
+              updateConfigField("cor_primaria", "#059669");
+              updateConfigField("cor_secundaria", "#1c1917");
+              updateConfigField("fonte_titulo", "Fraunces");
+              updateConfigField("fonte_corpo", "Inter");
+              flash("Padrões restaurados! Salve para aplicar");
+            }}
+            className="rounded-xl border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-600 transition-all hover:bg-neutral-100"
+          >
+            Restaurar padrões
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={salvarTudo}
+            disabled={saving}
+            className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
+          >
+          <Save size={16} />
+          {saving ? "Salvando..." : "Salvar alterações"}
+          </motion.button>
+        </div>
       </div>
 
       {msg && (
-        <div className="rounded-xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">
-          {msg}
-        </div>
+        <div className="rounded-xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">{msg}</div>
       )}
 
-      <div className="card p-6 space-y-6">
-        <h2 className="text-lg font-semibold">Logo</h2>
+      {/* Dados do Profissional + Cores + Tipografia — salvos com botão */}
+      <CardSection title="Dados do Profissional">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">Nome</label>
+            <input value={profissional?.nome || ""} onChange={(e) => updateProfField("nome", e.target.value)} className={inp} />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">WhatsApp (com DDI)</label>
+            <input value={profissional?.whatsapp || ""} onChange={(e) => updateProfField("whatsapp", e.target.value)} className={inp} placeholder="5541999999999" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">Slogan</label>
+            <input value={profissional?.slogan || ""} onChange={(e) => updateProfField("slogan", e.target.value)} className={inp} />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">Cidade</label>
+            <input value={profissional?.cidade || ""} onChange={(e) => updateProfField("cidade", e.target.value)} className={inp} />
+          </div>
+        </div>
+        <div className="mt-4 border-t border-neutral-100 pt-4">
+          <p className="mb-3 text-sm font-semibold text-neutral-500">Dados Pix</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-neutral-500">Chave Pix</label>
+              <input value={profissional?.pix_chave || ""} onChange={(e) => updateProfField("pix_chave", e.target.value)} className={inp} />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-neutral-500">Nome do titular</label>
+              <input value={profissional?.pix_nome || ""} onChange={(e) => updateProfField("pix_nome", e.target.value)} className={inp} />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-neutral-500">Cidade do titular</label>
+              <input value={profissional?.pix_cidade || ""} onChange={(e) => updateProfField("pix_cidade", e.target.value)} className={inp} />
+            </div>
+          </div>
+        </div>
+      </CardSection>
+
+      {/* Logo */}
+      <CardSection title="Logo">
         <div className="flex items-center gap-6">
           {config?.logo_url ? (
-            <div className="relative h-24 w-24 overflow-hidden rounded-xl border border-line">
+            <div className="relative h-24 w-24 overflow-hidden rounded-xl border border-neutral-200">
               <img src={config.logo_url} alt="Logo" className="h-full w-full object-contain" />
               <button onClick={removeLogo}
                 className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow"
               >×</button>
             </div>
           ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-xl border-2 border-dashed border-line bg-gray-50 text-3xl text-ink-soft">
-              📷
+            <div className="flex h-24 w-24 items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-3xl text-neutral-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             </div>
           )}
           <div>
             <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
               className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-emerald-700 disabled:opacity-50"
-            >
-              {uploading ? "Enviando..." : "Escolher imagem"}
-            </button>
-            <p className="mt-1.5 text-xs text-ink-soft">PNG, JPG ou WebP · Máx 5MB</p>
+            >{uploading ? "Enviando..." : "Escolher imagem"}</button>
+            <p className="mt-1.5 text-xs text-neutral-500">PNG, JPG ou WebP · Máx 5MB</p>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} />
           </div>
         </div>
-      </div>
+      </CardSection>
 
-      <div className="card p-6 space-y-6">
-        <h2 className="text-lg font-semibold">Cores</h2>
+      {/* Fundo */}
+      <CardSection title="Fundo da página">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {FUNDOS.map((f) => {
+            const selected = (config?.fundo_estilo || "none") === f.id;
+            return (
+              <button
+                key={f.id}
+                onClick={() => {
+                updateConfigField("fundo_estilo", f.id);
+                updateConfigField("cor_primaria", f.primary);
+                updateConfigField("cor_secundaria", f.secondary);
+              }}
+                className={`relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all ${
+                  selected ? "border-emerald-500 shadow-sm" : "border-neutral-200 hover:border-neutral-300"
+                }`}
+              >
+                <div
+                  className="-mx-4 -mt-4 mb-3 h-16"
+                  style={{
+                    background: f.id === "none" ? config?.cor_primaria || "#059669" : undefined,
+                  }}
+                >
+                  {f.id !== "none" && (
+                    <div
+                      className="h-full w-full"
+                      style={{
+                        backgroundImage: f.id === "dots"
+                          ? `radial-gradient(${config?.cor_primaria || "#059669"}20 1px, transparent 1px)`
+                          : f.id === "waves"
+                          ? `url("data:image/svg+xml,%3Csvg width='100' height='20' viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 25 0 50 10 Q 75 20 100 10' stroke='${encodeURIComponent(config?.cor_primaria || "#059669")}20' fill='none' stroke-width='2'/%3E%3C/svg%3E")`
+                          : f.id === "geometric"
+                          ? `linear-gradient(45deg,${config?.cor_primaria || "#059669"}08 25%,transparent 25%),linear-gradient(-45deg,${config?.cor_primaria || "#059669"}08 25%,transparent 25%),linear-gradient(45deg,transparent 75%,${config?.cor_primaria || "#059669"}08 75%),linear-gradient(-45deg,transparent 75%,${config?.cor_primaria || "#059669"}08 75%)`
+                          : undefined,
+                        backgroundSize: f.id === "dots" ? "20px 20px" : f.id === "geometric" ? "40px 40px" : undefined,
+                        background: f.id === "mesh"
+                          ? `linear-gradient(135deg, ${config?.cor_primaria || "#059669"}, ${config?.cor_primaria || "#059669"}88)`
+                          : f.id === "aurora"
+                          ? `linear-gradient(135deg, ${config?.cor_primaria || "#059669"}, #a855f7, #f472b6)`
+                          : f.id === "glass"
+                          ? `linear-gradient(135deg, ${config?.cor_primaria || "#059669"}44, white)`
+                          : f.id === "noise"
+                          ? `linear-gradient(${config?.cor_primaria || "#059669"}, ${config?.cor_primaria || "#059669"}dd)`
+                          : undefined,
+                      }}
+                    >
+                      {f.id === "noise" && (
+                        <div className="h-full w-full" style={{
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.1'/%3E%3C/svg%3E")`,
+                          backgroundSize: "256px 256px",
+                        }} />
+                      )}
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-neutral-900">{f.nome}</p>
+                <p className="text-xs text-neutral-500">{f.descricao}</p>
+              </button>
+            );
+          })}
+        </div>
+      </CardSection>
+
+      {/* Cores */}
+      <CardSection title="Cores">
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <label className="text-sm text-ink-soft">Cor principal</label>
-            <div className="mt-1.5 flex items-center gap-3">
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">Cor principal</label>
+            <div className="flex items-center gap-3">
               <input type="color" value={config?.cor_primaria || "#059669"}
-                onChange={(e) => updateConfig("cor_primaria", e.target.value)}
-                className="h-10 w-10 cursor-pointer rounded-lg border border-line" />
+                onChange={(e) => updateConfigField("cor_primaria", e.target.value)}
+                className="h-10 w-10 cursor-pointer rounded-lg border border-neutral-200" />
               <input type="text" value={config?.cor_primaria || "#059669"}
-                onChange={(e) => updateConfig("cor_primaria", e.target.value)}
-                className="flex-1 rounded-lg border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-emerald-600 font-mono" />
+                onChange={(e) => updateConfigField("cor_primaria", e.target.value)}
+                className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 font-mono" />
             </div>
           </div>
           <div>
-            <label className="text-sm text-ink-soft">Cor secundária</label>
-            <div className="mt-1.5 flex items-center gap-3">
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">Cor secundária</label>
+            <div className="flex items-center gap-3">
               <input type="color" value={config?.cor_secundaria || "#1c1917"}
-                onChange={(e) => updateConfig("cor_secundaria", e.target.value)}
-                className="h-10 w-10 cursor-pointer rounded-lg border border-line" />
+                onChange={(e) => updateConfigField("cor_secundaria", e.target.value)}
+                className="h-10 w-10 cursor-pointer rounded-lg border border-neutral-200" />
               <input type="text" value={config?.cor_secundaria || "#1c1917"}
-                onChange={(e) => updateConfig("cor_secundaria", e.target.value)}
-                className="flex-1 rounded-lg border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-emerald-600 font-mono" />
+                onChange={(e) => updateConfigField("cor_secundaria", e.target.value)}
+                className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 font-mono" />
             </div>
           </div>
         </div>
-      </div>
+      </CardSection>
 
-      <div className="card p-6 space-y-6">
-        <h2 className="text-lg font-semibold">Tipografia</h2>
+      {/* Tipografia */}
+      <CardSection title="Tipografia">
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <label className="text-sm text-ink-soft">Fonte dos títulos</label>
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">Fonte dos títulos</label>
             <select value={config?.fonte_titulo || "Fraunces"}
-              onChange={(e) => updateConfig("fonte_titulo", e.target.value)}
-              className="mt-1.5 w-full rounded-lg border border-line bg-paper px-3 py-2.5 text-sm outline-none focus:border-emerald-600">
+              onChange={(e) => updateConfigField("fonte_titulo", e.target.value)}
+              className={inp}>
               {fontes.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-sm text-ink-soft">Fonte do corpo</label>
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">Fonte do corpo</label>
             <select value={config?.fonte_corpo || "Inter"}
-              onChange={(e) => updateConfig("fonte_corpo", e.target.value)}
-              className="mt-1.5 w-full rounded-lg border border-line bg-paper px-3 py-2.5 text-sm outline-none focus:border-emerald-600">
+              onChange={(e) => updateConfigField("fonte_corpo", e.target.value)}
+              className={inp}>
               {fontes.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </div>
         </div>
-      </div>
+      </CardSection>
 
-      <div className="card p-6 space-y-6">
-        <h2 className="text-lg font-semibold">Serviços</h2>
-        <div className="space-y-4">
+      {/* Serviços — auto-save inline */}
+      <CardSection title="Serviços">
+        <div className="space-y-3">
           {servicos.map((s) => (
-            <div key={s.id} className="rounded-xl border border-line p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-4">
-                  <input type="text" value={s.nome}
-                    onChange={(e) => updateServico(s.id, "nome", e.target.value)}
-                    className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-lg font-medium outline-none focus:border-emerald-600" />
-                  <textarea value={s.descricao}
-                    onChange={(e) => updateServico(s.id, "descricao", e.target.value)} rows={2}
-                    className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-emerald-600" />
-                  <div className="flex flex-wrap gap-4">
-                    {s.tipo_preco === "por_hora" ? (<>
-                      <div><label className="text-xs text-ink-soft">R$/hora</label>
-                        <input type="number" value={s.valor_hora}
-                          onChange={(e) => updateServico(s.id, "valor_hora", Number(e.target.value))}
-                          className="mt-1 w-24 rounded-lg border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
-                      <div><label className="text-xs text-ink-soft">Horas mín</label>
-                        <input type="number" value={s.horas_minimas}
-                          onChange={(e) => updateServico(s.id, "horas_minimas", Number(e.target.value))}
-                          className="mt-1 w-20 rounded-lg border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
-                    </>) : (<>
-                      <div><label className="text-xs text-ink-soft">Preço fixo (R$)</label>
-                        <input type="number" value={s.preco_fixo}
-                          onChange={(e) => updateServico(s.id, "preco_fixo", Number(e.target.value))}
-                          className="mt-1 w-28 rounded-lg border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
-                      <div><label className="text-xs text-ink-soft">Duração (min)</label>
-                        <input type="number" value={s.duracao_minutos}
-                          onChange={(e) => updateServico(s.id, "duracao_minutos", Number(e.target.value))}
-                          className="mt-1 w-20 rounded-lg border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
-                    </>)}
-                    <div className="flex items-end">
+            <div key={s.id} className="rounded-xl border border-neutral-100 bg-neutral-50/50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <input type="text" value={s.nome}
+                      onChange={(e) => updateServico(s.id, "nome", e.target.value)}
+                      className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-base font-medium outline-none focus:border-emerald-600" />
+                    <div className="flex gap-2">
+                      <select value={s.tipo_preco}
+                        onChange={(e) => updateServico(s.id, "tipo_preco", e.target.value)}
+                        className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600">
+                        <option value="por_hora">Por hora</option>
+                        <option value="fixo">Preço fixo</option>
+                      </select>
                       <button onClick={() => updateServico(s.id, "ativo", !s.ativo)}
-                        className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${s.ativo ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
+                        className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-all ${s.ativo ? "bg-emerald-100 text-emerald-700" : "bg-neutral-200 text-neutral-500"}`}>
                         {s.ativo ? "Ativo" : "Inativo"}
                       </button>
                     </div>
                   </div>
+                  <textarea value={s.descricao}
+                    onChange={(e) => updateServico(s.id, "descricao", e.target.value)} rows={2}
+                    className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" placeholder="Descrição do serviço" />
+                  <div className="flex flex-wrap gap-4">
+                    {s.tipo_preco === "por_hora" ? (<>
+                      <div><label className="text-xs text-neutral-500">R$/hora</label>
+                        <input type="number" value={s.valor_hora}
+                          onChange={(e) => updateServico(s.id, "valor_hora", Number(e.target.value))}
+                          className="mt-1 w-24 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                      <div><label className="text-xs text-neutral-500">Horas mín</label>
+                        <input type="number" value={s.horas_minimas}
+                          onChange={(e) => updateServico(s.id, "horas_minimas", Number(e.target.value))}
+                          className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                      <div><label className="text-xs text-neutral-500">Multiplicador</label>
+                        <input type="number" step="0.1" value={s.multiplicador || 1}
+                          onChange={(e) => updateServico(s.id, "multiplicador", Number(e.target.value))}
+                          className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                    </>) : (<>
+                      <div><label className="text-xs text-neutral-500">Preço fixo (R$)</label>
+                        <input type="number" value={s.preco_fixo}
+                          onChange={(e) => updateServico(s.id, "preco_fixo", Number(e.target.value))}
+                          className="mt-1 w-28 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                      <div><label className="text-xs text-neutral-500">Duração (min)</label>
+                        <input type="number" value={s.duracao_minutos}
+                          onChange={(e) => updateServico(s.id, "duracao_minutos", Number(e.target.value))}
+                          className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                    </>)}
+                    <div><label className="text-xs text-neutral-500">Ordem</label>
+                      <input type="number" value={s.ordem}
+                        onChange={(e) => updateServico(s.id, "ordem", Number(e.target.value))}
+                        className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                  </div>
                 </div>
-                {saving === s.id && <span className="text-sm text-ink-soft shrink-0">Salvando...</span>}
+                <button onClick={() => setConfirmarDelete({ tipo: "servico", id: s.id })}
+                  className="shrink-0 rounded-lg p-2 text-neutral-400 transition-all hover:bg-red-50 hover:text-red-600">
+                  <Trash2 size={16} />
+                </button>
               </div>
             </div>
           ))}
         </div>
-      </div>
+        <button onClick={addServico}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 text-sm font-medium text-neutral-500 transition-all hover:border-emerald-400 hover:text-emerald-600">
+          <Plus size={16} /> Novo Serviço
+        </button>
+      </CardSection>
+
+      {/* Adicionais — auto-save inline */}
+      <CardSection title="Adicionais (serviços extras)">
+        <div className="space-y-3">
+          {adicionais.map((a) => (
+            <div key={a.id} className="flex items-start gap-3 rounded-xl border border-neutral-100 bg-neutral-50/50 p-4">
+              <div className="flex-1 grid gap-3 sm:grid-cols-4">
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-xs text-neutral-500">Nome</label>
+                  <input value={a.nome} onChange={(e) => updateAdicional(a.id, "nome", e.target.value)} className={inpMini} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-neutral-500">Preço (R$)</label>
+                  <input type="number" step="0.01" value={a.preco} onChange={(e) => updateAdicional(a.id, "preco", Number(e.target.value))} className={inpMini} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-neutral-500">Horas</label>
+                  <input type="number" step="0.5" value={a.horas} onChange={(e) => updateAdicional(a.id, "horas", Number(e.target.value))} className={inpMini} />
+                </div>
+                <div className="sm:col-span-3">
+                  <label className="mb-1 block text-xs text-neutral-500">Descrição</label>
+                  <input value={a.descricao} onChange={(e) => updateAdicional(a.id, "descricao", e.target.value)} className={inpMini} />
+                </div>
+                <div className="flex items-end gap-2">
+                  <button onClick={() => updateAdicional(a.id, "ativo", !a.ativo)}
+                    className={`rounded-lg px-3 py-2 text-xs font-medium transition-all ${a.ativo ? "bg-emerald-100 text-emerald-700" : "bg-neutral-200 text-neutral-500"}`}>
+                    {a.ativo ? "Ativo" : "Inativo"}
+                  </button>
+                  <button onClick={() => setConfirmarDelete({ tipo: "adicional", id: a.id })}
+                    className="rounded-lg p-2 text-neutral-400 hover:bg-red-50 hover:text-red-600">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button onClick={addAdicional}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 text-sm font-medium text-neutral-500 transition-all hover:border-emerald-400 hover:text-emerald-600">
+          <Plus size={16} /> Novo Adicional
+        </button>
+      </CardSection>
+
+      {/* Frequências — auto-save inline */}
+      <CardSection title="Frequências (descontos por recorrência)">
+        <div className="space-y-3">
+          {frequencias.map((f) => (
+            <div key={f.id} className="flex items-start gap-3 rounded-xl border border-neutral-100 bg-neutral-50/50 p-4">
+              <div className="flex-1 grid gap-3 sm:grid-cols-4">
+                <div>
+                  <label className="mb-1 block text-xs text-neutral-500">Nome</label>
+                  <input value={f.nome} onChange={(e) => updateFrequencia(f.id, "nome", e.target.value)} className={inpMini} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-neutral-500">Slug</label>
+                  <input value={f.slug} onChange={(e) => updateFrequencia(f.id, "slug", e.target.value)} className={inpMini} placeholder="ex: semanal" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-neutral-500">Desconto (%)</label>
+                  <input type="number" value={f.desconto} onChange={(e) => updateFrequencia(f.id, "desconto", Number(e.target.value))} className={inpMini} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-neutral-500">Ordem</label>
+                  <input type="number" value={f.ordem} onChange={(e) => updateFrequencia(f.id, "ordem", Number(e.target.value))} className={inpMini} />
+                </div>
+              </div>
+              <button onClick={() => setConfirmarDelete({ tipo: "frequencia", id: f.id })}
+                className="mt-5 shrink-0 rounded-lg p-2 text-neutral-400 hover:bg-red-50 hover:text-red-600">
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <button onClick={addFrequencia}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 text-sm font-medium text-neutral-500 transition-all hover:border-emerald-400 hover:text-emerald-600">
+          <Plus size={16} /> Nova Frequência
+        </button>
+      </CardSection>
+
+      {/* Delete confirmation modal */}
+      {confirmarDelete && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-900/30 px-4 pb-12 sm:items-center sm:pb-0"
+          onClick={() => setConfirmarDelete(null)}>
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                <Trash2 size={24} className="text-red-600" />
+              </div>
+              <p className="text-lg font-semibold text-neutral-900">Excluir?</p>
+              <p className="mt-2 text-sm text-neutral-500">Não dá para desfazer.</p>
+            </div>
+            <div className="flex border-t border-neutral-100">
+              <button onClick={() => setConfirmarDelete(null)}
+                className="flex-1 py-4 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-50">Voltar</button>
+              <button onClick={() => {
+                if (confirmarDelete.tipo === "servico") deleteServico(confirmarDelete.id);
+                else if (confirmarDelete.tipo === "adicional") deleteAdicional(confirmarDelete.id);
+                else if (confirmarDelete.tipo === "frequencia") deleteFrequencia(confirmarDelete.id);
+              }}
+                className="flex-1 py-4 text-sm font-semibold text-white transition-colors bg-red-600 hover:bg-red-700">Excluir</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ const DOMAIN = process.env.NEXT_PUBLIC_DOMAIN
   : "autonexabrasil.com.br";
 const APP_PATHS = ["/api", "/_next", "/favicon.ico", "/manifest.webmanifest"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get("host") || "";
   const host = hostname.replace(/:\d+$/, "").toLowerCase();
@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  if (host === DOMAIN || host === `www.${DOMAIN}` || host === "localhost:3000") {
+  if (host === DOMAIN || host === `www.${DOMAIN}` || host === "localhost" || host === "localhost:3000") {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 

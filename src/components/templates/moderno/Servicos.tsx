@@ -19,11 +19,10 @@ export function Servicos({ config }: { config: ProfissionalConfig }) {
   const primary = config.configuracao.cor_primaria;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-white to-violet-50 py-20">
-      <div className="absolute right-0 top-0 -mr-40 -mt-40 h-80 w-80 animate-float rounded-full bg-violet-200/30 blur-3xl" style={{ animationDelay: "1s" }} />
+    <section className="relative overflow-hidden py-20">
       <div className="container-x relative">
         <div className="mx-auto max-w-2xl text-center">
-          <div className="mb-3 animate-fade-in-up inline-block rounded-full bg-violet-100 px-4 py-1 text-sm font-medium text-violet-700">
+          <div className="mb-3 animate-fade-in-up inline-block rounded-full px-4 py-1 text-sm font-medium" style={{ backgroundColor: primary + "15", color: primary }}>
             Serviços
           </div>
           <h2 className="animate-fade-in-up delay-100 text-3xl font-bold tracking-tight">Meus serviços</h2>
@@ -35,7 +34,7 @@ export function Servicos({ config }: { config: ProfissionalConfig }) {
           {config.servicos.map((s, i) => (
             <div
               key={s.id}
-              className="group card relative overflow-hidden border-0 bg-white/80 p-6 shadow-md backdrop-blur-sm transition-all hover:shadow-xl hover:-translate-y-1 animate-fade-in-up"
+              className="group card relative overflow-hidden border border-line bg-paper p-6 shadow-md transition-all hover:shadow-xl hover:-translate-y-1 animate-fade-in-up"
               style={{ animationDelay: `${(i + 1) * 150}ms` }}
             >
               <div className="flex items-start justify-between gap-4">

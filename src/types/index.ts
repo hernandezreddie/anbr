@@ -25,6 +25,7 @@ export interface ConfiguracaoVisual {
   fonte_corpo: string
   logo_url: string
   slogan: string
+  fundo_estilo: string
 }
 
 export type TipoPreco = "por_hora" | "fixo";

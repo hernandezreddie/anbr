@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -10,18 +12,33 @@ import {
   LogOut,
   Home,
   ExternalLink,
+  ListOrdered,
+  Settings,
 } from "lucide-react";
 
 const links = [
   { href: "", label: "Dashboard", icon: LayoutDashboard, mobIcon: Home },
+  { href: "/agendamentos", label: "Agendamentos", icon: ListOrdered, mobIcon: ListOrdered },
   { href: "/calendario", label: "Calendário", icon: CalendarDays, mobIcon: CalendarDays },
   { href: "/clientes", label: "Clientes", icon: Users, mobIcon: Users },
+  { href: "/perfil", label: "Perfil", icon: Settings, mobIcon: Settings },
   { href: "/qr", label: "Meu QR", icon: QrCode, mobIcon: QrCode },
 ];
 
 export function SidebarClient({ slug }: { slug: string }) {
   const pathname = usePathname();
   const base = `/${slug}/painel`;
+  const [primary, setPrimary] = useState("#059669");
+
+  useEffect(() => {
+    createClient()
+      .from("configuracoes")
+      .select("cor_primaria")
+      .single()
+      .then(({ data }) => {
+        if (data?.cor_primaria) setPrimary(data.cor_primaria);
+      });
+  }, []);
 
   const isActive = (href: string) => pathname === base + href;
 
@@ -31,10 +48,13 @@ export function SidebarClient({ slug }: { slug: string }) {
       <aside className="hidden w-64 shrink-0 lg:block">
         <div className="sticky top-0 flex h-screen flex-col border-r border-neutral-200 bg-white">
           <div className="flex items-center gap-3 border-b border-neutral-100 px-6 py-6">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold text-white">
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white"
+              style={{ backgroundColor: primary }}
+            >
               L
             </div>
-            <span className="text-lg font-bold text-neutral-900">Livreta</span>
+            <span className="text-lg font-bold text-neutral-900">AN.BR</span>
           </div>
           <nav className="flex-1 space-y-1 p-4">
             {links.map((link) => {
@@ -47,9 +67,10 @@ export function SidebarClient({ slug }: { slug: string }) {
                   href={url}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
                     active
-                      ? "bg-emerald-50 text-emerald-700"
+                      ? "text-emerald-700"
                       : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800"
                   }`}
+                  style={active ? { backgroundColor: `${primary}12`, color: primary } : {}}
                 >
                   <Icon size={18} />
                   {link.label}
@@ -75,8 +96,8 @@ export function SidebarClient({ slug }: { slug: string }) {
         </div>
       </aside>
 
-      {/* MOBILE BOTTOM NAV */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 bg-white lg:hidden safe-bottom">
+      {/* MOBILE BOTTOM NAV — visible on all sizes */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 bg-white safe-bottom">
         <div className="flex items-center justify-around py-2">
           {links.map((link) => {
             const url = base + link.href;
@@ -87,15 +108,15 @@ export function SidebarClient({ slug }: { slug: string }) {
                 key={link.href}
                 href={url}
                 className={`flex flex-col items-center gap-1 px-3 py-1 text-xs font-medium transition-all ${
-                  active
-                    ? "text-emerald-600"
-                    : "text-neutral-400 hover:text-neutral-600"
+                  active ? "" : "text-neutral-400 hover:text-neutral-600"
                 }`}
+                style={active ? { color: primary } : {}}
               >
                 <div
                   className={`flex items-center justify-center rounded-lg p-1.5 transition-all ${
-                    active ? "bg-emerald-50" : ""
+                    active ? "" : ""
                   }`}
+                  style={active ? { backgroundColor: `${primary}12` } : {}}
                 >
                   <Icon size={22} />
                 </div>

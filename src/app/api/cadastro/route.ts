@@ -1,8 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getServicosPadrao, getSloganPadrao } from "@/lib/servicos-padrao";
+import type { CategoriaId } from "@/lib/servicos-padrao";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { nome, email, senha, slug, whatsapp, cidade, pix_chave, servicos, slogan, template_id } = body;
+  const { nome, email, senha, slug, whatsapp, cidade, pix_chave, servicos, slogan, template_id, categoria } = body;
 
   if (!nome || !email || !senha || !slug) {
     return Response.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
@@ -64,13 +66,31 @@ export async function POST(request: Request) {
         nome: s.nome || "Serviço",
         descricao: s.descricao || "",
         descricao_curta: s.descricao_curta || s.descricao || "",
-        horas_base: s.tipo_preco === "por_hora" ? (s.horas_base || 2) : 0,
+        horas_base: s.tipo_preco === "por_hora" ? (s.horas_base || s.horas_minimas || 1) : 0,
         valor_hora: s.tipo_preco === "por_hora" ? (s.valor_hora || 25) : 0,
-        horas_minimas: s.tipo_preco === "por_hora" ? (s.horas_minimas || 2) : 0,
+        horas_minimas: s.tipo_preco === "por_hora" ? (s.horas_minimas || 1) : 0,
         preco_fixo: s.tipo_preco === "fixo" ? (s.preco_fixo || 0) : 0,
         duracao_minutos: s.duracao_minutos || 60,
         tipo_preco: s.tipo_preco || "por_hora",
         ordem: s.ordem || 1,
+      });
+    }
+  } else if (categoria) {
+    const servicosCat = getServicosPadrao(categoria as CategoriaId);
+    for (let i = 0; i < servicosCat.length; i++) {
+      const s = servicosCat[i];
+      await supabase.from("servicos").insert({
+        profissional_id: prof.id,
+        nome: s.nome,
+        descricao: s.descricao,
+        descricao_curta: s.descricao,
+        horas_base: s.tipo_preco === "por_hora" ? s.horas_minimas : 0,
+        valor_hora: s.tipo_preco === "por_hora" ? s.valor_hora : 0,
+        horas_minimas: s.tipo_preco === "por_hora" ? s.horas_minimas : 0,
+        preco_fixo: s.tipo_preco === "fixo" ? s.preco_fixo : 0,
+        duracao_minutos: s.duracao_minutos,
+        tipo_preco: s.tipo_preco,
+        ordem: i + 1,
       });
     }
   } else {

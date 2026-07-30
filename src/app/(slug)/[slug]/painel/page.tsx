@@ -193,7 +193,7 @@ function Card({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-sm shadow-neutral-100/50"
+      className="rounded-2xl border border-neutral-100 bg-white shadow-sm shadow-neutral-100/50"
     >
       {/* Top row: name + status */}
       <div className="flex items-start justify-between gap-3 p-4 pb-3">
@@ -466,13 +466,16 @@ export default function PainelPage() {
   const [pix, setPix] = useState<{ valor: number; desc: string } | null>(null);
   const [aviso, setAviso] = useState("");
   const [confirmacao, setConfirmacao] = useState<{ tipo: "cancelar" | "pago"; a: Agendamento } | null>(null);
+  const [primary, setPrimary] = useState("#059669");
 
   const load = useCallback(async () => {
-    const [ag, pg, prof] = await Promise.all([
+    const [ag, pg, prof, config] = await Promise.all([
       supabase.from("agendamentos").select("*").order("created_at", { ascending: false }),
       supabase.from("pagamentos").select("valor, pago_em, status, agendamento_id"),
       supabase.from("profissionais").select("*").single(),
+      supabase.from("configuracoes").select("cor_primaria").single(),
     ]);
+    if (config.data?.cor_primaria) setPrimary(config.data.cor_primaria);
     const lista = (ag.data as Agendamento[]) ?? [];
     setItems(lista);
     setProfissional((prof.data as Profissional) ?? null);
@@ -572,7 +575,6 @@ export default function PainelPage() {
     return "Boa noite";
   })();
 
-  const primary = "#059669";
   const hojeStr = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
 
   const renderCard = (a: Agendamento) => profissional && (
@@ -604,7 +606,7 @@ export default function PainelPage() {
             exit={{ opacity: 0, y: -20 }}
             className="fixed left-1/2 top-4 z-50 -translate-x-1/2"
           >
-            <p className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white shadow-lg">{aviso}</p>
+            <p className="rounded-xl px-5 py-3 text-sm font-medium text-white shadow-lg" style={{ backgroundColor: primary }}>{aviso}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -794,11 +796,16 @@ export default function PainelPage() {
                 </button>
                 <button
                   onClick={executarConfirmacao}
-                  className={`flex-1 py-4 text-sm font-semibold text-white transition-colors ${
-                    confirmacao.tipo === "pago"
-                      ? "bg-emerald-600 hover:bg-emerald-700"
-                      : "bg-red-600 hover:bg-red-700"
-                  }`}
+                  className="flex-1 py-4 text-sm font-semibold text-white transition-colors"
+                  style={{
+                    backgroundColor: confirmacao.tipo === "pago" ? primary : "#dc2626",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (confirmacao.tipo === "pago") e.currentTarget.style.backgroundColor = `${primary}dd`;
+                  }}
+                  onMouseLeave={(e) => {
+                    if (confirmacao.tipo === "pago") e.currentTarget.style.backgroundColor = primary;
+                  }}
                 >
                   {confirmacao.tipo === "pago" ? "Sim, pagar" : "Sim, cancelar"}
                 </button>

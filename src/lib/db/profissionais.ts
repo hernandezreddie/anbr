@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Profissional, ConfiguracaoVisual } from "@/types";
+import { cache } from "react";
 
 export async function getProfissionalBySlug(slug: string) {
   const supabase = createAdminClient();
@@ -21,39 +22,41 @@ export async function getConfiguracaoVisual(profissionalId: string) {
   return data as ConfiguracaoVisual | null;
 }
 
-export async function getProfissionalFullConfig(slug: string) {
+export const getProfissionalFullConfig = cache(async (slug: string) => {
   const supabase = createAdminClient();
 
-  const [profissional, servicos, adicionais, frequencias] = await Promise.all([
-    supabase.from("profissionais").select("*").eq("slug", slug).single(),
-    supabase
-      .from("servicos")
-      .select("*")
-      .eq("profissional_id", (await supabase.from("profissionais").select("id").eq("slug", slug).single()).data?.id)
-      .eq("ativo", true)
-      .order("ordem"),
-    supabase.from("adicionais").select("*").eq("profissional_id", (await supabase.from("profissionais").select("id").eq("slug", slug).single()).data?.id).eq("ativo", true),
-    supabase.from("frequencias").select("*").eq("profissional_id", (await supabase.from("profissionais").select("id").eq("slug", slug).single()).data?.id).order("ordem"),
+  const { data: profissional } = await supabase
+    .from("profissionais")
+    .select("*")
+    .eq("slug", slug)
+    .single();
+
+  if (!profissional) return null;
+
+  const pid = profissional.id;
+
+  const [servicos, adicionais, frequencias, configuracao] = await Promise.all([
+    supabase.from("servicos").select("*").eq("profissional_id", pid).eq("ativo", true).order("ordem"),
+    supabase.from("adicionais").select("*").eq("profissional_id", pid).eq("ativo", true),
+    supabase.from("frequencias").select("*").eq("profissional_id", pid).order("ordem"),
+    getConfiguracaoVisual(pid),
   ]);
 
-  if (!profissional.data) return null;
-
-  const configuracao = await getConfiguracaoVisual(profissional.data.id);
-
   return {
-    profissional: profissional.data as Profissional,
+    profissional: profissional as Profissional,
     configuracao: configuracao || {
-      profissional_id: profissional.data.id,
+      profissional_id: pid,
       template_id: 1,
       cor_primaria: "#059669",
       cor_secundaria: "#1c1917",
       fonte_titulo: "Fraunces",
       fonte_corpo: "Inter",
       logo_url: "",
-      slogan: profissional.data.slogan,
+      slogan: profissional.slogan,
+      fundo_estilo: "none",
     },
     servicos: (servicos.data || []) as any[],
     adicionais: (adicionais.data || []) as any[],
     frequencias: (frequencias.data || []) as any[],
   };
-}
+});
