@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { linkWhatsApp } from "@/lib/whatsapp";
 import { MODELOS_MENSAGEM, type MsgCtx } from "@/lib/mensagens";
@@ -19,6 +20,11 @@ import {
   TrendingUp,
   Clock,
   AlertTriangle,
+  ChevronRight,
+  Star,
+  Sparkles,
+  ArrowUpRight,
+  MoreHorizontal,
 } from "lucide-react";
 
 type Agendamento = {
@@ -54,13 +60,6 @@ type Pagamento = {
   pago_em: string | null;
   status: string;
   agendamento_id: string | null;
-};
-
-const STATUS: Record<string, { label: string; cls: string }> = {
-  solicitado: { label: "Solicitado", cls: "bg-amber-100 text-amber-800" },
-  confirmado: { label: "Confirmado", cls: "bg-emerald-100 text-emerald-800" },
-  concluido: { label: "Concluído", cls: "bg-ink/10 text-ink-soft" },
-  cancelado: { label: "Cancelado", cls: "bg-red-100 text-red-700" },
 };
 
 const isoLocal = (d: Date) => d.toLocaleDateString("sv-SE");
@@ -128,6 +127,23 @@ function rotaLink(items: Agendamento[]): string | null {
   return url;
 }
 
+const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  solicitado: { label: "Solicitado", cls: "bg-amber-100 text-amber-800" },
+  confirmado: { label: "Confirmado", cls: "bg-emerald-100 text-emerald-800" },
+  concluido: { label: "Concluído", cls: "bg-neutral-100 text-neutral-500" },
+  cancelado: { label: "Cancelado", cls: "bg-red-100 text-red-700" },
+};
+
+function StatusDot({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    solicitado: "bg-amber-500",
+    confirmado: "bg-emerald-500",
+    concluido: "bg-neutral-400",
+    cancelado: "bg-red-500",
+  };
+  return <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${colors[status] || "bg-neutral-300"}`} />;
+}
+
 function Card({
   a,
   busy,
@@ -161,15 +177,7 @@ function Card({
     servico: a.servico_nome ?? "Serviço",
   };
 
-  const linhas: [string, string][] = [];
-  if (a.observacoes) linhas.push(["Obs", a.observacoes]);
-  if (a.endereco) linhas.push(["Endereço", a.endereco]);
-  linhas.push(["Frequência", a.recorrencia ?? "pontual"]);
-  if (a.cliente_whatsapp) linhas.push(["Telefone", a.cliente_whatsapp]);
-
-  const inp = "rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-emerald-600";
-  const act = "px-4 py-2 text-xs";
-  const nav = "rounded-xl px-3 py-2 text-xs text-ink-soft hover:bg-gray-100 hover:text-ink";
+  const inp = "rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:shadow-sm w-full";
 
   async function copiar() {
     try {
@@ -180,108 +188,150 @@ function Card({
   }
 
   return (
-    <div className="rounded-2xl border border-line bg-paper p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-serif text-lg font-semibold text-ink">{a.cliente_nome}</p>
-          <p className="text-sm text-ink-mute">
-            {a.servico_nome ?? "Serviço"}
-            {a.horas ? ` · ${a.horas}h` : ""}
-            {a.origem === "web" ? " · pelo site" : ""}
-          </p>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-sm shadow-neutral-100/50"
+    >
+      {/* Top row: name + status */}
+      <div className="flex items-start justify-between gap-3 p-4 pb-3">
+        <div className="flex items-start gap-3">
+          <StatusDot status={a.status} />
+          <div>
+            <p className="font-semibold text-neutral-900">{a.cliente_nome}</p>
+            <p className="mt-0.5 text-sm text-neutral-500">
+              {a.servico_nome ?? "Serviço"}
+              {a.horas ? ` · ${a.horas}h` : ""}
+              {a.origem === "web" ? " · 🌐 site" : ""}
+            </p>
+          </div>
         </div>
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS[a.status].cls}`}>
-          {STATUS[a.status].label}
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_BADGE[a.status].cls}`}>
+          {STATUS_BADGE[a.status].label}
         </span>
       </div>
 
-      <dl className="mt-4 space-y-1.5 border-t border-line pt-4 text-sm">
-        {linhas.map(([k, v]) => (
-          <div key={k} className="flex gap-2">
-            <dt className="w-20 shrink-0 text-ink-mute">{k}</dt>
-            <dd className="flex-1 text-ink-soft">{v}</dd>
+      {/* Info rows */}
+      <div className="space-y-2 px-4 pb-3">
+        {a.observacoes && (
+          <div className="flex gap-2 text-sm">
+            <span className="w-16 shrink-0 text-neutral-400">Obs</span>
+            <span className="text-neutral-600">{a.observacoes}</span>
           </div>
-        ))}
-        <div className="flex items-center gap-2">
-          <dt className="w-20 shrink-0 text-ink-mute">Quando</dt>
-          <dd className="flex-1">
-            {!edit ? (
-              <span className="text-ink-soft">
-                {fmtData(a.data, a.hora)}
-                {ativo && (
-                  <button onClick={() => setEdit(true)} className="ml-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700">
-                    editar
-                  </button>
-                )}
-              </span>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <input type="date" value={d} onChange={(e) => setD(e.target.value)} className={inp} />
-                <input type="time" value={h} onChange={(e) => setH(e.target.value)} className={inp} />
-                <button onClick={() => { onQuando(a.id, d, h); setEdit(false); }}
-                  className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-emerald-700">
-                  Salvar
+        )}
+        {a.endereco && (
+          <div className="flex gap-2 text-sm">
+            <span className="w-16 shrink-0 text-neutral-400">Endereço</span>
+            <span className="text-neutral-600">{a.endereco}</span>
+          </div>
+        )}
+        {a.cliente_whatsapp && (
+          <div className="flex gap-2 text-sm">
+            <span className="w-16 shrink-0 text-neutral-400">Telefone</span>
+            <span className="text-neutral-600">{a.cliente_whatsapp}</span>
+          </div>
+        )}
+        <div className="flex gap-2 text-sm">
+          <span className="w-16 shrink-0 text-neutral-400">Frequência</span>
+          <span className="text-neutral-600">{a.recorrencia ?? "pontual"}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="w-16 shrink-0 text-neutral-400">Quando</span>
+          {!edit ? (
+            <span className="text-neutral-600">
+              {fmtData(a.data, a.hora)}
+              {ativo && (
+                <button onClick={() => setEdit(true)} className="ml-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+                  editar
                 </button>
-                <button onClick={() => setEdit(false)} className="text-xs text-ink-mute">cancelar</button>
-              </div>
-            )}
-          </dd>
+              )}
+            </span>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <input type="date" value={d} onChange={(e) => setD(e.target.value)} className={inp} />
+              <input type="time" value={h} onChange={(e) => setH(e.target.value)} className={inp} />
+              <button onClick={() => { onQuando(a.id, d, h); setEdit(false); }}
+                className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-emerald-700">
+                Salvar
+              </button>
+              <button onClick={() => setEdit(false)} className="text-xs text-neutral-400">cancelar</button>
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-2 pt-1">
-          <dt className="w-20 shrink-0 text-ink-mute">Valor</dt>
-          <dd className="font-serif text-xl font-semibold text-ink">{fmtR$(a.valor)}</dd>
-        </div>
-      </dl>
+      </div>
 
+      {/* Value */}
+      <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-3">
+        <span className="text-xs font-medium text-neutral-400">Valor</span>
+        <span className="text-lg font-bold text-neutral-900">{fmtR$(a.valor)}</span>
+      </div>
+
+      {/* Quick nav links (active only) */}
       {ativo && (
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-4">
-          <a href={mapsLink(a)} target="_blank" rel="noopener noreferrer" className={nav}>
-            <MapPin size={15} /> Mapa
+        <div className="flex gap-1 border-t border-neutral-100 px-4 py-2">
+          <a href={mapsLink(a)} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
+            <MapPin size={13} /> Mapa
           </a>
-          <a href={onibusLink(a)} target="_blank" rel="noopener noreferrer" className={nav}>
-            <Bus size={15} /> Ônibus
+          <a href={onibusLink(a)} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
+            <Bus size={13} /> Ônibus
           </a>
           {a.cliente_whatsapp && (
-            <a href={`tel:+${a.cliente_whatsapp.replace(/\D/g, "")}`} className={nav}>
-              <Phone size={15} /> Ligar
+            <a href={`tel:+${a.cliente_whatsapp.replace(/\D/g, "")}`}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
+              <Phone size={13} /> Ligar
             </a>
           )}
           {googleCalLink(a, profissional.primeiro_nome) && (
-            <a href={googleCalLink(a, profissional.primeiro_nome)!} target="_blank" rel="noopener noreferrer" className={nav}>
-              <Calendar size={15} /> Meu calendário
+            <a href={googleCalLink(a, profissional.primeiro_nome)!} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
+              <Calendar size={13} /> Agenda
             </a>
           )}
-          <button onClick={copiar} className={nav}>
-            <Copy size={15} /> {copiado ? "Copiado!" : "Copiar dados"}
+          <button onClick={copiar}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
+            <Copy size={13} /> {copiado ? "Copiado!" : "Copiar"}
           </button>
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-2 border-t border-neutral-100 bg-neutral-50/50 px-4 py-3">
         {a.status === "solicitado" && (
-          <button onClick={() => onStatus(a.id, "confirmado")} disabled={busy}
-            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-50">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onStatus(a.id, "confirmado")}
+            disabled={busy}
+            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
+          >
             <Check size={14} /> Confirmar
-          </button>
+          </motion.button>
         )}
         {a.status === "confirmado" && (
-          <button onClick={() => onStatus(a.id, "concluido")} disabled={busy}
-            className="flex items-center gap-1.5 rounded-xl bg-ink px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-ink/90 disabled:opacity-50">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onStatus(a.id, "concluido")}
+            disabled={busy}
+            className="flex items-center gap-1.5 rounded-xl bg-neutral-800 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-neutral-900 disabled:opacity-50"
+          >
             <Check size={14} /> Concluir
-          </button>
+          </motion.button>
         )}
         {ativo && (
           <>
             <div className="relative">
               <button onClick={() => setMsgAberto((v) => !v)}
-                className="flex items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-xs text-ink-soft transition-all hover:bg-gray-50 hover:text-ink">
+                className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 shadow-sm transition-all hover:bg-neutral-100 hover:text-neutral-800">
                 <MessageCircle size={14} /> Mensagens
               </button>
               {msgAberto && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setMsgAberto(false)} />
-                  <div className="absolute left-0 z-50 mt-2 w-72 overflow-hidden rounded-xl border border-line bg-paper shadow-lg">
-                    <p className="border-b border-line px-3 py-2 text-xs font-semibold text-ink-mute">
+                  <div className="absolute left-0 z-50 mt-2 w-72 overflow-hidden rounded-xl border border-neutral-100 bg-white shadow-lg">
+                    <p className="border-b border-neutral-100 px-3 py-2.5 text-xs font-semibold text-neutral-500">
                       Enviar para {a.cliente_nome.split(" ")[0]}
                     </p>
                     {MODELOS_MENSAGEM.map((m) => (
@@ -293,7 +343,7 @@ function Card({
                         }), a.cliente_whatsapp || "")}
                         target="_blank" rel="noopener noreferrer"
                         onClick={() => setMsgAberto(false)}
-                        className="block border-b border-line px-3 py-2.5 text-left text-sm text-ink-soft transition-colors last:border-0 hover:bg-emerald-50 hover:text-ink">
+                        className="block border-b border-neutral-100 px-3 py-3 text-left text-sm text-neutral-600 transition-colors last:border-0 hover:bg-emerald-50 hover:text-emerald-700">
                         {m.titulo}
                       </a>
                     ))}
@@ -302,34 +352,100 @@ function Card({
               )}
             </div>
             <button onClick={() => onPix(a)}
-              className="flex items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-xs text-ink-soft transition-all hover:bg-gray-50 hover:text-ink">
+              className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 shadow-sm transition-all hover:bg-neutral-100 hover:text-neutral-800">
               <Wallet size={14} /> Cobrar Pix
             </button>
             <button onClick={() => onPago(a)} disabled={busy}
-              className="flex items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-xs text-ink-soft transition-all hover:bg-gray-50 hover:text-ink disabled:opacity-50">
-              Marcar pago
+              className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 shadow-sm transition-all hover:bg-neutral-100 hover:text-neutral-800 disabled:opacity-50">
+              <DollarSign size={14} /> Marcar pago
             </button>
             <button onClick={() => onCancelar(a)} disabled={busy}
-              className="px-3 py-2 text-xs text-ink-mute hover:text-red-600 disabled:opacity-50">
+              className="ml-auto flex items-center gap-1 rounded-lg px-2 py-2 text-xs text-neutral-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50">
               <X size={14} />
             </button>
           </>
         )}
       </div>
+    </motion.div>
+  );
+}
+
+function StatsCard({
+  label,
+  value,
+  sub,
+  icon: Icon,
+  color,
+  href,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  icon: any;
+  color: string;
+  href?: string;
+}) {
+  const content = (
+    <div className="relative overflow-hidden rounded-2xl border border-neutral-100 bg-white p-4 shadow-sm transition-all hover:shadow-md">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-medium text-neutral-400">{label}</p>
+          <p className="mt-1 text-xl font-bold text-neutral-900">{value}</p>
+          <p className="mt-1 text-xs text-neutral-500">{sub}</p>
+        </div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ backgroundColor: `${color}15` }}>
+          <Icon size={18} style={{ color }} />
+        </div>
+      </div>
+    </div>
+  );
+
+  if (href) {
+    return <a href={href} target="_blank" rel="noopener noreferrer">{content}</a>;
+  }
+  return content;
+}
+
+function EmptyState({ icon: Icon, text }: { icon: any; text: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 py-10">
+      <Icon size={32} className="text-neutral-300" />
+      <p className="mt-3 text-sm text-neutral-400">{text}</p>
     </div>
   );
 }
 
-function Secao({ titulo, n, vazio, destaque, children }: { titulo: string; n: number; vazio: string; destaque?: boolean; children: React.ReactNode }) {
+function SectionCard({
+  title,
+  count,
+  children,
+  empty,
+  color,
+}: {
+  title: string;
+  count: number;
+  children: React.ReactNode;
+  empty: string;
+  color: string;
+}) {
   return (
     <section>
       <div className="mb-4 flex items-center gap-3">
-        <h2 className="font-serif text-2xl font-semibold text-ink">{titulo}</h2>
-        {n > 0 && (
-          <span className={`grid h-6 min-w-6 place-items-center rounded-full px-2 text-xs font-semibold text-white ${destaque ? "bg-amber-500" : "bg-emerald-600"}`}>{n}</span>
+        <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
+        {count > 0 && (
+          <span
+            className="flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-bold text-white shadow-sm"
+            style={{ backgroundColor: color }}
+          >
+            {count}
+          </span>
         )}
       </div>
-      {n === 0 ? vazio && <p className="text-sm text-ink-mute">{vazio}</p> : <div className="grid gap-4 sm:grid-cols-2">{children}</div>}
+      {count === 0 ? (
+        <EmptyState text={empty} icon={Clock} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+      )}
     </section>
   );
 }
@@ -448,7 +564,18 @@ export default function PainelPage() {
   const outros = items.filter((i) => i.status === "concluido" || i.status === "cancelado").slice(0, 12);
   const rota = rotaLink(items);
 
-  const render = (a: Agendamento) => profissional && (
+  const nome = profissional?.primeiro_nome || "";
+  const saudacao = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return "Bom dia";
+    if (h < 18) return "Boa tarde";
+    return "Boa noite";
+  })();
+
+  const primary = "#059669";
+  const hojeStr = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+
+  const renderCard = (a: Agendamento) => profissional && (
     <Card
       key={a.id}
       a={a}
@@ -463,75 +590,154 @@ export default function PainelPage() {
   );
 
   return (
-    <>
-      {aviso && (
-        <div className="mb-4">
-          <p className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white">{aviso}</p>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
+      {/* Toast */}
+      <AnimatePresence>
+        {aviso && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed left-1/2 top-4 z-50 -translate-x-1/2"
+          >
+            <p className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white shadow-lg">{aviso}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Header */}
+      <div
+        className="relative -mx-6 -mt-8 overflow-hidden px-6 pb-8 pt-8 lg:-mx-8 lg:px-8"
+        style={{ background: `linear-gradient(135deg, ${primary}, ${primary}dd)` }}
+      >
+        <div className="pointer-events-none absolute inset-0 opacity-[0.08]">
+          <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white" />
+          <div className="absolute -bottom-8 -left-8 h-48 w-48 rounded-full bg-white" />
+          <div className="absolute right-1/4 top-1/3 h-32 w-32 rounded-full bg-white" />
         </div>
+        <div className="relative">
+          <p className="text-sm font-medium text-white/70">{saudacao},</p>
+          <h1 className="mt-0.5 text-2xl font-bold text-white">{nome}</h1>
+          <p className="mt-1 text-sm text-white/60 capitalize">{hojeStr}</p>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatsCard
+          label="Ganho no mês"
+          value={fmtR$(ganho)}
+          sub={`${nPagos} pago(s)`}
+          icon={TrendingUp}
+          color={primary}
+        />
+        <StatsCard
+          label="A receber"
+          value={fmtR$(aReceber)}
+          sub={nAReceber > 0 ? `${nAReceber} pendente(s)` : "Tudo em dia ✔"}
+          icon={DollarSign}
+          color={aReceber > 0 ? "#d97706" : primary}
+        />
+        <StatsCard
+          label="Próximos 7 dias"
+          value={fmtR$(semanaValor)}
+          sub={`${semanaN} serviço(s)`}
+          icon={Calendar}
+          color={primary}
+        />
+        {rota ? (
+          <StatsCard
+            label="Rota de hoje"
+            value="Ver rota"
+            sub="Google Maps"
+            icon={MapPin}
+            color="#2563eb"
+            href={rota}
+          />
+        ) : (
+          <StatsCard
+            label="Rota de hoje"
+            value="—"
+            sub="Sem rota hoje"
+            icon={MapPin}
+            color="#a1a1aa"
+          />
+        )}
+      </div>
+
+      {/* Sections */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="flex items-center gap-3 text-neutral-400">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-emerald-600" />
+            <span className="text-sm">Carregando...</span>
+          </div>
+        </div>
+      ) : (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+          }}
+          className="space-y-8"
+        >
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 10 },
+              visible: { opacity: 1, y: 0 },
+            }}
+          >
+            <SectionCard title="Novas solicitações" count={solicitacoes.length} empty="Nenhuma solicitação nova." color={primary}>
+              {solicitacoes.map(renderCard)}
+            </SectionCard>
+          </motion.div>
+
+          {amanha.length > 0 && (
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 10 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <SectionCard title="Para amanhã" count={amanha.length} empty="" color="#d97706">
+                {amanha.map(renderCard)}
+              </SectionCard>
+            </motion.div>
+          )}
+
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 10 },
+              visible: { opacity: 1, y: 0 },
+            }}
+          >
+            <SectionCard title="Agendados" count={agendados.length} empty="Nada mais confirmado." color={primary}>
+              {agendados.map(renderCard)}
+            </SectionCard>
+          </motion.div>
+
+          {outros.length > 0 && (
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 10 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <SectionCard title="Histórico" count={outros.length} empty="" color="#a1a1aa">
+                {outros.map(renderCard)}
+              </SectionCard>
+            </motion.div>
+          )}
+        </motion.div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-2xl border border-line bg-paper px-5 py-3">
-          <span className="text-xs text-ink-mute">Ganhei este mês</span>
-          <p className="font-serif text-2xl font-semibold text-ink">{fmtR$(ganho)}</p>
-          <p className="text-xs text-ink-mute">
-            {nPagos} pago(s)
-            {ganhoAnterior > 0 && (
-              <span className={ganho >= ganhoAnterior ? "text-emerald-600" : "text-amber-600"}>
-                {" "}· {ganho >= ganhoAnterior ? "▲" : "▼"} vs {fmtR$(ganhoAnterior)} mês passado
-              </span>
-            )}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-line bg-paper px-5 py-3">
-          <span className="text-xs text-ink-mute">A receber</span>
-          <p className={`font-serif text-2xl font-semibold ${aReceber > 0 ? "text-amber-600" : "text-ink"}`}>
-            {fmtR$(aReceber)}
-          </p>
-          <p className="text-xs text-ink-mute">
-            {nAReceber > 0 ? `${nAReceber} serviço(s) concluído(s) sem pagamento` : "Tudo em dia ✔"}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-line bg-paper px-5 py-3">
-          <span className="text-xs text-ink-mute">Próximos 7 dias</span>
-          <p className="font-serif text-2xl font-semibold text-ink">{fmtR$(semanaValor)}</p>
-          <p className="text-xs text-ink-mute">{semanaN} serviço(s) confirmado(s)</p>
-        </div>
-        {rota ? (
-          <a href={rota} target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-ink/90">
-            <MapPin size={17} /> Rota de hoje
-          </a>
-        ) : (
-          <div className="grid place-items-center rounded-2xl border border-line bg-paper px-5 py-3 text-sm text-ink-mute">
-            Sem rota hoje
-          </div>
-        )}
-      </div>
-
-      <div className="mt-8 space-y-10">
-        {loading ? (
-          <p className="text-sm text-ink-mute">Carregando agenda…</p>
-        ) : (
-          <>
-            <Secao titulo="Novas solicitações" n={solicitacoes.length} vazio="Nenhuma solicitação nova.">
-              {solicitacoes.map(render)}
-            </Secao>
-            <Secao titulo="Para amanhã — lembrar" n={amanha.length} vazio="" destaque>
-              {amanha.map(render)}
-            </Secao>
-            <Secao titulo="Agendados" n={agendados.length} vazio="Nada mais confirmado.">
-              {agendados.map(render)}
-            </Secao>
-            {outros.length > 0 && (
-              <Secao titulo="Histórico" n={outros.length} vazio="">
-                {outros.map(render)}
-              </Secao>
-            )}
-          </>
-        )}
-      </div>
-
+      {/* Pix Modal */}
       {pix && profissional && (
         <QrPix
           valor={pix.valor}
@@ -543,31 +749,64 @@ export default function PainelPage() {
         />
       )}
 
-      {confirmacao && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/40 px-5" onClick={() => setConfirmacao(null)}>
-          <div className="w-full max-w-sm rounded-2xl border border-line bg-paper p-6" onClick={(e) => e.stopPropagation()}>
-            <p className="font-serif text-lg font-semibold text-ink">
-              {confirmacao.tipo === "pago" ? "Marcar como pago?" : "Cancelar este agendamento?"}
-            </p>
-            <p className="mt-2 text-sm text-ink-soft">
-              {confirmacao.a.cliente_nome} · {fmtR$(confirmacao.a.valor)}
-              {confirmacao.tipo === "pago"
-                ? " — registra o pagamento na sua conta do mês."
-                : " — ele sai da agenda."}
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmacao(null)}
-                className="rounded-xl px-4 py-2 text-sm text-ink-soft transition-all hover:bg-gray-100 hover:text-ink">Voltar</button>
-              <button onClick={executarConfirmacao}
-                className={`rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all ${
-                  confirmacao.tipo === "pago" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"
-                }`}>
-                {confirmacao.tipo === "pago" ? "Sim, marcar pago" : "Sim, cancelar"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {confirmacao && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-900/30 px-4 pb-12 sm:items-center sm:pb-0"
+            onClick={() => setConfirmacao(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-xl"
+            >
+              <div className="p-6">
+                <div
+                  className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full ${
+                    confirmacao.tipo === "pago" ? "bg-emerald-100" : "bg-red-100"
+                  }`}
+                >
+                  {confirmacao.tipo === "pago" ? (
+                    <DollarSign size={24} className="text-emerald-600" />
+                  ) : (
+                    <AlertTriangle size={24} className="text-red-600" />
+                  )}
+                </div>
+                <p className="text-center text-lg font-semibold text-neutral-900">
+                  {confirmacao.tipo === "pago" ? "Marcar como pago?" : "Cancelar agendamento?"}
+                </p>
+                <p className="mt-2 text-center text-sm text-neutral-500">
+                  {confirmacao.a.cliente_nome} · {fmtR$(confirmacao.a.valor)}
+                </p>
+              </div>
+              <div className="flex border-t border-neutral-100">
+                <button
+                  onClick={() => setConfirmacao(null)}
+                  className="flex-1 py-4 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-50"
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={executarConfirmacao}
+                  className={`flex-1 py-4 text-sm font-semibold text-white transition-colors ${
+                    confirmacao.tipo === "pago"
+                      ? "bg-emerald-600 hover:bg-emerald-700"
+                      : "bg-red-600 hover:bg-red-700"
+                  }`}
+                >
+                  {confirmacao.tipo === "pago" ? "Sim, pagar" : "Sim, cancelar"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

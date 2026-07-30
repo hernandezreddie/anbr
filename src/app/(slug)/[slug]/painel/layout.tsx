@@ -49,7 +49,7 @@ export default async function PainelLayout({
       {!isLoginPage && <PushSubscriber />}
       {!isLoginPage && <SidebarClient slug={slug} />}
       <main className="flex-1 overflow-auto">
-        <div className={isLoginPage ? "" : "container-x py-8"}>{children}</div>
+        <div className={isLoginPage ? "" : "container-x py-8 pb-24 lg:pb-8"}>{children}</div>
       </main>
     </div>
   );
