@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const DOMAIN = process.env.NEXT_PUBLIC_DOMAIN || "livreta.com.br";
+const DOMAIN = process.env.NEXT_PUBLIC_DOMAIN
+  ? new URL(process.env.NEXT_PUBLIC_DOMAIN).hostname
+  : "autonexabrasil.com.br";
 const APP_PATHS = ["/api", "/_next", "/favicon.ico", "/manifest.webmanifest"];
 
 export function middleware(request: NextRequest) {
