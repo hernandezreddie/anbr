@@ -138,6 +138,15 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 10. Assinaturas Web Push para notificações no painel
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  subscription JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
 -- ========== ÍNDICES ==========
 CREATE INDEX IF NOT EXISTS idx_servicos_profissional ON servicos(profissional_id);
 CREATE INDEX IF NOT EXISTS idx_adicionais_profissional ON adicionais(profissional_id);
@@ -148,6 +157,7 @@ CREATE INDEX IF NOT EXISTS idx_agendamentos_status ON agendamentos(profissional_
 CREATE INDEX IF NOT EXISTS idx_pagamentos_profissional ON pagamentos(profissional_id);
 CREATE INDEX IF NOT EXISTS idx_pagamentos_agendamento ON pagamentos(agendamento_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_user ON profiles(id);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
 
 -- ========== ROW LEVEL SECURITY ==========
 ALTER TABLE profissionais ENABLE ROW LEVEL SECURITY;
@@ -158,10 +168,12 @@ ALTER TABLE frequencias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clientes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agendamentos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pagamentos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- ========== CUSTOM ACCESS TOKEN HOOK ==========
 -- Injeta profissional_id no JWT do usuário logado
 -- SECURITY DEFINER é obrigatório: supabase_auth_admin nāo tem acesso a public.profiles
+DROP FUNCTION IF EXISTS public.custom_access_token_hook CASCADE;
 CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -191,104 +203,142 @@ GRANT EXECUTE ON FUNCTION public.custom_access_token_hook TO supabase_auth_admin
 -- ========== RLS POLICIES ==========
 
 -- Profissionais: cada um vê apenas seu próprio registro
+DROP POLICY IF EXISTS "profissionais_self_select" ON profissionais;
 CREATE POLICY "profissionais_self_select" ON profissionais
   FOR SELECT TO authenticated
   USING (email = (SELECT auth.email()));
 
+DROP POLICY IF EXISTS "profissionais_self_update" ON profissionais;
 CREATE POLICY "profissionais_self_update" ON profissionais
   FOR UPDATE TO authenticated
   USING (email = (SELECT auth.email()))
   WITH CHECK (email = (SELECT auth.email()));
 
 -- Público pode ler profissionais ativos (para landing pages)
+DROP POLICY IF EXISTS "profissionais_public_select" ON profissionais;
 CREATE POLICY "profissionais_public_select" ON profissionais
   FOR SELECT TO anon
   USING (status = 'ativo');
 
--- Configurações: isolar por profissional_id usando JWT
+-- Configurações: isolar por profissional_id via profiles table
+DROP POLICY IF EXISTS "configuracoes_tenant_select" ON configuracoes;
 CREATE POLICY "configuracoes_tenant_select" ON configuracoes
   FOR SELECT TO authenticated
   USING (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid);
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ));
 
 -- Público pode ler configurações (para renderizar landing)
+DROP POLICY IF EXISTS "configuracoes_public_select" ON configuracoes;
 CREATE POLICY "configuracoes_public_select" ON configuracoes
   FOR SELECT TO anon
   USING (true);
 
 -- Serviços: isolar por tenant
+DROP POLICY IF EXISTS "servicos_tenant_all" ON servicos;
 CREATE POLICY "servicos_tenant_all" ON servicos
   FOR ALL TO authenticated
   USING (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid)
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ))
   WITH CHECK (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid);
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ));
 
 -- Público pode ler serviços ativos
+DROP POLICY IF EXISTS "servicos_public_select" ON servicos;
 CREATE POLICY "servicos_public_select" ON servicos
   FOR SELECT TO anon
   USING (ativo = true);
 
 -- Adicionais: isolar por tenant
+DROP POLICY IF EXISTS "adicionais_tenant_all" ON adicionais;
 CREATE POLICY "adicionais_tenant_all" ON adicionais
   FOR ALL TO authenticated
   USING (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid)
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ))
   WITH CHECK (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid);
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ));
 
+DROP POLICY IF EXISTS "adicionais_public_select" ON adicionais;
 CREATE POLICY "adicionais_public_select" ON adicionais
   FOR SELECT TO anon
   USING (true);
 
 -- Frequências: isolar por tenant
+DROP POLICY IF EXISTS "frequencias_tenant_all" ON frequencias;
 CREATE POLICY "frequencias_tenant_all" ON frequencias
   FOR ALL TO authenticated
   USING (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid)
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ))
   WITH CHECK (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid);
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ));
 
+DROP POLICY IF EXISTS "frequencias_public_select" ON frequencias;
 CREATE POLICY "frequencias_public_select" ON frequencias
   FOR SELECT TO anon
   USING (true);
 
 -- Clientes: isolar por tenant
+DROP POLICY IF EXISTS "clientes_tenant_all" ON clientes;
 CREATE POLICY "clientes_tenant_all" ON clientes
   FOR ALL TO authenticated
   USING (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid)
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ))
   WITH CHECK (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid);
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ));
 
 -- Agendamentos: isolar por tenant
+DROP POLICY IF EXISTS "agendamentos_tenant_all" ON agendamentos;
 CREATE POLICY "agendamentos_tenant_all" ON agendamentos
   FOR ALL TO authenticated
   USING (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid)
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ))
   WITH CHECK (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid);
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ));
 
 -- Pagamentos: isolar por tenant
+DROP POLICY IF EXISTS "pagamentos_tenant_all" ON pagamentos;
 CREATE POLICY "pagamentos_tenant_all" ON pagamentos
   FOR ALL TO authenticated
   USING (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid)
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ))
   WITH CHECK (profissional_id = (
-    (SELECT auth.jwt()) -> 'app_metadata' ->> 'profissional_id'
-  )::uuid);
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ));
+
+-- Profiles: cada user vê apenas seu próprio profile
+DROP POLICY IF EXISTS "profiles_self_select" ON profiles;
+CREATE POLICY "profiles_self_select" ON profiles
+  FOR SELECT TO authenticated
+  USING (id = auth.uid());
+
+-- Admin/owner pode ver todos os profiles
+DROP POLICY IF EXISTS "profiles_admin_select" ON profiles;
+CREATE POLICY "profiles_admin_select" ON profiles
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role IN ('owner', 'admin')
+    )
+  );
+
+-- Push subscriptions: cada user só vê/gerencia a própria
+DROP POLICY IF EXISTS "push_subscriptions_self" ON push_subscriptions;
+CREATE POLICY "push_subscriptions_self" ON push_subscriptions
+  FOR ALL TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
 
 -- ========== DADOS DE EXEMPLO ==========
 -- Inserir um profissional de teste (descomentar para testar)

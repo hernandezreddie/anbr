@@ -1,0 +1,20 @@
+[project]
+ref_id = ""
+name = "livreta"
+
+[auth]
+enabled = true
+
+[auth.hook]
+# Habilitar no Dashboard: Authentication > Hooks > Customize Access Token (JWT)
+# Função: public.custom_access_token_hook
+secret = ""
+
+[analytics]
+enabled = false
+
+[functions]
+enabled = true
+
+[import_map]
+path = "./functions/import_map.json"

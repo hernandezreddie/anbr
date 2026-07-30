@@ -1,0 +1,605 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { ocorrenciasRecorrentes } from "@/lib/agenda";
+import { Plus, X, Check } from "lucide-react";
+
+type Servico = { id: number; nome: string; valor: number; ativo: boolean };
+type Agendamento = {
+  id: string;
+  cliente_nome: string;
+  cliente_whatsapp: string | null;
+  data: string | null;
+  hora: string | null;
+  valor: number;
+  horas: number | null;
+  servico_nome: string | null;
+  status: "solicitado" | "confirmado" | "concluido" | "cancelado";
+  recorrencia: string | null;
+  endereco: string | null;
+  observacoes: string | null;
+  serie_id: string | null;
+  data_original: string | null;
+  created_at: string | null;
+};
+
+const STATUS_CLS: Record<string, string> = {
+  solicitado: "bg-amber-400",
+  confirmado: "bg-emerald-500",
+  concluido: "bg-ink/40",
+  cancelado: "bg-red-400",
+};
+const STATUS_LABEL: Record<string, string> = {
+  solicitado: "Solicitado",
+  confirmado: "Confirmado",
+  concluido: "Concluído",
+  cancelado: "Cancelado",
+};
+
+const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+const iso = (d: Date) => d.toLocaleDateString("sv-SE");
+const fmtR$ = (n: number) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
+
+type FormState = {
+  id: string | null;
+  cliente_nome: string;
+  cliente_whatsapp: string;
+  data: string;
+  hora: string;
+  servico_nome: string;
+  valor: string;
+  status: Agendamento["status"];
+  recorrencia: string;
+  endereco: string;
+  observacoes: string;
+};
+
+const formVazio = (data: string, servicos: Servico[]): FormState => ({
+  id: null,
+  cliente_nome: "",
+  cliente_whatsapp: "",
+  data,
+  hora: "",
+  servico_nome: servicos[0]?.nome ?? "",
+  valor: "",
+  status: "confirmado",
+  recorrencia: "pontual",
+  endereco: "",
+  observacoes: "",
+});
+
+type Previsao = { key: string; dataOriginal: string; base: Agendamento; hora: string | null; nome: string; servico: string | null };
+
+export default function CalendarioPage() {
+  const hoje = new Date();
+  const [ano, setAno] = useState(hoje.getFullYear());
+  const [mes, setMes] = useState(hoje.getMonth());
+  const [items, setItems] = useState<Agendamento[]>([]);
+  const [servicos, setServicos] = useState<Servico[]>([]);
+  const [diaSel, setDiaSel] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [aviso, setAviso] = useState("");
+  const [confirmarDel, setConfirmarDel] = useState<Agendamento | null>(null);
+  const [moverPrev, setMoverPrev] = useState<Previsao | null>(null);
+  const [moverData, setMoverData] = useState("");
+  const [moverHora, setMoverHora] = useState("");
+  const [cancelarPrev, setCancelarPrev] = useState<Previsao | null>(null);
+
+  const supabase = useMemo(() => createClient(), []);
+
+  const load = useCallback(async () => {
+    const [ag, sv] = await Promise.all([
+      supabase.from("agendamentos").select("*").order("hora", { ascending: true }),
+      supabase.from("servicos").select("*").eq("ativo", true).order("ordem"),
+    ]);
+    if (ag.data) setItems(ag.data as Agendamento[]);
+    if (sv.data) setServicos(sv.data as Servico[]);
+  }, [supabase]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const flash = (m: string) => {
+    setAviso(m);
+    setTimeout(() => setAviso(""), 2500);
+  };
+
+  const semanas = useMemo(() => {
+    const primeiro = new Date(ano, mes, 1);
+    const inicio = new Date(primeiro);
+    inicio.setDate(1 - primeiro.getDay());
+    const dias: Date[] = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(inicio);
+      d.setDate(inicio.getDate() + i);
+      dias.push(d);
+    }
+    const out: Date[][] = [];
+    for (let i = 0; i < 42; i += 7) out.push(dias.slice(i, i + 7));
+    return out;
+  }, [ano, mes]);
+
+  const porDia = useMemo(() => {
+    const m: Record<string, Agendamento[]> = {};
+    for (const a of items) {
+      if (!a.data || a.status === "cancelado") continue;
+      (m[a.data] ??= []).push(a);
+    }
+    return m;
+  }, [items]);
+
+  const excecoes = useMemo(() => {
+    const s = new Set<string>();
+    for (const a of items) {
+      if (a.serie_id && a.data_original) s.add(`${a.serie_id}|${a.data_original}`);
+    }
+    return s;
+  }, [items]);
+
+  const previsoesPorDia = useMemo(() => {
+    const m: Record<string, Previsao[]> = {};
+    const hojeStr = iso(new Date());
+    for (const a of items) {
+      if (a.status === "cancelado" || !a.data || !a.recorrencia || a.recorrencia === "pontual") continue;
+      for (const f of ocorrenciasRecorrentes(a.data, a.recorrencia)) {
+        if (f < hojeStr) continue;
+        if (excecoes.has(`${a.id}|${f}`)) continue;
+        (m[f] ??= []).push({
+          key: a.id + "@" + f,
+          dataOriginal: f,
+          base: a,
+          hora: a.hora,
+          nome: a.cliente_nome,
+          servico: a.servico_nome,
+        });
+      }
+    }
+    return m;
+  }, [items, excecoes]);
+
+  const doDia = diaSel ? (porDia[diaSel] ?? []).slice().sort((a, b) => (a.hora ?? "").localeCompare(b.hora ?? "")) : [];
+  const prevDoDia = diaSel ? previsoesPorDia[diaSel] ?? [] : [];
+
+  function mudarMes(delta: number) {
+    let m = mes + delta;
+    let a = ano;
+    if (m < 0) { m = 11; a--; }
+    if (m > 11) { m = 0; a++; }
+    setMes(m);
+    setAno(a);
+    setDiaSel(null);
+  }
+
+  function abrirNovo(data: string) {
+    setForm(formVazio(data, servicos));
+  }
+
+  function abrirEditar(a: Agendamento) {
+    setForm({
+      id: a.id,
+      cliente_nome: a.cliente_nome,
+      cliente_whatsapp: a.cliente_whatsapp ?? "",
+      data: a.data ?? diaSel ?? iso(hoje),
+      hora: a.hora ? a.hora.slice(0, 5) : "",
+      servico_nome: a.servico_nome ?? servicos[0]?.nome ?? "",
+      valor: String(a.valor),
+      status: a.status,
+      recorrencia: a.recorrencia ?? "pontual",
+      endereco: a.endereco ?? "",
+      observacoes: a.observacoes ?? "",
+    });
+  }
+
+  async function salvar() {
+    if (!form) return;
+    if (!form.cliente_nome.trim()) {
+      flash("Informe o nome do cliente.");
+      return;
+    }
+    if (!form.valor || isNaN(Number(form.valor))) {
+      flash("Informe o valor.");
+      return;
+    }
+    setBusy(true);
+
+    const patch: Record<string, unknown> = {
+      cliente_nome: form.cliente_nome.trim(),
+      cliente_whatsapp: form.cliente_whatsapp.replace(/\D/g, "") || null,
+      data: form.data || null,
+      hora: form.hora || null,
+      servico_nome: form.servico_nome || null,
+      valor: Number(form.valor),
+      status: form.status,
+      recorrencia: form.recorrencia,
+      endereco: form.endereco || null,
+      observacoes: form.observacoes || null,
+    };
+
+    const res = form.id
+      ? await supabase.from("agendamentos").update(patch).eq("id", form.id)
+      : await supabase.from("agendamentos").insert({ ...patch, origem: "manual" });
+    setBusy(false);
+    if (res.error) {
+      flash("Erro ao salvar. Tente de novo.");
+      return;
+    }
+    setForm(null);
+    setDiaSel(form.data || diaSel);
+    flash(form.id ? "Agendamento atualizado ✔" : "Agendamento criado ✔");
+    await load();
+  }
+
+  async function excluir() {
+    if (!confirmarDel) return;
+    setBusy(true);
+    const { error } = await supabase.from("agendamentos").delete().eq("id", confirmarDel.id);
+    setBusy(false);
+    setConfirmarDel(null);
+    if (error) { flash("Erro ao excluir."); return; }
+    flash("Agendamento excluído ✔");
+    await load();
+  }
+
+  async function moverExcecao() {
+    if (!moverPrev || !moverData) return;
+    setBusy(true);
+    const a = moverPrev.base;
+    const { error } = await supabase.from("agendamentos").insert({
+      cliente_nome: a.cliente_nome,
+      cliente_whatsapp: a.cliente_whatsapp,
+      data: moverData,
+      hora: moverHora || a.hora,
+      valor: a.valor,
+      servico_nome: a.servico_nome,
+      status: "confirmado",
+      recorrencia: "pontual",
+      origem: "manual",
+      endereco: a.endereco,
+      observacoes: a.observacoes,
+      serie_id: a.id,
+      data_original: moverPrev.dataOriginal,
+    });
+    setBusy(false);
+    setMoverPrev(null);
+    if (error) { flash("Erro ao remarcar."); return; }
+    flash("Dia remarcado ✔");
+    await load();
+  }
+
+  async function cancelarExcecaoDia() {
+    if (!cancelarPrev) return;
+    setBusy(true);
+    const a = cancelarPrev.base;
+    const { error } = await supabase.from("agendamentos").insert({
+      cliente_nome: a.cliente_nome,
+      valor: a.valor,
+      status: "cancelado",
+      recorrencia: "pontual",
+      origem: "manual",
+      serie_id: a.id,
+      data_original: cancelarPrev.dataOriginal,
+    });
+    setBusy(false);
+    setCancelarPrev(null);
+    if (error) { flash("Erro ao cancelar."); return; }
+    flash("Ocorrência cancelada ✔");
+    await load();
+  }
+
+  const inp = "w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm text-ink outline-none focus:border-emerald-600";
+  const lbl = "mb-1 block text-xs font-semibold text-ink";
+  const hojeIso = iso(hoje);
+
+  return (
+    <>
+      {aviso && (
+        <div className="mb-4">
+          <p className="rounded-xl bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800">{aviso}</p>
+        </div>
+      )}
+
+      {/* Controles do mês */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button onClick={() => mudarMes(-1)} className="rounded-xl px-3 py-2 text-sm text-ink-soft hover:bg-gray-100 hover:text-ink">←</button>
+          <h1 className="font-serif text-xl font-semibold text-ink sm:text-2xl">{MESES[mes]} {ano}</h1>
+          <button onClick={() => mudarMes(1)} className="rounded-xl px-3 py-2 text-sm text-ink-soft hover:bg-gray-100 hover:text-ink">→</button>
+        </div>
+        <button onClick={() => { setAno(hoje.getFullYear()); setMes(hoje.getMonth()); }} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">Hoje</button>
+      </div>
+
+      {/* Grade do calendário */}
+      <div className="overflow-hidden rounded-2xl border border-line bg-paper">
+        <div className="grid grid-cols-7 border-b border-line bg-ivory/60">
+          {DIAS.map((d) => (
+            <div key={d} className="py-2 text-center text-xs font-semibold text-ink-mute">{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7">
+          {semanas.flat().map((d) => {
+            const dstr = iso(d);
+            const foraMes = d.getMonth() !== mes;
+            const eHoje = dstr === hojeIso;
+            const lista = porDia[dstr] ?? [];
+            const prev = previsoesPorDia[dstr] ?? [];
+            const total = lista.length + prev.length;
+            return (
+              <button
+                key={dstr}
+                onClick={() => setDiaSel(dstr)}
+                className={`min-h-[68px] border-b border-r border-line p-1.5 text-left align-top transition-colors sm:min-h-[92px] ${
+                  foraMes ? "bg-ivory/40 text-ink-mute" : "hover:bg-emerald-50/50"
+                } ${diaSel === dstr ? "ring-2 ring-inset ring-emerald-500" : ""}`}
+              >
+                <span className={`inline-grid h-6 w-6 place-items-center rounded-full text-xs font-semibold ${eHoje ? "bg-emerald-600 text-white" : foraMes ? "text-ink-mute" : "text-ink"}`}>
+                  {d.getDate()}
+                </span>
+                <div className="mt-1 space-y-0.5">
+                  {lista.slice(0, 3).map((a) => (
+                    <div key={a.id} className="flex items-center gap-1 truncate text-[10px] leading-tight text-ink-soft sm:text-xs">
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_CLS[a.status]}`} />
+                      <span className="truncate">{a.hora ? a.hora.slice(0, 5) + " " : ""}{a.cliente_nome}</span>
+                    </div>
+                  ))}
+                  {lista.length < 3 &&
+                    prev.slice(0, 3 - lista.length).map((p) => (
+                      <div key={p.key} className="flex items-center gap-1 truncate text-[10px] leading-tight text-emerald-700/80 sm:text-xs">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full border border-emerald-500 bg-transparent" />
+                        <span className="truncate">{p.hora ? p.hora.slice(0, 5) + " " : ""}{p.nome}</span>
+                      </div>
+                    ))}
+                  {total > 3 && <div className="text-[10px] text-ink-mute">+{total - 3}</div>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legenda */}
+      <div className="mt-3 flex flex-wrap gap-3 text-xs text-ink-mute">
+        {(["solicitado", "confirmado", "concluido"] as const).map((s) => (
+          <span key={s} className="flex items-center gap-1.5">
+            <span className={`h-2 w-2 rounded-full ${STATUS_CLS[s]}`} /> {STATUS_LABEL[s]}
+          </span>
+        ))}
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full border border-emerald-500 bg-transparent" /> Recorrente (previsão)
+        </span>
+      </div>
+
+      {/* Dia selecionado */}
+      {diaSel && (
+        <div className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-serif text-lg font-semibold text-ink">
+              {(() => { const [y, m, dd] = diaSel.split("-"); return `${dd}/${m}/${y}`; })()}
+            </h2>
+            <button onClick={() => abrirNovo(diaSel)} className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700">
+              <Plus size={15} /> Novo
+            </button>
+          </div>
+          {doDia.length === 0 && prevDoDia.length === 0 ? (
+            <p className="text-sm text-ink-mute">Nenhum agendamento nesse dia. Toque em &ldquo;Novo&rdquo; para adicionar.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {prevDoDia.map((p) => (
+                <div key={p.key} className="rounded-2xl border border-dashed border-emerald-300 bg-paper p-4 opacity-90">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-ink">{p.nome}</p>
+                      <p className="text-sm text-ink-mute">
+                        {p.hora ? p.hora.slice(0, 5) + " · " : ""}{p.servico ?? "Serviço"}
+                      </p>
+                    </div>
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-emerald-700">
+                      <span className="h-2 w-2 rounded-full border border-emerald-500 bg-transparent" /> Recorrente
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-ink-mute">
+                    Previsão de cliente fixo. Mudou só neste dia?
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setMoverPrev(p);
+                        setMoverData(p.dataOriginal);
+                        setMoverHora(p.hora ? p.hora.slice(0, 5) : "");
+                      }}
+                      className="rounded-xl px-3 py-1.5 text-xs text-ink-soft hover:bg-gray-100 hover:text-ink"
+                    >
+                      Mudou este dia
+                    </button>
+                    <button onClick={() => setCancelarPrev(p)} className="px-3 py-1.5 text-xs text-ink-mute hover:text-red-600">
+                      Cancelar só este dia
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {doDia.map((a) => (
+                <div key={a.id} className="rounded-2xl border border-line bg-paper p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-ink">{a.cliente_nome}</p>
+                      <p className="text-sm text-ink-mute">
+                        {a.hora ? a.hora.slice(0, 5) + " · " : ""}{a.servico_nome ?? "Serviço"}
+                      </p>
+                    </div>
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-ink-mute">
+                      <span className={`h-2 w-2 rounded-full ${STATUS_CLS[a.status]}`} /> {STATUS_LABEL[a.status]}
+                    </span>
+                  </div>
+                  <p className="mt-2 font-serif text-lg font-semibold text-ink">{fmtR$(a.valor)}</p>
+                  <div className="mt-3 flex gap-2">
+                    <button onClick={() => abrirEditar(a)} className="rounded-xl px-3 py-1.5 text-xs text-ink-soft hover:bg-gray-100 hover:text-ink">Editar</button>
+                    <button onClick={() => setConfirmarDel(a)} className="px-3 py-1.5 text-xs text-ink-mute hover:text-red-600">Excluir</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal formulário */}
+      {form && (
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/40 px-4 py-8" onClick={() => !busy && setForm(null)}>
+          <div className="w-full max-w-lg rounded-2xl border border-line bg-paper p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-serif text-xl font-semibold text-ink">{form.id ? "Editar agendamento" : "Novo agendamento"}</h3>
+              <button onClick={() => setForm(null)} className="text-ink-mute hover:text-ink"><X size={18} /></button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Nome do cliente</label>
+                  <input value={form.cliente_nome} onChange={(e) => setForm({ ...form, cliente_nome: e.target.value })} className={inp} placeholder="Ex: Maria" />
+                </div>
+                <div>
+                  <label className={lbl}>WhatsApp</label>
+                  <input value={form.cliente_whatsapp} onChange={(e) => setForm({ ...form, cliente_whatsapp: e.target.value })} className={inp} placeholder="41 9..." />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Data</label>
+                  <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} className={inp} />
+                </div>
+                <div>
+                  <label className={lbl}>Hora</label>
+                  <input type="time" value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} className={inp} />
+                </div>
+              </div>
+
+              <div>
+                <label className={lbl}>Serviço</label>
+                <select value={form.servico_nome} onChange={(e) => setForm({ ...form, servico_nome: e.target.value })} className={inp}>
+                  {servicos.map((s) => (
+                    <option key={s.id} value={s.nome}>{s.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Valor (R$)</label>
+                  <input type="number" step="0.01" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} className={inp} placeholder="0,00" />
+                </div>
+                <div>
+                  <label className={lbl}>Frequência</label>
+                  <select value={form.recorrencia} onChange={(e) => setForm({ ...form, recorrencia: e.target.value })} className={inp}>
+                    <option value="pontual">Pontual</option>
+                    <option value="semanal">Semanal</option>
+                    <option value="quinzenal">Quinzenal</option>
+                    <option value="mensal">Mensal</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className={lbl}>Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {(["solicitado", "confirmado", "concluido"] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setForm({ ...form, status: s })}
+                      className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                        form.status === s ? "border-emerald-600 bg-emerald-600 text-white" : "border-line bg-paper text-ink hover:border-emerald-600/50"
+                      }`}
+                    >
+                      {STATUS_LABEL[s]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className={lbl}>Endereço</label>
+                <input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} className={inp} placeholder="Rua, nº, bairro" />
+              </div>
+              <div>
+                <label className={lbl}>Observações</label>
+                <input value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} className={inp} placeholder="Tipo de imóvel, notas…" />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={() => setForm(null)} disabled={busy} className="rounded-xl px-4 py-2 text-sm text-ink-soft transition-all hover:bg-gray-100 hover:text-ink disabled:opacity-50">Cancelar</button>
+              <button onClick={salvar} disabled={busy} className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-50">
+                <Check size={15} /> {busy ? "Salvando…" : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remarcar só uma ocorrência recorrente */}
+      {moverPrev && (
+        <div className="fixed inset-0 z-[60] grid place-items-center bg-ink/40 px-5" onClick={() => !busy && setMoverPrev(null)}>
+          <div className="w-full max-w-sm rounded-2xl border border-line bg-paper p-6" onClick={(e) => e.stopPropagation()}>
+            <p className="font-serif text-lg font-semibold text-ink">Remarcar só este dia</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              {moverPrev.nome} · cliente fixo. As próximas semanas continuam iguais.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div>
+                <label className={lbl}>Nova data</label>
+                <input type="date" value={moverData} onChange={(e) => setMoverData(e.target.value)} className={inp} />
+              </div>
+              <div>
+                <label className={lbl}>Nova hora</label>
+                <input type="time" value={moverHora} onChange={(e) => setMoverHora(e.target.value)} className={inp} />
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={() => setMoverPrev(null)} disabled={busy} className="rounded-xl px-4 py-2 text-sm text-ink-soft transition-all hover:bg-gray-100 hover:text-ink disabled:opacity-50">Voltar</button>
+              <button onClick={moverExcecao} disabled={busy || !moverData} className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-50">
+                {busy ? "Salvando…" : "Remarcar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancelar só uma ocorrência recorrente */}
+      {cancelarPrev && (
+        <div className="fixed inset-0 z-[60] grid place-items-center bg-ink/40 px-5" onClick={() => !busy && setCancelarPrev(null)}>
+          <div className="w-full max-w-sm rounded-2xl border border-line bg-paper p-6" onClick={(e) => e.stopPropagation()}>
+            <p className="font-serif text-lg font-semibold text-ink">Cancelar só este dia?</p>
+            <p className="mt-2 text-sm text-ink-soft">
+              {cancelarPrev.nome} — a série continua nas próximas.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={() => setCancelarPrev(null)} disabled={busy} className="rounded-xl px-4 py-2 text-sm text-ink-soft transition-all hover:bg-gray-100 hover:text-ink disabled:opacity-50">Voltar</button>
+              <button onClick={cancelarExcecaoDia} disabled={busy} className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50">
+                {busy ? "…" : "Cancelar este dia"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmar exclusão */}
+      {confirmarDel && (
+        <div className="fixed inset-0 z-[60] grid place-items-center bg-ink/40 px-5" onClick={() => !busy && setConfirmarDel(null)}>
+          <div className="w-full max-w-sm rounded-2xl border border-line bg-paper p-6" onClick={(e) => e.stopPropagation()}>
+            <p className="font-serif text-lg font-semibold text-ink">Excluir este agendamento?</p>
+            <p className="mt-2 text-sm text-ink-soft">{confirmarDel.cliente_nome} · {fmtR$(confirmarDel.valor)}. Não dá para desfazer.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={() => setConfirmarDel(null)} disabled={busy} className="rounded-xl px-4 py-2 text-sm text-ink-soft transition-all hover:bg-gray-100 hover:text-ink disabled:opacity-50">Cancelar</button>
+              <button onClick={excluir} disabled={busy} className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50">
+                {busy ? "Excluindo…" : "Excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

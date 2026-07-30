@@ -1,11 +1,16 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 function SucessoContent() {
   const params = useSearchParams();
   const slug = params.get("slug");
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   return (
     <div className="container-x py-20 text-center">
@@ -15,12 +20,12 @@ function SucessoContent() {
         <p className="mb-8 text-lg text-ink-soft">
           Seu sistema de agendamento já está disponível.
         </p>
-        {slug && (
+        {slug && origin && (
           <a
-            href={`https://livreta.vercel.app/${slug}`}
+            href={`${origin}/${slug}`}
             className="mb-4 block text-lg font-semibold text-emerald-600 underline"
           >
-            https://livreta.vercel.app/{slug}
+            {origin}/{slug}
           </a>
         )}
       </div>
