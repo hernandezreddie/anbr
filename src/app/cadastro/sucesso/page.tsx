@@ -42,7 +42,7 @@ function SucessoContent() {
 
         <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <a href={link ? `${link}/painel` : "#"}
-            className="btn-emerald gap-2 px-8 py-4 text-base shadow-lg shadow-[var(--color-primary)]/20">
+            className="btn-primary gap-2 px-8 py-4 text-base shadow-lg shadow-[var(--color-primary)]/20">
             Ir para o painel
             <ArrowRight size={20} />
           </a>

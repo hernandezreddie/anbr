@@ -129,7 +129,7 @@ function rotaLink(items: Agendamento[]): string | null {
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
   solicitado: { label: "Solicitado", cls: "bg-amber-100 text-amber-800" },
-  confirmado: { label: "Confirmado", cls: "bg-emerald-100 text-emerald-800" },
+  confirmado: { label: "Confirmado", cls: "bg-teal-100 text-teal-800" },
   concluido: { label: "Concluído", cls: "bg-neutral-100 text-neutral-500" },
   cancelado: { label: "Cancelado", cls: "bg-red-100 text-red-700" },
 };
@@ -137,7 +137,7 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
     solicitado: "bg-amber-500",
-    confirmado: "bg-emerald-500",
+    confirmado: "bg-teal-500",
     concluido: "bg-neutral-400",
     cancelado: "bg-red-500",
   };
@@ -177,7 +177,7 @@ function Card({
     servico: a.servico_nome ?? "Serviço",
   };
 
-  const inp = "rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:shadow-sm w-full";
+  const inp = "rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-teal-500 focus:shadow-sm w-full";
 
   async function copiar() {
     try {
@@ -243,7 +243,7 @@ function Card({
             <span className="text-neutral-600">
               {fmtData(a.data, a.hora)}
               {ativo && (
-                <button onClick={() => setEdit(true)} className="ml-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+                <button onClick={() => setEdit(true)} className="btn-ghost btn-sm ml-2 text-teal-600">
                   editar
                 </button>
               )}
@@ -253,10 +253,10 @@ function Card({
               <input type="date" value={d} onChange={(e) => setD(e.target.value)} className={inp} />
               <input type="time" value={h} onChange={(e) => setH(e.target.value)} className={inp} />
               <button onClick={() => { onQuando(a.id, d, h); setEdit(false); }}
-                className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-emerald-700">
+                className="btn-primary btn-sm">
                 Salvar
               </button>
-              <button onClick={() => setEdit(false)} className="text-xs text-neutral-400">cancelar</button>
+              <button onClick={() => setEdit(false)} className="btn-ghost btn-sm">cancelar</button>
             </div>
           )}
         </div>
@@ -305,7 +305,7 @@ function Card({
             whileTap={{ scale: 0.95 }}
             onClick={() => onStatus(a.id, "confirmado")}
             disabled={busy}
-            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-teal-700 disabled:opacity-50"
           >
             <Check size={14} /> Confirmar
           </motion.button>
@@ -343,7 +343,7 @@ function Card({
                         }), a.cliente_whatsapp || "")}
                         target="_blank" rel="noopener noreferrer"
                         onClick={() => setMsgAberto(false)}
-                        className="block border-b border-neutral-100 px-3 py-3 text-left text-sm text-neutral-600 transition-colors last:border-0 hover:bg-emerald-50 hover:text-emerald-700">
+                        className="block border-b border-neutral-100 px-3 py-3 text-left text-sm text-neutral-600 transition-colors last:border-0 hover:bg-teal-50 hover:text-teal-700">
                         {m.titulo}
                       </a>
                     ))}
@@ -675,7 +675,7 @@ export default function PainelPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="flex items-center gap-3 text-neutral-400">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-emerald-600" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-teal-600" />
             <span className="text-sm">Carregando...</span>
           </div>
         </div>
@@ -771,11 +771,11 @@ export default function PainelPage() {
               <div className="p-6">
                 <div
                   className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full ${
-                    confirmacao.tipo === "pago" ? "bg-emerald-100" : "bg-red-100"
+                    confirmacao.tipo === "pago" ? "bg-teal-100" : "bg-red-100"
                   }`}
                 >
                   {confirmacao.tipo === "pago" ? (
-                    <DollarSign size={24} className="text-emerald-600" />
+                    <DollarSign size={24} className="text-teal-600" />
                   ) : (
                     <AlertTriangle size={24} className="text-red-600" />
                   )}

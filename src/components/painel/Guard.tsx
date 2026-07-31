@@ -28,3 +28,4 @@ export default async function Guard({
 
   return <>{children(profissional as Profissional)}</>;
 }
+

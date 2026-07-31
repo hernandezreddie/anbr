@@ -21,7 +21,7 @@ export function Nav({ config }: { config: ProfissionalConfig }) {
           )}
         </a>
         <div className="flex items-center gap-4">
-          <a href={`/${profissional.slug}/reservar`} className="btn-emerald btn-sm">
+          <a href={`/${profissional.slug}/reservar`} className="btn-primary btn-sm">
             Agendar
           </a>
         </div>

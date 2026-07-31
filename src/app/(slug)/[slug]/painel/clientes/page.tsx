@@ -72,7 +72,7 @@ export default function ClientesPage() {
     <>
       {aviso && (
         <div className="mb-4">
-          <p className="rounded-xl bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800">{aviso}</p>
+          <p className="rounded-xl bg-teal-50 px-4 py-2.5 text-sm text-teal-800">{aviso}</p>
         </div>
       )}
 
@@ -87,7 +87,7 @@ export default function ClientesPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar por nome…"
-          className="w-full rounded-xl border border-line bg-paper py-3 pl-10 pr-4 text-sm text-ink outline-none focus:border-emerald-600"
+          className="w-full rounded-xl border border-line bg-paper py-3 pl-10 pr-4 text-sm text-ink outline-none focus:border-teal-600"
         />
       </div>
 

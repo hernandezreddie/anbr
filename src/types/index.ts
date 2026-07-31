@@ -30,6 +30,71 @@ export interface ConfiguracaoVisual {
 
 export type TipoPreco = "por_hora" | "fixo";
 
+export interface AgentConfig {
+  id: string
+  profissional_id: string
+  enabled: boolean
+  system_prompt: string
+  model: string
+  temperature: number
+  max_tokens: number
+  tools_enabled: string[]
+  connectors: Record<string, boolean>
+  webhook_url: string
+  created_at: string
+  updated_at: string
+}
+
+export interface KnowledgeDoc {
+  id: string
+  profissional_id: string
+  filename: string
+  type: string
+  content: string
+  chunk_count: number
+  file_url: string
+  token_count: number
+  created_at: string
+}
+
+export interface AgentConversation {
+  id: string
+  profissional_id: string
+  channel: string
+  customer_name: string
+  customer_phone: string
+  customer_id: string
+  status: string
+  message_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface AgentMessage {
+  id: string
+  conversation_id: string
+  profissional_id: string
+  role: 'user' | 'assistant' | 'system' | 'tool'
+  content: string
+  tool_calls: any
+  tool_results: any
+  tokens_input: number
+  tokens_output: number
+  model: string
+  created_at: string
+}
+
+export interface AgentUsage {
+  id: string
+  profissional_id: string
+  date: string
+  tokens_input: number
+  tokens_output: number
+  messages: number
+  conversations: number
+  cost: number
+}
+
 export interface Servico {
   id: string
   profissional_id: string
@@ -147,4 +212,80 @@ export interface ProfissionalConfig {
   servicos: Servico[]
   adicionais: Adicional[]
   frequencias: Frequencia[]
+}
+
+export interface GoogleCalendarToken {
+  profissional_id: string
+  access_token: string
+  refresh_token: string
+  scope: string
+  token_type: string
+  expires_at: string
+  calendar_id: string
+  calendar_email: string
+}
+
+export interface GoogleCalendarEvent {
+  id: string
+  profissional_id: string
+  agendamento_id: string | null
+  google_event_id: string
+  calendar_id: string
+  event_data: any
+}
+
+export interface WhatsAppInstance {
+  id: string
+  profissional_id: string
+  instance_name: string
+  instance_token: string
+  evolution_api_url: string
+  evolution_api_key: string
+  connection_status: string
+  qr_code: string
+  phone_number: string
+}
+
+export interface WhatsAppMessage {
+  id: string
+  profissional_id: string
+  conversation_id: string | null
+  remote_jid: string
+  message_id: string
+  from_me: boolean
+  type: string
+  content: string
+  timestamp: number
+}
+
+export interface MetaConnection {
+  id: string
+  profissional_id: string
+  page_id: string
+  page_name: string
+  page_access_token: string
+  instagram_id: string
+  instagram_name: string
+}
+
+export interface MetaMessage {
+  id: string
+  profissional_id: string
+  platform: "messenger" | "instagram"
+  sender_id: string
+  recipient_id: string
+  message_id: string
+  content: string
+  type: string
+  timestamp: number
+}
+
+export interface CustomDomain {
+  id: string
+  profissional_id: string
+  domain: string
+  cloudflare_hostname_id: string
+  ssl_status: string
+  ssl_validation_records: any[]
+  verified: boolean
 }

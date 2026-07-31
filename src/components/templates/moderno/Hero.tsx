@@ -56,3 +56,4 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
     </section>
   );
 }
+

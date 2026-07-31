@@ -88,7 +88,7 @@ function Counter({
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => onChange(Math.max(0, value - 1))}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-neutral-200 bg-white text-lg font-bold transition-colors hover:border-emerald-400 hover:text-emerald-600"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-neutral-200 bg-white text-lg font-bold transition-colors hover:border-teal-400 hover:text-teal-600"
         >
           &minus;
         </motion.button>
@@ -96,7 +96,7 @@ function Counter({
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => onChange(value + 1)}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-neutral-200 bg-white text-lg font-bold transition-colors hover:border-emerald-400 hover:text-emerald-600"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-neutral-200 bg-white text-lg font-bold transition-colors hover:border-teal-400 hover:text-teal-600"
         >
           +
         </motion.button>
@@ -401,7 +401,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                         value={data}
                         onChange={(e) => setData(e.target.value)}
                         min={minDate}
-                        className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 pl-12 text-sm outline-none transition-all focus:border-emerald-500 focus:shadow-md"
+                        className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 pl-12 text-sm outline-none transition-all focus:border-teal-500 focus:shadow-md"
                         style={{ borderColor: data ? primary : undefined }}
                       />
                     </div>
@@ -413,7 +413,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                       <select
                         value={hora}
                         onChange={(e) => setHora(e.target.value)}
-                        className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 pl-12 text-sm outline-none transition-all focus:border-emerald-500 focus:shadow-md appearance-none"
+                        className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 pl-12 text-sm outline-none transition-all focus:border-teal-500 focus:shadow-md appearance-none"
                         style={{ borderColor: hora ? primary : undefined }}
                       >
                         <option value="">Selecione</option>
@@ -435,7 +435,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                     placeholder="Seu nome"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 text-sm outline-none transition-all focus:border-emerald-500 focus:shadow-md"
+                    className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 text-sm outline-none transition-all focus:border-teal-500 focus:shadow-md"
                     style={{ borderColor: nome ? primary : undefined }}
                   />
                   <input
@@ -443,7 +443,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                     placeholder="WhatsApp com DDD"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ""))}
-                    className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 text-sm outline-none transition-all focus:border-emerald-500 focus:shadow-md"
+                    className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 text-sm outline-none transition-all focus:border-teal-500 focus:shadow-md"
                     style={{ borderColor: whatsapp ? primary : undefined }}
                     maxLength={11}
                   />
@@ -452,7 +452,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                     placeholder="Seu endereço (opcional)"
                     value={endereco}
                     onChange={(e) => setEndereco(e.target.value)}
-                    className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 text-sm outline-none transition-all focus:border-emerald-500 focus:shadow-md"
+                    className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 text-sm outline-none transition-all focus:border-teal-500 focus:shadow-md"
                   />
                 </div>
               </motion.section>
@@ -502,7 +502,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                       {orcamento.desconto > 0 && (
                         <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                           <span className="text-sm opacity-60">Desconto fidelidade</span>
-                          <span className="text-sm font-medium text-emerald-600">
+                          <span className="text-sm font-medium text-teal-600">
                             &minus;R$ {orcamento.desconto.toFixed(2).replace(".", ",")}
                           </span>
                         </div>

@@ -19,7 +19,7 @@ export function Servicos({ config }: { config: ProfissionalConfig }) {
               Um cuidado para cada momento
             </h2>
           </div>
-          <a href={`/${profissional.slug}/reservar`} className="btn-emerald btn-lg shrink-0" style={{ backgroundColor: primary }}>
+          <a href={`/${profissional.slug}/reservar`} className="btn-primary btn-lg shrink-0" style={{ backgroundColor: primary }}>
             Ver preços
             <ArrowRight size={18} />
           </a>

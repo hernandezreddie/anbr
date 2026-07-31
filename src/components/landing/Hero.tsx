@@ -110,7 +110,7 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
           >
             <a
               href={`/${profissional.slug}/reservar`}
-              className="btn-emerald btn-lg"
+              className="btn-primary btn-lg"
               style={{ backgroundColor: primary }}
             >
               Ver meu preço em 1 minuto

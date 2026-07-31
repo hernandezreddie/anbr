@@ -58,7 +58,7 @@ export function QrPix({
         <p className="mt-4 break-all rounded-xl bg-ivory px-3 py-2 text-[11px] leading-relaxed text-ink-soft">
           {payload}
         </p>
-        <button onClick={copiar} className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-emerald-700 ${copiado ? "!bg-emerald-700" : ""}`}>
+        <button onClick={copiar} className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-teal-700 ${copiado ? "!bg-teal-700" : ""}`}>
           {copiado ? <Check size={16} /> : null}
           {copiado ? "Copiado!" : "Copiar Pix Copia e Cola"}
         </button>

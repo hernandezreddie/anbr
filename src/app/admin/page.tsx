@@ -22,12 +22,18 @@ export default async function AdminPage() {
 
   const adminDb = createAdminClient();
 
-  const [profissionais, profiles, servicos, agendamentos] = await Promise.all([
+  const [profissionais, profiles, servicos, agendamentos, domains] = await Promise.all([
     adminDb.from("profissionais").select("*").order("created_at", { ascending: false }),
     adminDb.from("profiles").select("profissional_id, role"),
     adminDb.from("servicos").select("profissional_id, id"),
     adminDb.from("agendamentos").select("profissional_id, status, valor"),
+    adminDb.from("custom_domains").select("profissional_id, domain, ssl_status, verified"),
   ]);
+
+  const domainMap = new Map<string, { domain: string; ssl_status: string; verified: boolean }>();
+  for (const d of (domains.data || []) as { profissional_id: string; domain: string; ssl_status: string; verified: boolean }[]) {
+    domainMap.set(d.profissional_id, d);
+  }
 
   const profMap = new Map<string, { role: string }>();
   for (const p of (profiles.data || []) as { profissional_id: string; role: string }[]) {
@@ -53,6 +59,7 @@ export default async function AdminPage() {
     role: profMap.get(p.id)?.role || "—",
     servicos: servCount.get(p.id) || 0,
     agendamentos: agStats.get(p.id) || { total: 0, receita: 0, pendentes: 0 },
+    customDomain: domainMap.get(p.id),
   }));
 
   return (
@@ -61,7 +68,7 @@ export default async function AdminPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <span className="font-serif text-lg font-semibold">AN.BR · Admin</span>
           <form action="/auth/signout" method="post">
-            <button className="text-sm text-ink-soft hover:text-ink">Sair</button>
+            <button className="btn-ghost btn-sm">Sair</button>
           </form>
         </div>
       </header>
@@ -110,6 +117,7 @@ export default async function AdminPage() {
                 <th className="px-5 py-4">Serviços</th>
                 <th className="px-5 py-4">Agend.</th>
                 <th className="px-5 py-4">Receita</th>
+                <th className="px-5 py-4">Domínio</th>
                 <th className="px-5 py-4">Status</th>
                 <th className="px-5 py-4">Ações</th>
               </tr>
@@ -122,7 +130,7 @@ export default async function AdminPage() {
                   <td className="px-5 py-4 text-sm text-ink-soft">{t.email}</td>
                   <td className="px-5 py-4">
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      t.role === "owner" ? "bg-emerald-100 text-emerald-700" :
+                      t.role === "owner" ? "bg-teal-100 text-teal-700" :
                       t.role === "admin" ? "bg-blue-100 text-blue-700" :
                       "bg-gray-100 text-gray-500"
                     }`}>{t.role}</span>
@@ -132,21 +140,54 @@ export default async function AdminPage() {
                   <td className="px-5 py-4 text-sm font-medium">
                     R$ {t.agendamentos.receita.toFixed(2).replace(".", ",")}
                   </td>
+                  <td className="px-5 py-4 text-xs">
+                    {t.customDomain ? (
+                      <span className={`inline-block rounded-full px-2 py-0.5 font-medium ${
+                        t.customDomain.verified ? "bg-teal-100 text-teal-700" : "bg-amber-100 text-amber-700"
+                      }`}>
+                        {t.customDomain.domain}
+                        {t.customDomain.verified ? " ✓" : " (pendente)"}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
                   <td className="px-5 py-4">
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      t.status === "ativo" ? "bg-emerald-100 text-emerald-700" :
+                      t.status === "ativo" ? "bg-teal-100 text-teal-700" :
                       t.status === "suspenso" ? "bg-amber-100 text-amber-700" :
                       "bg-gray-100 text-gray-500"
                     }`}>{t.status}</span>
                   </td>
                   <td className="px-5 py-4">
-                    <a
-                      href={`/${t.slug}/painel`}
-                      className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
-                      target="_blank"
-                    >
-                      Painel →
-                    </a>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <a
+                        href={`/${t.slug}`}
+                        target="_blank"
+                        className="btn-primary btn-sm"
+                      >
+                        Booking
+                      </a>
+                      <a
+                        href={`/${t.slug}/painel`}
+                        target="_blank"
+                        className="btn-outline btn-sm"
+                      >
+                        Painel
+                      </a>
+                      <a
+                        href={`/admin/agent/${t.slug}`}
+                        className="rounded-lg bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors inline-flex items-center gap-1"
+                      >
+                        AI Agent
+                      </a>
+                      <a
+                        href={`/admin/domains/${t.slug}`}
+                        className="btn-ghost btn-sm"
+                      >
+                        Domínio
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}

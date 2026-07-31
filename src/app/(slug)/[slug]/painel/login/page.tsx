@@ -39,10 +39,10 @@ export default function PainelLogin() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 to-white p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50 to-white p-4">
       <form onSubmit={handleLogin} className="w-full max-w-sm rounded-2xl border border-neutral-100 bg-white p-8 shadow-lg shadow-neutral-200/50">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-xl font-bold text-white shadow-sm">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-600 text-xl font-bold text-white shadow-sm">
             L
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900">AN.BR</h1>
@@ -61,7 +61,7 @@ export default function PainelLogin() {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
-            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:opacity-50"
+            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-teal-600 focus:ring-2 focus:ring-teal-100 disabled:opacity-50"
           />
           <input
             type="password"
@@ -70,12 +70,12 @@ export default function PainelLogin() {
             onChange={(e) => setSenha(e.target.value)}
             required
             disabled={loading}
-            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:opacity-50"
+            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-teal-600 focus:ring-2 focus:ring-teal-100 disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-50"
+            className="w-full rounded-xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-teal-700 active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>

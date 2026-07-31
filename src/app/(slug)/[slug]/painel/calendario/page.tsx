@@ -26,7 +26,7 @@ type Agendamento = {
 
 const STATUS_CLS: Record<string, string> = {
   solicitado: "bg-amber-400",
-  confirmado: "bg-emerald-500",
+  confirmado: "bg-teal-500",
   concluido: "bg-ink/40",
   cancelado: "bg-red-400",
 };
@@ -289,7 +289,7 @@ export default function CalendarioPage() {
     await load();
   }
 
-  const inp = "w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm text-ink outline-none focus:border-emerald-600";
+  const inp = "w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm text-ink outline-none focus:border-teal-600";
   const lbl = "mb-1 block text-xs font-semibold text-ink";
   const hojeIso = iso(hoje);
 
@@ -297,7 +297,7 @@ export default function CalendarioPage() {
     <>
       {aviso && (
         <div className="mb-4">
-          <p className="rounded-xl bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800">{aviso}</p>
+          <p className="rounded-xl bg-teal-50 px-4 py-2.5 text-sm text-teal-800">{aviso}</p>
         </div>
       )}
 
@@ -308,7 +308,7 @@ export default function CalendarioPage() {
           <h1 className="font-serif text-xl font-semibold text-ink sm:text-2xl">{MESES[mes]} {ano}</h1>
           <button onClick={() => mudarMes(1)} className="rounded-xl px-3 py-2 text-sm text-ink-soft hover:bg-gray-100 hover:text-ink">→</button>
         </div>
-        <button onClick={() => { setAno(hoje.getFullYear()); setMes(hoje.getMonth()); }} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">Hoje</button>
+        <button onClick={() => { setAno(hoje.getFullYear()); setMes(hoje.getMonth()); }} className="text-sm font-medium text-teal-600 hover:text-teal-700">Hoje</button>
       </div>
 
       {/* Grade do calendário */}
@@ -331,10 +331,10 @@ export default function CalendarioPage() {
                 key={dstr}
                 onClick={() => setDiaSel(dstr)}
                 className={`min-h-[68px] border-b border-r border-line p-1.5 text-left align-top transition-colors sm:min-h-[92px] ${
-                  foraMes ? "bg-ivory/40 text-ink-mute" : "hover:bg-emerald-50/50"
-                } ${diaSel === dstr ? "ring-2 ring-inset ring-emerald-500" : ""}`}
+                  foraMes ? "bg-ivory/40 text-ink-mute" : "hover:bg-teal-50/50"
+                } ${diaSel === dstr ? "ring-2 ring-inset ring-teal-500" : ""}`}
               >
-                <span className={`inline-grid h-6 w-6 place-items-center rounded-full text-xs font-semibold ${eHoje ? "bg-emerald-600 text-white" : foraMes ? "text-ink-mute" : "text-ink"}`}>
+                <span className={`inline-grid h-6 w-6 place-items-center rounded-full text-xs font-semibold ${eHoje ? "bg-teal-600 text-white" : foraMes ? "text-ink-mute" : "text-ink"}`}>
                   {d.getDate()}
                 </span>
                 <div className="mt-1 space-y-0.5">
@@ -346,8 +346,8 @@ export default function CalendarioPage() {
                   ))}
                   {lista.length < 3 &&
                     prev.slice(0, 3 - lista.length).map((p) => (
-                      <div key={p.key} className="flex items-center gap-1 truncate text-[10px] leading-tight text-emerald-700/80 sm:text-xs">
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full border border-emerald-500 bg-transparent" />
+                      <div key={p.key} className="flex items-center gap-1 truncate text-[10px] leading-tight text-teal-700/80 sm:text-xs">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full border border-teal-500 bg-transparent" />
                         <span className="truncate">{p.hora ? p.hora.slice(0, 5) + " " : ""}{p.nome}</span>
                       </div>
                     ))}
@@ -367,7 +367,7 @@ export default function CalendarioPage() {
           </span>
         ))}
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full border border-emerald-500 bg-transparent" /> Recorrente (previsão)
+          <span className="h-2 w-2 rounded-full border border-teal-500 bg-transparent" /> Recorrente (previsão)
         </span>
       </div>
 
@@ -378,7 +378,7 @@ export default function CalendarioPage() {
             <h2 className="font-serif text-lg font-semibold text-ink">
               {(() => { const [y, m, dd] = diaSel.split("-"); return `${dd}/${m}/${y}`; })()}
             </h2>
-            <button onClick={() => abrirNovo(diaSel)} className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700">
+            <button onClick={() => abrirNovo(diaSel)} className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-teal-700">
               <Plus size={15} /> Novo
             </button>
           </div>
@@ -387,7 +387,7 @@ export default function CalendarioPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {prevDoDia.map((p) => (
-                <div key={p.key} className="rounded-2xl border border-dashed border-emerald-300 bg-paper p-4 opacity-90">
+                <div key={p.key} className="rounded-2xl border border-dashed border-teal-300 bg-paper p-4 opacity-90">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-ink">{p.nome}</p>
@@ -395,8 +395,8 @@ export default function CalendarioPage() {
                         {p.hora ? p.hora.slice(0, 5) + " · " : ""}{p.servico ?? "Serviço"}
                       </p>
                     </div>
-                    <span className="flex shrink-0 items-center gap-1 text-xs text-emerald-700">
-                      <span className="h-2 w-2 rounded-full border border-emerald-500 bg-transparent" /> Recorrente
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-teal-700">
+                      <span className="h-2 w-2 rounded-full border border-teal-500 bg-transparent" /> Recorrente
                     </span>
                   </div>
                   <p className="mt-2 text-xs text-ink-mute">
@@ -409,11 +409,11 @@ export default function CalendarioPage() {
                         setMoverData(p.dataOriginal);
                         setMoverHora(p.hora ? p.hora.slice(0, 5) : "");
                       }}
-                      className="rounded-xl px-3 py-1.5 text-xs text-ink-soft hover:bg-gray-100 hover:text-ink"
+                      className="btn-outline btn-sm"
                     >
                       Mudou este dia
                     </button>
-                    <button onClick={() => setCancelarPrev(p)} className="px-3 py-1.5 text-xs text-ink-mute hover:text-red-600">
+                    <button onClick={() => setCancelarPrev(p)} className="btn-danger btn-sm">
                       Cancelar só este dia
                     </button>
                   </div>
@@ -434,8 +434,8 @@ export default function CalendarioPage() {
                   </div>
                   <p className="mt-2 font-serif text-lg font-semibold text-ink">{fmtR$(a.valor)}</p>
                   <div className="mt-3 flex gap-2">
-                    <button onClick={() => abrirEditar(a)} className="rounded-xl px-3 py-1.5 text-xs text-ink-soft hover:bg-gray-100 hover:text-ink">Editar</button>
-                    <button onClick={() => setConfirmarDel(a)} className="px-3 py-1.5 text-xs text-ink-mute hover:text-red-600">Excluir</button>
+                    <button onClick={() => abrirEditar(a)} className="btn-outline btn-sm">Editar</button>
+                    <button onClick={() => setConfirmarDel(a)} className="btn-danger btn-sm">Excluir</button>
                   </div>
                 </div>
               ))}
@@ -510,7 +510,7 @@ export default function CalendarioPage() {
                       type="button"
                       onClick={() => setForm({ ...form, status: s })}
                       className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
-                        form.status === s ? "border-emerald-600 bg-emerald-600 text-white" : "border-line bg-paper text-ink hover:border-emerald-600/50"
+                        form.status === s ? "border-teal-600 bg-teal-600 text-white" : "border-line bg-paper text-ink hover:border-teal-600/50"
                       }`}
                     >
                       {STATUS_LABEL[s]}
@@ -530,8 +530,8 @@ export default function CalendarioPage() {
             </div>
 
             <div className="mt-6 flex justify-end gap-2">
-              <button onClick={() => setForm(null)} disabled={busy} className="rounded-xl px-4 py-2 text-sm text-ink-soft transition-all hover:bg-gray-100 hover:text-ink disabled:opacity-50">Cancelar</button>
-              <button onClick={salvar} disabled={busy} className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-50">
+              <button onClick={() => setForm(null)} disabled={busy} className="btn-outline disabled:opacity-50">Cancelar</button>
+              <button onClick={salvar} disabled={busy} className="btn-primary disabled:opacity-50">
                 <Check size={15} /> {busy ? "Salvando…" : "Salvar"}
               </button>
             </div>
@@ -558,8 +558,8 @@ export default function CalendarioPage() {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setMoverPrev(null)} disabled={busy} className="rounded-xl px-4 py-2 text-sm text-ink-soft transition-all hover:bg-gray-100 hover:text-ink disabled:opacity-50">Voltar</button>
-              <button onClick={moverExcecao} disabled={busy || !moverData} className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-50">
+              <button onClick={() => setMoverPrev(null)} disabled={busy} className="btn-outline disabled:opacity-50">Voltar</button>
+              <button onClick={moverExcecao} disabled={busy || !moverData} className="btn-primary disabled:opacity-50">
                 {busy ? "Salvando…" : "Remarcar"}
               </button>
             </div>
@@ -576,7 +576,7 @@ export default function CalendarioPage() {
               {cancelarPrev.nome} — a série continua nas próximas.
             </p>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setCancelarPrev(null)} disabled={busy} className="rounded-xl px-4 py-2 text-sm text-ink-soft transition-all hover:bg-gray-100 hover:text-ink disabled:opacity-50">Voltar</button>
+              <button onClick={() => setCancelarPrev(null)} disabled={busy} className="btn-outline disabled:opacity-50">Voltar</button>
               <button onClick={cancelarExcecaoDia} disabled={busy} className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50">
                 {busy ? "…" : "Cancelar este dia"}
               </button>
@@ -592,7 +592,7 @@ export default function CalendarioPage() {
             <p className="font-serif text-lg font-semibold text-ink">Excluir este agendamento?</p>
             <p className="mt-2 text-sm text-ink-soft">{confirmarDel.cliente_nome} · {fmtR$(confirmarDel.valor)}. Não dá para desfazer.</p>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmarDel(null)} disabled={busy} className="rounded-xl px-4 py-2 text-sm text-ink-soft transition-all hover:bg-gray-100 hover:text-ink disabled:opacity-50">Cancelar</button>
+              <button onClick={() => setConfirmarDel(null)} disabled={busy} className="btn-outline disabled:opacity-50">Cancelar</button>
               <button onClick={excluir} disabled={busy} className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50">
                 {busy ? "Excluindo…" : "Excluir"}
               </button>

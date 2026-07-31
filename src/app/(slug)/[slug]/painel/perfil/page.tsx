@@ -68,8 +68,8 @@ const fontes = [
   { value: "DM Sans", label: "DM Sans (limpo)" },
 ];
 
-const inp = "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-600";
-const inpMini = "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600";
+const inp = "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-teal-600";
+const inpMini = "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600";
 
 function CardSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -327,7 +327,7 @@ export default function PerfilPage() {
             whileTap={{ scale: 0.95 }}
             onClick={salvarTudo}
             disabled={saving}
-            className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-teal-700 disabled:opacity-50"
           >
           <Save size={16} />
           {saving ? "Salvando..." : "Salvar alterações"}
@@ -336,7 +336,7 @@ export default function PerfilPage() {
       </div>
 
       {msg && (
-        <div className="rounded-xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">{msg}</div>
+        <div className="rounded-xl bg-teal-50 px-5 py-3 text-sm font-medium text-teal-700">{msg}</div>
       )}
 
       {/* Dados do Profissional + Cores + Tipografia — salvos com botão */}
@@ -395,7 +395,7 @@ export default function PerfilPage() {
           )}
           <div>
             <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-              className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-teal-700 disabled:opacity-50"
             >{uploading ? "Enviando..." : "Escolher imagem"}</button>
             <p className="mt-1.5 text-xs text-neutral-500">PNG, JPG ou WebP · Máx 5MB</p>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
@@ -418,7 +418,7 @@ export default function PerfilPage() {
                 updateConfigField("cor_secundaria", f.secondary);
               }}
                 className={`relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all ${
-                  selected ? "border-emerald-500 shadow-sm" : "border-neutral-200 hover:border-neutral-300"
+                  selected ? "border-teal-500 shadow-sm" : "border-neutral-200 hover:border-neutral-300"
                 }`}
               >
                 <div
@@ -478,7 +478,7 @@ export default function PerfilPage() {
                 className="h-10 w-10 cursor-pointer rounded-lg border border-neutral-200" />
               <input type="text" value={config?.cor_primaria || "#059669"}
                 onChange={(e) => updateConfigField("cor_primaria", e.target.value)}
-                className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 font-mono" />
+                className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600 font-mono" />
             </div>
           </div>
           <div>
@@ -489,7 +489,7 @@ export default function PerfilPage() {
                 className="h-10 w-10 cursor-pointer rounded-lg border border-neutral-200" />
               <input type="text" value={config?.cor_secundaria || "#1c1917"}
                 onChange={(e) => updateConfigField("cor_secundaria", e.target.value)}
-                className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 font-mono" />
+                className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600 font-mono" />
             </div>
           </div>
         </div>
@@ -527,51 +527,51 @@ export default function PerfilPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <input type="text" value={s.nome}
                       onChange={(e) => updateServico(s.id, "nome", e.target.value)}
-                      className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-base font-medium outline-none focus:border-emerald-600" />
+                      className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-base font-medium outline-none focus:border-teal-600" />
                     <div className="flex gap-2">
                       <select value={s.tipo_preco}
                         onChange={(e) => updateServico(s.id, "tipo_preco", e.target.value)}
-                        className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600">
+                        className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600">
                         <option value="por_hora">Por hora</option>
                         <option value="fixo">Preço fixo</option>
                       </select>
                       <button onClick={() => updateServico(s.id, "ativo", !s.ativo)}
-                        className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-all ${s.ativo ? "bg-emerald-100 text-emerald-700" : "bg-neutral-200 text-neutral-500"}`}>
+                        className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-all ${s.ativo ? "bg-teal-100 text-teal-700" : "bg-neutral-200 text-neutral-500"}`}>
                         {s.ativo ? "Ativo" : "Inativo"}
                       </button>
                     </div>
                   </div>
                   <textarea value={s.descricao}
                     onChange={(e) => updateServico(s.id, "descricao", e.target.value)} rows={2}
-                    className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" placeholder="Descrição do serviço" />
+                    className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600" placeholder="Descrição do serviço" />
                   <div className="flex flex-wrap gap-4">
                     {s.tipo_preco === "por_hora" ? (<>
                       <div><label className="text-xs text-neutral-500">R$/hora</label>
                         <input type="number" value={s.valor_hora}
                           onChange={(e) => updateServico(s.id, "valor_hora", Number(e.target.value))}
-                          className="mt-1 w-24 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                          className="mt-1 w-24 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600" /></div>
                       <div><label className="text-xs text-neutral-500">Horas mín</label>
                         <input type="number" value={s.horas_minimas}
                           onChange={(e) => updateServico(s.id, "horas_minimas", Number(e.target.value))}
-                          className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                          className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600" /></div>
                       <div><label className="text-xs text-neutral-500">Multiplicador</label>
                         <input type="number" step="0.1" value={s.multiplicador || 1}
                           onChange={(e) => updateServico(s.id, "multiplicador", Number(e.target.value))}
-                          className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                          className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600" /></div>
                     </>) : (<>
                       <div><label className="text-xs text-neutral-500">Preço fixo (R$)</label>
                         <input type="number" value={s.preco_fixo}
                           onChange={(e) => updateServico(s.id, "preco_fixo", Number(e.target.value))}
-                          className="mt-1 w-28 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                          className="mt-1 w-28 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600" /></div>
                       <div><label className="text-xs text-neutral-500">Duração (min)</label>
                         <input type="number" value={s.duracao_minutos}
                           onChange={(e) => updateServico(s.id, "duracao_minutos", Number(e.target.value))}
-                          className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                          className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600" /></div>
                     </>)}
                     <div><label className="text-xs text-neutral-500">Ordem</label>
                       <input type="number" value={s.ordem}
                         onChange={(e) => updateServico(s.id, "ordem", Number(e.target.value))}
-                        className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600" /></div>
+                        className="mt-1 w-20 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-600" /></div>
                   </div>
                 </div>
                 <button onClick={() => setConfirmarDelete({ tipo: "servico", id: s.id })}
@@ -583,7 +583,7 @@ export default function PerfilPage() {
           ))}
         </div>
         <button onClick={addServico}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 text-sm font-medium text-neutral-500 transition-all hover:border-emerald-400 hover:text-emerald-600">
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 text-sm font-medium text-neutral-500 transition-all hover:border-teal-400 hover:text-teal-600">
           <Plus size={16} /> Novo Serviço
         </button>
       </CardSection>
@@ -612,7 +612,7 @@ export default function PerfilPage() {
                 </div>
                 <div className="flex items-end gap-2">
                   <button onClick={() => updateAdicional(a.id, "ativo", !a.ativo)}
-                    className={`rounded-lg px-3 py-2 text-xs font-medium transition-all ${a.ativo ? "bg-emerald-100 text-emerald-700" : "bg-neutral-200 text-neutral-500"}`}>
+                    className={`rounded-lg px-3 py-2 text-xs font-medium transition-all ${a.ativo ? "bg-teal-100 text-teal-700" : "bg-neutral-200 text-neutral-500"}`}>
                     {a.ativo ? "Ativo" : "Inativo"}
                   </button>
                   <button onClick={() => setConfirmarDelete({ tipo: "adicional", id: a.id })}
@@ -625,7 +625,7 @@ export default function PerfilPage() {
           ))}
         </div>
         <button onClick={addAdicional}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 text-sm font-medium text-neutral-500 transition-all hover:border-emerald-400 hover:text-emerald-600">
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 text-sm font-medium text-neutral-500 transition-all hover:border-teal-400 hover:text-teal-600">
           <Plus size={16} /> Novo Adicional
         </button>
       </CardSection>
@@ -661,7 +661,7 @@ export default function PerfilPage() {
           ))}
         </div>
         <button onClick={addFrequencia}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 text-sm font-medium text-neutral-500 transition-all hover:border-emerald-400 hover:text-emerald-600">
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 py-3 text-sm font-medium text-neutral-500 transition-all hover:border-teal-400 hover:text-teal-600">
           <Plus size={16} /> Nova Frequência
         </button>
       </CardSection>
@@ -680,7 +680,7 @@ export default function PerfilPage() {
             </div>
             <div className="flex border-t border-neutral-100">
               <button onClick={() => setConfirmarDelete(null)}
-                className="flex-1 py-4 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-50">Voltar</button>
+                className="btn-outline flex-1 justify-center py-4">Voltar</button>
               <button onClick={() => {
                 if (confirmarDelete.tipo === "servico") deleteServico(confirmarDelete.id);
                 else if (confirmarDelete.tipo === "adicional") deleteAdicional(confirmarDelete.id);

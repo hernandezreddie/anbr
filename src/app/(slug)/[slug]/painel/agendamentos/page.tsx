@@ -23,21 +23,21 @@ type Agendamento = {
 
 const statusBadge: Record<string, { label: string; cls: string }> = {
   solicitado: { label: "Solicitado", cls: "bg-amber-100 text-amber-800" },
-  confirmado: { label: "Confirmado", cls: "bg-emerald-100 text-emerald-800" },
+  confirmado: { label: "Confirmado", cls: "bg-teal-100 text-teal-800" },
   concluido: { label: "Concluído", cls: "bg-neutral-100 text-neutral-500" },
   cancelado: { label: "Cancelado", cls: "bg-red-100 text-red-700" },
 };
 
 const statusDot: Record<string, string> = {
   solicitado: "bg-amber-500",
-  confirmado: "bg-emerald-500",
+  confirmado: "bg-teal-500",
   concluido: "bg-neutral-400",
   cancelado: "bg-red-500",
 };
 
 const statusColors: Record<string, string> = {
   solicitado: "bg-amber-500",
-  confirmado: "bg-emerald-500",
+  confirmado: "bg-teal-500",
   concluido: "bg-neutral-400",
   cancelado: "bg-red-500",
 };
@@ -108,14 +108,14 @@ export default function AgendamentosPage() {
           <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
           <input value={busca} onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por nome…"
-            className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-emerald-500" />
+            className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-teal-500" />
         </div>
         <div className="flex flex-wrap gap-2">
           {(["todos", "solicitado", "confirmado", "concluido", "cancelado"] as const).map((s) => (
             <button key={s} onClick={() => setFiltro(s)}
               className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all border ${
                 filtro === s
-                  ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                  ? "border-teal-600 bg-teal-50 text-teal-700"
                   : "border-neutral-200 text-neutral-500 hover:border-neutral-400"
               }`}>
               {s === "todos" ? "Todos" : statusBadge[s]?.label || s}
@@ -129,7 +129,7 @@ export default function AgendamentosPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="flex items-center gap-3 text-neutral-400">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-emerald-600" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-teal-600" />
             <span className="text-sm">Carregando...</span>
           </div>
         </div>
@@ -207,7 +207,7 @@ export default function AgendamentosPage() {
                   {nextStatus(a.status) && (
                     <motion.button whileTap={{ scale: 0.95 }}
                       onClick={() => alterarStatus(a.id, nextStatus(a.status)!)}
-                      className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-emerald-700">
+                      className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-teal-700">
                       <Check size={14} />
                       {nextStatus(a.status) === "confirmado" ? "Confirmar" : "Concluir"}
                     </motion.button>

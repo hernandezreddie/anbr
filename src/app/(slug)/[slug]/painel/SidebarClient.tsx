@@ -14,6 +14,7 @@ import {
   ExternalLink,
   ListOrdered,
   Settings,
+  Bot,
 } from "lucide-react";
 
 const links = [
@@ -23,6 +24,7 @@ const links = [
   { href: "/clientes", label: "Clientes", icon: Users, mobIcon: Users },
   { href: "/perfil", label: "Perfil", icon: Settings, mobIcon: Settings },
   { href: "/qr", label: "Meu QR", icon: QrCode, mobIcon: QrCode },
+  { href: "/agente", label: "AI Agent", icon: Bot, mobIcon: Bot },
 ];
 
 export function SidebarClient({ slug }: { slug: string }) {
@@ -67,7 +69,7 @@ export function SidebarClient({ slug }: { slug: string }) {
                   href={url}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
                     active
-                      ? "text-emerald-700"
+                      ? "text-teal-700"
                       : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800"
                   }`}
                   style={active ? { backgroundColor: `${primary}12`, color: primary } : {}}

@@ -21,7 +21,7 @@ export const TEMPLATES = {
     nome: "Clássico",
     slug: "classico",
     colors: {
-      primary: "#059673",
+      primary: "#14b8a6",
       secondary: "#1c1917",
       bg: "#faf8f5",
       paper: "#ffffff",

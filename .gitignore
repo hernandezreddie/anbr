@@ -35,6 +35,15 @@ yarn-error.log*
 .env.production
 .env.development
 
+# credentials vault (CONTIENE SECRETOS - NUNCA SUBIR)
+CREDENTIAL_VAULT.md
+
+# local logs & temp scripts
+.server.log
+replace.js
+replace.ps1
+replace.py
+
 # vercel
 .vercel
 

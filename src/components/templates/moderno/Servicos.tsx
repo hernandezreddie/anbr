@@ -65,3 +65,4 @@ export function Servicos({ config }: { config: ProfissionalConfig }) {
     </section>
   );
 }
+

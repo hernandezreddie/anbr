@@ -207,7 +207,7 @@ export default function CadastroPage() {
                 </div>
                 <div className="mt-8 flex justify-end">
                   <button onClick={() => setPasso(2)} disabled={!categoria}
-                    className="btn-emerald gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
+                    className="btn-primary gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
                     Continuar <ChevronRight size={16} />
                   </button>
                 </div>
@@ -230,7 +230,7 @@ export default function CadastroPage() {
                     <ArrowLeft size={16} /> Voltar
                   </button>
                   <button onClick={() => setPasso(3)} disabled={!form.nome || !form.email || !form.senha}
-                    className="flex-1 btn-emerald gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
+                    className="flex-1 btn-primary gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
                     Continuar <ChevronRight size={16} />
                   </button>
                 </div>
@@ -243,7 +243,7 @@ export default function CadastroPage() {
                   <div>
                     <label className="text-sm text-ink-soft mb-1.5 block">Seu link</label>
                     <div className="flex items-center gap-2 rounded-xl border border-[var(--color-line)] bg-white px-4 has-[input:focus]:border-[var(--color-primary)]">
-                      <span className="text-sm text-ink-soft shrink-0">livreta.com.br/</span>
+                      <span className="text-sm text-ink-soft shrink-0">autonexabrasil.com.br/</span>
                       <input type="text" placeholder="seu-negocio" value={form.slug}
                         onChange={(e) => updateField("slug", e.target.value)}
                         className="flex-1 py-3 text-sm outline-none bg-transparent" />
@@ -260,7 +260,7 @@ export default function CadastroPage() {
                     <ArrowLeft size={16} /> Voltar
                   </button>
                   <button onClick={() => setPasso(4)} disabled={!form.slug || !form.whatsapp || !form.cidade}
-                    className="flex-1 btn-emerald gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
+                    className="flex-1 btn-primary gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
                     Continuar <ChevronRight size={16} />
                   </button>
                 </div>
@@ -344,7 +344,7 @@ export default function CadastroPage() {
                     <ArrowLeft size={16} /> Voltar
                   </button>
                   <button onClick={() => setPasso(5)} disabled={!servicos.some((s) => s.nome.trim())}
-                    className="flex-1 btn-emerald gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
+                    className="flex-1 btn-primary gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
                     Continuar <ChevronRight size={16} />
                   </button>
                 </div>
@@ -373,7 +373,7 @@ export default function CadastroPage() {
                     <label className="text-sm text-ink-soft mb-3 block font-medium">Template visual</label>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { id: 1, nome: "Clássico", desc: "Verde elegante", bg: "from-emerald-50 to-white", accent: "bg-emerald-600" },
+                        { id: 1, nome: "Clássico", desc: "Verde elegante", bg: "from-teal-50 to-white", accent: "bg-teal-600" },
                         { id: 2, nome: "Moderno", desc: "Minimalista", bg: "from-neutral-50 to-white", accent: "bg-ink" },
                       ].map((t) => (
                         <button key={t.id}
@@ -398,7 +398,7 @@ export default function CadastroPage() {
                   {erro && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{erro}</div>}
 
                   <button onClick={handleSubmit} disabled={enviando}
-                    className="w-full btn-emerald justify-center gap-2 px-6 py-3.5 text-sm font-semibold disabled:opacity-50">
+                    className="w-full btn-primary justify-center gap-2 px-6 py-3.5 text-sm font-semibold disabled:opacity-50">
                     {enviando ? "Criando sistema..." : "Criar meu sistema"}
                     {!enviando && <ChevronRight size={16} />}
                   </button>
