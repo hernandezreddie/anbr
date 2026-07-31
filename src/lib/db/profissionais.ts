@@ -52,6 +52,7 @@ export const getProfissionalFullConfig = cache(async (slug: string) => {
       fonte_titulo: "Fraunces",
       fonte_corpo: "Inter",
       logo_url: "",
+      foto_fundo: "",
       slogan: profissional.slogan,
       fundo_estilo: "none",
     },

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, Filter, Search } from "lucide-react";
+import { Dica } from "@/components/painel/Dica";
 
 type Agendamento = {
   id: string;
@@ -101,6 +102,11 @@ export default function AgendamentosPage() {
         <h1 className="text-2xl font-bold tracking-tight text-neutral-900">Agendamentos</h1>
         <p className="mt-1 text-sm text-neutral-500">Gerencie todas as solicitações</p>
       </div>
+
+      <Dica>
+        Cada pedido novo do seu site cai aqui na hora. <strong>Toque em Confirmar</strong> para aceitar,
+        ou <strong>Cancelar</strong> se não puder atender naquele horário.
+      </Dica>
 
       {/* Search + Filter */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

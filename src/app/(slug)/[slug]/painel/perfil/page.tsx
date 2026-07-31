@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Plus, Trash2, Save } from "lucide-react";
 import { motion } from "framer-motion";
 import { FUNDOS, fundoStyle, type FundoEstilo } from "@/lib/backgrounds";
+import { Dica } from "@/components/painel/Dica";
 
 type Servico = {
   id: string;
@@ -46,6 +47,7 @@ type Configuracao = {
   fonte_titulo: string;
   fonte_corpo: string;
   logo_url: string;
+  foto_fundo: string;
   slogan: string;
   fundo_estilo: string;
 };
@@ -85,6 +87,7 @@ export default function PerfilPage() {
   const slug = pathname.split("/")[1];
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fundoInputRef = useRef<HTMLInputElement>(null);
 
   const [profissional, setProfissional] = useState<Profissional | null>(null);
   const [servicos, setServicos] = useState<Servico[]>([]);
@@ -301,14 +304,41 @@ export default function PerfilPage() {
     flash("Logo removido");
   };
 
+  const uploadFundo = async (file: File) => {
+    if (!config) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("profissional_id", config.profissional_id);
+    formData.append("destino", "fundo");
+
+    const res = await fetch("/api/upload/logo", { method: "POST", body: formData });
+    const data = await res.json();
+    if (res.ok) {
+      setConfig((prev) => prev ? { ...prev, foto_fundo: data.url } : null);
+      flash("Foto de fundo atualizada!");
+    } else flash(data.error || "Erro ao enviar foto");
+    setUploading(false);
+  };
+
+  const removeFundo = async () => {
+    if (!config?.foto_fundo) return;
+    setConfig((prev) => prev ? { ...prev, foto_fundo: "" } : null);
+    await fetch("/api/config/atualizar", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profissional_id: config!.profissional_id, foto_fundo: "" }),
+    });
+    flash("Foto de fundo removida");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900">Perfil</h1>
           <p className="mt-1 text-sm text-neutral-500">Personalize sua página e gerencie serviços</p>
-        </div>
-        <div className="flex items-center gap-3">
+        </div>        <div className="flex items-center gap-3">
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => {
@@ -335,10 +365,14 @@ export default function PerfilPage() {
         </div>
       </div>
 
+      <Dica>
+        Tudo que você mudar aqui aparece na sua página pública — cores, logo, foto de fundo e serviços.
+        Não esqueça de tocar em <strong>Salvar alterações</strong> no final.
+      </Dica>
+
       {msg && (
         <div className="rounded-xl bg-teal-50 px-5 py-3 text-sm font-medium text-teal-700">{msg}</div>
       )}
-
       {/* Dados do Profissional + Cores + Tipografia — salvos com botão */}
       <CardSection title="Dados do Profissional">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -400,6 +434,32 @@ export default function PerfilPage() {
             <p className="mt-1.5 text-xs text-neutral-500">PNG, JPG ou WebP · Máx 5MB</p>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} />
+          </div>
+        </div>
+      </CardSection>
+
+      {/* Foto de fundo */}
+      <CardSection title="Foto de fundo da página">
+        <div className="flex items-center gap-6">
+          {config?.foto_fundo ? (
+            <div className="relative h-28 w-48 overflow-hidden rounded-xl border border-neutral-200">
+              <img src={config.foto_fundo} alt="Foto de fundo" className="h-full w-full object-cover" />
+              <button onClick={removeFundo}
+                className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow"
+              >×</button>
+            </div>
+          ) : (
+            <div className="flex h-28 w-48 items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-neutral-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+          )}
+          <div>
+            <button onClick={() => fundoInputRef.current?.click()} disabled={uploading}
+              className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-teal-700 disabled:opacity-50"
+            >{uploading ? "Enviando..." : "Escolher foto"}</button>
+            <p className="mt-1.5 text-xs text-neutral-500">Aparece grande atrás do título da página, com leve transparência. PNG, JPG ou WebP · Máx 5MB</p>
+            <input ref={fundoInputRef} type="file" accept="image/*" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFundo(f); }} />
           </div>
         </div>
       </CardSection>

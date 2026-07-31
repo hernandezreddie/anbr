@@ -39,21 +39,36 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
   return (
     <section className="relative overflow-hidden pb-16 pt-32 sm:pb-24 sm:pt-44">
       <div className="absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        {configuracao.logo_url && (
-          <img
-            src={configuracao.logo_url}
-            alt=""
-            fetchPriority="high"
-            className="absolute right-0 top-0 h-full w-full object-cover object-[center_16%] sm:w-[54%] sm:object-[center_14%]"
-          />
-        )}
-        {/* Mobile: gradient veil for readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-bg)]/30 via-[var(--color-bg)]/45 to-[var(--color-bg)]/75 sm:hidden" />
-        {/* Desktop: soft lateral gradient (text left, image right) */}
-        <div className="absolute inset-0 hidden bg-gradient-to-r from-[var(--color-bg)] from-15% via-[var(--color-bg)]/60 to-transparent sm:block" />
-        {/* Top/bottom blends */}
-        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[var(--color-bg)] to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--color-bg)] to-transparent" />
+        {configuracao.foto_fundo ? (
+          <>
+            {/* Foto de fundo full-bleed com opacidade */}
+            <img
+              src={configuracao.foto_fundo}
+              alt=""
+              fetchPriority="high"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-[var(--color-bg)]/60" />
+            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--color-bg)] to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[var(--color-bg)]/80 to-transparent" />
+          </>
+        ) : configuracao.logo_url ? (
+          <>
+            <img
+              src={configuracao.logo_url}
+              alt=""
+              fetchPriority="high"
+              className="absolute right-0 top-0 h-full w-full object-cover object-[center_16%] sm:w-[54%] sm:object-[center_14%]"
+            />
+            {/* Mobile: gradient veil for readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-bg)]/30 via-[var(--color-bg)]/45 to-[var(--color-bg)]/75 sm:hidden" />
+            {/* Desktop: soft lateral gradient (text left, image right) */}
+            <div className="absolute inset-0 hidden bg-gradient-to-r from-[var(--color-bg)] from-15% via-[var(--color-bg)]/60 to-transparent sm:block" />
+            {/* Top/bottom blends */}
+            <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[var(--color-bg)] to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--color-bg)] to-transparent" />
+          </>
+        ) : null}
         {/* Subtle primary glow */}
         <div className="absolute -left-16 -top-16 h-72 w-72 rounded-full" style={{ background: primary + "15", filter: "blur(60px)" }} />
       </div>

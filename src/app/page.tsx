@@ -8,7 +8,7 @@ import {
   Check, ArrowRight, CalendarCheck, MessageCircle, Bot,
   Palette, LayoutDashboard, Bell, Moon, Zap, Shield,
   Wrench, Scissors, Stethoscope, Dumbbell, Brush, ChefHat,
-  Camera, MonitorSmartphone, HelpCircle, Globe,
+  Camera, MonitorSmartphone, HelpCircle, Globe, Hand, HeartPulse, Car, PawPrint,
 } from "lucide-react";
 
 type CategoriaServico = {
@@ -20,8 +20,12 @@ type CategoriaServico = {
 const categorias: CategoriaServico[] = [
   { icone: <Wrench size={28} />, nome: "Limpeza e Conservação", exemplos: "Diaristas, faxina, pós-obra" },
   { icone: <Scissors size={28} />, nome: "Beleza e Estética", exemplos: "Cabeleireiro, manicure, depilação" },
+  { icone: <Hand size={28} />, nome: "Manicure & Nail Designer", exemplos: "Alongamento em gel, fibra de vidro, nail art" },
   { icone: <Stethoscope size={28} />, nome: "Saúde e Bem-estar", exemplos: "Massagem, acupuntura, nutrição" },
+  { icone: <HeartPulse size={28} />, nome: "Clínica e Consultório", exemplos: "Médicos, dentistas, fisioterapia" },
   { icone: <Dumbbell size={28} />, nome: "Personal & Esportes", exemplos: "Personal trainer, pilates, yoga" },
+  { icone: <Car size={28} />, nome: "Automotivo", exemplos: "Lava-jato, polimento, mecânica" },
+  { icone: <PawPrint size={28} />, nome: "Pet Shop & Veterinária", exemplos: "Veterinário, banho e tosa, vacinas" },
   { icone: <Brush size={28} />, nome: "Artes e Ofícios", exemplos: "Tatuagem, pintura, artesanato" },
   { icone: <ChefHat size={28} />, nome: "Gastronomia", exemplos: "Chef em casa, buffet, confeitaria" },
   { icone: <Camera size={28} />, nome: "Fotografia e Eventos", exemplos: "Ensaio, festa, casamento" },

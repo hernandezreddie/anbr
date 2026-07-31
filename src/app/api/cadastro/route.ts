@@ -1,5 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getServicosPadrao, getSloganPadrao } from "@/lib/servicos-padrao";
+import {
+  getServicosPadrao,
+  getSloganPadrao,
+  getFrequenciasPadrao,
+  getAdicionaisPadrao,
+  getCategoriaPadrao,
+} from "@/lib/servicos-padrao";
 import type { CategoriaId } from "@/lib/servicos-padrao";
 import { gerarLogoSVG } from "@/lib/logo-padrao";
 
@@ -139,8 +145,23 @@ export async function POST(request: Request) {
     { nome: "Quinzenal", slug: "quinzenal", desconto: 10, ordem: 3 },
     { nome: "Semanal", slug: "semanal", desconto: 15, ordem: 4 },
   ];
-  for (const f of frequenciasPadrao) {
+
+  const cat = categoria ? getCategoriaPadrao(categoria as CategoriaId) : undefined;
+  const frequencias = cat?.frequencias?.length ? cat.frequencias : frequenciasPadrao;
+  for (const f of frequencias) {
     await supabase.from("frequencias").insert({ profissional_id: prof.id, ...f });
+  }
+
+  const adicionais = cat?.adicionais ?? [];
+  for (const a of adicionais) {
+    await supabase.from("adicionais").insert({
+      profissional_id: prof.id,
+      nome: a.nome,
+      descricao: "",
+      preco: a.preco,
+      horas: a.horas,
+      ativo: true,
+    });
   }
 
   return Response.json({ slug, nome });

@@ -3,6 +3,60 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 import { getPlanoAtivo, AGENDAMENTOS_GRATIS_POR_MES } from "@/lib/planos";
 
+export async function GET(request: NextRequest) {
+  try {
+    const slug = request.nextUrl.searchParams.get("slug");
+    const data = request.nextUrl.searchParams.get("data");
+
+    if (!slug || !data) {
+      return NextResponse.json({ error: "slug e data são obrigatórios" }, { status: 400 });
+    }
+
+    const supabase = await createClient();
+
+    const { data: prof } = await supabase
+      .from("profissionais")
+      .select("id")
+      .eq("slug", slug)
+      .single();
+
+    if (!prof) {
+      return NextResponse.json({ error: "Profissional não encontrado" }, { status: 404 });
+    }
+
+    const [ags, servicos] = await Promise.all([
+      supabase
+        .from("agendamentos")
+        .select("hora, servico_id, horas")
+        .eq("profissional_id", prof.id)
+        .eq("data", data)
+        .neq("status", "cancelado"),
+      supabase.from("servicos").select("id, tipo_preco, duracao_minutos"),
+    ]);
+
+    const durPorServico = new Map<string, number>();
+    for (const s of servicos.data || []) {
+      if (s.tipo_preco === "fixo" && s.duracao_minutos) {
+        durPorServico.set(s.id, s.duracao_minutos);
+      }
+    }
+
+    const ocupados = (ags.data || [])
+      .filter((a) => a.hora)
+      .map((a) => {
+        const minutos =
+          durPorServico.get(a.servico_id) ||
+          Math.max(30, Math.round((Number(a.horas) || 1) * 60));
+        return { inicio: a.hora.slice(0, 5), minutos };
+      });
+
+    return NextResponse.json({ ocupados });
+  } catch (err) {
+    console.error("Erro:", err);
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

@@ -25,6 +25,7 @@ export interface ConfiguracaoVisual {
   fonte_titulo: string
   fonte_corpo: string
   logo_url: string
+  foto_fundo: string
   slogan: string
   fundo_estilo: string
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { linkWhatsApp } from "@/lib/whatsapp";
 import { Search, Trash2, MessageCircle, MapPin } from "lucide-react";
+import { Dica } from "@/components/painel/Dica";
 
 type ClienteResumo = {
   nome: string;
@@ -79,6 +80,13 @@ export default function ClientesPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
         <p className="mt-1 text-ink-soft">{items.length} cliente(s) no total</p>
+      </div>
+
+      <div className="mb-6">
+        <Dica>
+          Seus clientes aparecem aqui automaticamente depois que agendam pelo site.
+          Toque no botão verde para mandar mensagem no WhatsApp.
+        </Dica>
       </div>
 
       <div className="relative mb-6">

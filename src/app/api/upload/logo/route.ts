@@ -7,6 +7,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const file = formData.get("file") as File;
   const profissionalId = formData.get("profissional_id") as string;
+  const destino = (formData.get("destino") as string) || "logo";
 
   if (!file || !profissionalId) {
     return Response.json({ error: "Arquivo e profissional_id obrigatórios" }, { status: 400 });
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
   }
 
   const ext = file.name.split(".").pop() || "png";
-  const fileName = `${profissionalId}/logo.${ext}`;
+  const fileName = `${profissionalId}/${destino}.${ext}`;
 
   const { error: uploadError } = await supabase.storage
     .from("logos")
@@ -35,10 +36,17 @@ export async function POST(request: NextRequest) {
     .from("logos")
     .getPublicUrl(fileName);
 
-  await supabase
-    .from("configuracoes")
-    .update({ logo_url: publicUrl.publicUrl })
-    .eq("profissional_id", profissionalId);
+  if (destino === "fundo") {
+    await supabase
+      .from("configuracoes")
+      .update({ foto_fundo: publicUrl.publicUrl })
+      .eq("profissional_id", profissionalId);
+  } else {
+    await supabase
+      .from("configuracoes")
+      .update({ logo_url: publicUrl.publicUrl })
+      .eq("profissional_id", profissionalId);
+  }
 
   return Response.json({ url: publicUrl.publicUrl });
 }

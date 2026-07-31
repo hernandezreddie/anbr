@@ -43,7 +43,7 @@ const planos: Plano[] = [
       { nome: "Google Calendar sincronizado", incluido: false },
       { nome: "Lembrete automático 12h antes", incluido: false },
       { nome: "Resumo diário matinal", incluido: false },
-      { nome: "Domínio personalizado", incluido: false },
+      { nome: "Domínio próprio", incluido: false },
       { nome: "Instagram DM + Facebook Messenger", incluido: false },
       { nome: "AI Agent", incluido: false },
     ],
@@ -52,16 +52,15 @@ const planos: Plano[] = [
     nome: "Profissional",
     slug: "profissional",
     precoMensal: 49,
-    desc: "Presença completa: domínio próprio, Google Calendar, redes sociais e IA.",
+    desc: "Presença completa: conecte seu domínio próprio, Google Calendar, redes sociais e IA.",
     idealPara: "Profissionais estabelecidos",
-    destaque: true,
     cor: "text-teal-600",
     icone: <Globe size={20} />,
     features: [
       { nome: "Agendamentos ilimitados", incluido: true },
       { nome: "Página pública de agendamento", incluido: true },
       { nome: "Link: autonexabrasil.com.br/seu-slug", incluido: true },
-      { nome: "Domínio personalizado com SSL grátis", incluido: true },
+      { nome: "Conecte seu próprio domínio", incluido: true, detalhe: "ex: suaempresa.com.br — nós configuramos o DNS para você" },
       { nome: "Receba pagamento via Pix", incluido: true },
       { nome: "Sem marca AN.BR", incluido: true },
       { nome: "Cores e logo personalizados", incluido: true },
@@ -80,14 +79,15 @@ const planos: Plano[] = [
     nome: "IA Premium",
     slug: "ia-premium",
     precoMensal: 99,
-    desc: "Automação total com AI Agent inteligente e todos os recursos.",
+    desc: "Automação total: o AI Agent atende seus clientes sozinho, dia e noite.",
     idealPara: "Automação com IA",
+    destaque: true,
     cor: "text-purple-600",
     icone: <Bot size={20} />,
     features: [
       { nome: "Agendamentos ilimitados", incluido: true },
       { nome: "Página pública de agendamento", incluido: true },
-      { nome: "Domínio personalizado com SSL grátis", incluido: true },
+      { nome: "Conecte seu próprio domínio", incluido: true, detalhe: "ex: suaempresa.com.br — nós configuramos o DNS para você" },
       { nome: "Receba pagamento via Pix", incluido: true },
       { nome: "Sem marca AN.BR", incluido: true },
       { nome: "Cores e logo personalizados", incluido: true },
@@ -129,8 +129,8 @@ const faqPrecos = [
     r: "Sua página não exibe nenhuma referência à AN.BR. O link e a página são totalmente seus, com sua marca.",
   },
   {
-    q: "Domínio personalizado é incluso?",
-    r: "Sim, nos planos Profissional e IA Premium. Ajudamos na configuração do DNS. O custo do registro do domínio (ex: R$ 40/ano) é por sua conta.",
+    q: "O que significa 'conectar meu domínio'?",
+    r: "Nós não vendemos domínios — você conecta um domínio que já é seu, ou registra em qualquer empresa de registro (ex: Registro.br, custo típico R$ 40/ano). Nós configuramos o DNS para você e o certificado SSL (cadeado) é grátis. Seu site passa a aparecer como suaempresa.com.br, sem nenhuma marca da AN.BR.",
   },
   {
     q: "Precisa de servidor para WhatsApp?",
@@ -312,7 +312,7 @@ function ComparacaoTable({ frequencia }: { frequencia: Frequencia }) {
     { label: "Lembrete 12h antes", valores: [false, true, true] },
     { label: "Resumo matinal diário", valores: [false, true, true] },
     { label: "Instagram DM + Facebook", valores: [false, true, true] },
-    { label: "Domínio personalizado", valores: [false, true, true] },
+    { label: "Domínio próprio conectado", valores: [false, true, true] },
     { label: "AI Agent mensagens/mês", valores: [false, "500", "2.000"] },
     { label: "Tokens excedentes IA", valores: [false, false, "R$ 0,005/msg"] },
     { label: "WhatsApp API", valores: [false, false, true] },
@@ -403,7 +403,7 @@ export default function PrecosPage() {
       {/* Toggle + Cards */}
       <Secao className="pt-0 sm:pt-0">
         <ToggleFrequencia frequencia={frequencia} onChange={setFrequencia} />
-        <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4 items-start">
+        <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-3 items-start">
           {planos.map((plano, i) => (
             <CardPlano key={plano.slug} plano={plano} frequencia={frequencia} indice={i} />
           ))}

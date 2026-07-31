@@ -4,9 +4,9 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, ArrowRight, Check, ChevronRight, User, Globe,
+  ArrowLeft, ArrowRight, Check, ChevronRight, User, Globe, Eye, EyeOff,
   Wrench, Scissors, Stethoscope, Dumbbell, Brush, ChefHat, Camera,
-  MonitorSmartphone, Sparkles, Briefcase,
+  MonitorSmartphone, Sparkles, Briefcase, Hand, HeartPulse, Car, PawPrint,
 } from "lucide-react";
 import { getServicosPadrao, getSloganPadrao, type CategoriaId } from "@/lib/servicos-padrao";
 import { Logo } from "@/components/Logo";
@@ -14,8 +14,12 @@ import { Logo } from "@/components/Logo";
 const categorias = [
   { id: "limpeza" as CategoriaId, icone: <Wrench size={24} />, nome: "Limpeza e Conservação" },
   { id: "beleza" as CategoriaId, icone: <Scissors size={24} />, nome: "Beleza e Estética" },
+  { id: "unhas" as CategoriaId, icone: <Hand size={24} />, nome: "Manicure & Nail Designer" },
   { id: "saude" as CategoriaId, icone: <Stethoscope size={24} />, nome: "Saúde e Bem-estar" },
+  { id: "clinica" as CategoriaId, icone: <HeartPulse size={24} />, nome: "Clínica e Consultório" },
   { id: "personal" as CategoriaId, icone: <Dumbbell size={24} />, nome: "Personal & Esportes" },
+  { id: "automotivo" as CategoriaId, icone: <Car size={24} />, nome: "Automotivo" },
+  { id: "veterinario" as CategoriaId, icone: <PawPrint size={24} />, nome: "Pet Shop & Veterinária" },
   { id: "artes" as CategoriaId, icone: <Brush size={24} />, nome: "Artes e Ofícios" },
   { id: "gastronomia" as CategoriaId, icone: <ChefHat size={24} />, nome: "Gastronomia" },
   { id: "fotografia" as CategoriaId, icone: <Camera size={24} />, nome: "Fotografia e Eventos" },
@@ -59,6 +63,7 @@ export default function CadastroPage() {
   const [servicos, setServicos] = useState<ServicoForm[]>([]);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [verSenha, setVerSenha] = useState(false);
 
   const slugFromNome = (nome: string) =>
     nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -97,6 +102,9 @@ export default function CadastroPage() {
     const data = await res.json();
     setEnviando(false);
     if (!res.ok) { setErro(data.error || "Erro ao criar sistema"); return; }
+    try {
+      sessionStorage.setItem("anbr_credenciais", JSON.stringify({ email: form.email, senha: form.senha }));
+    } catch { /* ignora */ }
     router.push(`/cadastro/sucesso?slug=${data.slug}`);
   };
 
@@ -181,8 +189,10 @@ export default function CadastroPage() {
             {passo === 1 && (
               <motion.div key="passo1" variants={containerVar} initial="hidden" animate="visible" exit="exit">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {categorias.map((cat) => (
-                    <button
+                  {categorias.map((cat) => {
+                    const selected = categoria === cat.id;
+                    return (
+                    <motion.button
                       key={cat.id}
                       onClick={() => {
   setCategoria(cat.id);
@@ -190,22 +200,35 @@ export default function CadastroPage() {
   setServicos(padrao.map((s, i) => ({ ...s, ordem: i + 1 })));
   updateField("slogan", getSloganPadrao(cat.id));
 }}
-                      className={`card flex flex-col items-center gap-3 p-5 text-center transition-all ${
-                        categoria === cat.id
-                          ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/20 shadow-sm"
+                      whileTap={{ scale: 0.95 }}
+                      animate={{ scale: selected ? 1.03 : 1 }}
+                      className={`card relative flex flex-col items-center gap-3 p-5 text-center transition-all ${
+                        selected
+                          ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/20 shadow-md shadow-[var(--color-primary)]/10"
                           : "hover:border-[var(--color-primary)]/40 hover:shadow-sm"
                       }`}
                     >
+                      {selected && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                          className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-primary)]"
+                        >
+                          <Check size={12} className="text-white" />
+                        </motion.span>
+                      )}
                       <div className={`flex h-12 w-12 items-center justify-center rounded-xl transition-all ${
-                        categoria === cat.id
+                        selected
                           ? "bg-[var(--color-primary)] text-white"
                           : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
                       }`}>
                         {cat.icone}
                       </div>
                       <span className="text-sm font-medium text-ink leading-tight">{cat.nome}</span>
-                    </button>
-                  ))}
+                    </motion.button>
+                    );
+                  })}
                 </div>
                 <div className="mt-8 flex justify-end">
                   <button onClick={() => setPasso(2)} disabled={!categoria}
@@ -223,8 +246,14 @@ export default function CadastroPage() {
                     onChange={(e) => updateField("nome", e.target.value)} className={inp} />
                   <input type="email" placeholder="Seu email" value={form.email}
                     onChange={(e) => updateField("email", e.target.value)} className={inp} />
-                  <input type="password" placeholder="Sua senha" value={form.senha}
-                    onChange={(e) => updateField("senha", e.target.value)} className={inp} />
+                  <div className="relative">
+                    <input type={verSenha ? "text" : "password"} placeholder="Sua senha" value={form.senha}
+                      onChange={(e) => updateField("senha", e.target.value)} className={inp} />
+                    <button type="button" onClick={() => setVerSenha((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors">
+                      {verSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="mt-6 flex gap-3">
                   <button onClick={() => setPasso(1)}
@@ -381,23 +410,52 @@ export default function CadastroPage() {
                       {[
                         { id: 1, nome: "Clássico", desc: "Verde elegante", bg: "from-teal-50 to-white", accent: "bg-teal-600" },
                         { id: 2, nome: "Moderno", desc: "Minimalista", bg: "from-neutral-50 to-white", accent: "bg-ink" },
-                      ].map((t) => (
-                        <button key={t.id}
-                          onClick={() => setForm((prev) => ({ ...prev, template_id: t.id }))}
-                          className={`card overflow-hidden text-left transition-all ${
-                            form.template_id === t.id ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/20 shadow-sm" : ""
-                          }`}
-                        >
-                          <div className={`h-20 bg-gradient-to-br ${t.bg} p-4 flex flex-col justify-end`}>
-                            <div className={`h-5 w-24 rounded ${t.accent} opacity-80`} />
-                            <div className="mt-1 h-2 w-32 rounded bg-[var(--color-line)]/50" />
-                          </div>
-                          <div className="p-4">
-                            <p className="font-semibold text-sm text-ink">{t.nome}</p>
-                            <p className="text-xs text-ink-soft mt-0.5">{t.desc}</p>
-                          </div>
-                        </button>
-                      ))}
+                      ].map((t) => {
+                        const selected = form.template_id === t.id;
+                        return (
+                          <motion.button
+                            key={t.id}
+                            onClick={() => setForm((prev) => ({ ...prev, template_id: t.id }))}
+                            whileTap={{ scale: 0.97 }}
+                            animate={{ scale: selected ? 1.02 : 1 }}
+                            className={`relative overflow-hidden rounded-2xl border-2 text-left transition-all ${
+                              selected
+                                ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/25 shadow-md shadow-[var(--color-primary)]/10"
+                                : "border-transparent bg-white hover:border-[var(--color-primary)]/40"
+                            }`}
+                          >
+                            {selected && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                                className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-primary)] shadow-md"
+                              >
+                                <Check size={15} className="text-white" />
+                              </motion.div>
+                            )}
+                            <div className={`h-20 bg-gradient-to-br ${t.bg} p-4 flex flex-col justify-end`}>
+                              <div className={`h-5 w-24 rounded ${t.accent} opacity-80`} />
+                              <div className="mt-1 h-2 w-32 rounded bg-[var(--color-line)]/50" />
+                            </div>
+                            <div className="p-4">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="font-semibold text-sm text-ink">{t.nome}</p>
+                                {selected && (
+                                  <motion.span
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="rounded-full bg-[var(--color-primary)]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-primary)]"
+                                  >
+                                    Selecionado
+                                  </motion.span>
+                                )}
+                              </div>
+                              <p className="text-xs text-ink-soft mt-0.5">{t.desc}</p>
+                            </div>
+                          </motion.button>
+                        );
+                      })}
                     </div>
                   </div>
 

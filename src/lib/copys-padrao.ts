@@ -326,6 +326,158 @@ export const COPYS_PADRAO: Record<CategoriaId, CopyPadrao> = {
     cta_btn: "Agendar sessão",
     whatsapp_msg: "Olá {nome}! Vi seu site e gostaria de agendar uma sessão.",
   },
+  unhas: {
+    hero_titulo: ["Unhas impecáveis,", "do seu jeito."],
+    hero_destaque: "impecáveis",
+    hero_sub:
+      "Sou {nome}. Alongamento, esmaltação em gel e nail art com acabamento perfeito — agenda online e horário garantido.",
+    hero_cta1: "Agendar meu horário",
+    hero_cta2: "Tirar dúvida no WhatsApp",
+    confianca_eyebrow: "Por que escolher {nome}",
+    confianca_titulo: "Manicure e nail designer de confiança em {cidade}.",
+    confianca_hooks: [
+      {
+        titulo: "Acabamento que dura",
+        texto:
+          "Técnica de verdade: base, cor e finalização bem feitas para suas unhas durarem semanas, não dias.",
+      },
+      {
+        titulo: "Horário marcado, sem fila",
+        texto:
+          "Agende online e chegue direto: seu horário é seu. Nada de esperar na sala de espera.",
+      },
+      {
+        titulo: "Hidratação e cuidado em cada detalhe",
+        texto:
+          "Cutículas, esmaltação e decoração feitas com carinho — suas unhas ficam lindas e saudáveis.",
+      },
+    ],
+    servicos_titulo: "Meus serviços",
+    servicos_sub: "Escolha o serviço ideal para você",
+    depoimentos: [
+      { nome: "Camila R.", bairro: "Bigorrilho", texto: "Meu alongamento de gel está perfeito há 3 semanas. Atendimento impecável e no horário certinho." },
+      { nome: "Fernanda L.", bairro: "Cristo Rei", texto: "Unha de fibra de vidro mais linda que já fiz. Ela capricha em cada detalhe, recomendo demais." },
+      { nome: "Patrícia M.", bairro: "Batel", texto: "Agendei pelo site, fui atendida no horário e saí com as unhas impecáveis. Já virei cliente fixa." },
+    ],
+    cta_titulo: "Bora marcar seu horário?",
+    cta_sub: "Agende online agora: seu horário confirmado no WhatsApp, sem fila e sem espera.",
+    cta_btn: "Agendar horário",
+    whatsapp_msg: "Olá {nome}! Vi seu site e quero agendar um horário para as unhas.",
+  },
+  clinica: {
+    hero_titulo: ["Sua saúde com", "horário marcado."],
+    hero_destaque: "horário marcado",
+    hero_sub:
+      "Consulta e acompanhamento na Clínica {nome}, em {cidade} — agende online e evite filas e esperas na recepção.",
+    hero_cta1: "Agendar consulta",
+    hero_cta2: "Tirar dúvida no WhatsApp",
+    confianca_eyebrow: "Por que escolher {nome}",
+    confianca_titulo: "Atendimento sério, do agendamento ao tratamento.",
+    confianca_hooks: [
+      {
+        titulo: "Sem espera na recepção",
+        texto:
+          "Seu horário é reservado só para você: chegue na hora marcada e seja atendido pontualmente.",
+      },
+      {
+        titulo: "Acompanhamento contínuo",
+        texto:
+          "Registro completo do seu histórico e lembretes automáticos de retorno e exames no WhatsApp.",
+      },
+      {
+        titulo: "Confirmação e lembretes automáticos",
+        texto:
+          "Confirmação na hora do agendamento e lembrete no dia anterior — você nunca mais perde uma consulta.",
+      },
+    ],
+    servicos_titulo: "Nossos serviços",
+    servicos_sub: "Escolha o atendimento ideal para você",
+    depoimentos: [
+      { nome: "Marcos V.", bairro: "Portão", texto: "Agendei online e fui atendido na hora, sem espera. Atendimento atencioso do início ao fim." },
+      { nome: "Elaine S.", bairro: "Água Verde", texto: "Recebi confirmação e lembrete no WhatsApp. Nunca mais esqueci uma consulta." },
+      { nome: "Rodrigo F.", bairro: "Campina do Siqueira", texto: "Praticidade total: marquei a consulta em 1 minuto pelo site e o atendimento foi excelente." },
+    ],
+    cta_titulo: "Agende sua consulta",
+    cta_sub: "Escolha o horário que cabe na sua rotina. Confirmação imediata no WhatsApp.",
+    cta_btn: "Agendar consulta",
+    whatsapp_msg: "Olá {nome}! Vi o site da clínica e gostaria de agendar uma consulta.",
+  },
+  automotivo: {
+    hero_titulo: ["Seu carro", "sempre no ponto."],
+    hero_destaque: "no ponto",
+    hero_sub:
+      "Lavagem, detalhamento, polimento e mecânica com {nome} — agende online e deixe seu carro nas melhores mãos.",
+    hero_cta1: "Agendar serviço",
+    hero_cta2: "Pedir orçamento no WhatsApp",
+    confianca_eyebrow: "Por que escolher {nome}",
+    confianca_titulo: "Cuidado de verdade com o seu veículo.",
+    confianca_hooks: [
+      {
+        titulo: "Agendamento sem fila",
+        texto:
+          "Escolha o dia e horário online: chegue, entregue a chave e receba no prazo combinado.",
+      },
+      {
+        titulo: "Produtos e peças de qualidade",
+        texto:
+          "Trabalhamos com produtos certificados e peças originais — sem atalhos no seu carro.",
+      },
+      {
+        titulo: "Lembrete na hora certa",
+        texto:
+          "Confirmação e lembrete automáticos no WhatsApp: revisão, troca de óleo ou lavagem nunca mais passam da data.",
+      },
+    ],
+    servicos_titulo: "Meus serviços",
+    servicos_sub: "Escolha o serviço ideal para o seu veículo",
+    depoimentos: [
+      { nome: "André C.", bairro: "Bigorrilho", texto: "Agendei a lavagem completa online, entreguei o carro e busquei no horário. Impecável." },
+      { nome: "Sérgio T.", bairro: "Batel", texto: "Revisão e troca de óleo sem espera. Agendamento online facilita muito a rotina." },
+      { nome: "Paula N.", bairro: "Mercês", texto: "Polimento nota 10. Carro saiu brilhando e eles ainda mandam lembrete para a próxima manutenção." },
+    ],
+    cta_titulo: "Agende o serviço do seu carro",
+    cta_sub: "Escolha o serviço e o horário — confirmação na hora no WhatsApp.",
+    cta_btn: "Agendar serviço",
+    whatsapp_msg: "Olá {nome}! Vi seu site e gostaria de agendar um serviço para meu carro.",
+  },
+  veterinario: {
+    hero_titulo: ["Cuidado de verdade", "para quem você ama."],
+    hero_destaque: "Cuidado de verdade",
+    hero_sub:
+      "Consulta, vacinação, banho e tosa com {nome} — agende online e dê ao seu pet o cuidado que ele merece.",
+    hero_cta1: "Agendar atendimento",
+    hero_cta2: "Tirar dúvida no WhatsApp",
+    confianca_eyebrow: "Por que escolher {nome}",
+    confianca_titulo: "Seu pet bem cuidado, do agendamento ao atendimento.",
+    confianca_hooks: [
+      {
+        titulo: "Atendimento pontual",
+        texto:
+          "Seu horário é reservado para o seu pet: nada de espera longa nem fila no consultório.",
+      },
+      {
+        titulo: "Carteirinha de vacinação em dia",
+        texto:
+          "Lembretes automáticos no WhatsApp para vacinas, retornos e banho — você nunca esquece.",
+      },
+      {
+        titulo: "Amor e técnica em cada visita",
+        texto:
+          "Equipe dedicada e paciente que trata o seu pet com o carinho que ele merece.",
+      },
+    ],
+    servicos_titulo: "Nossos serviços",
+    servicos_sub: "Escolha o serviço ideal para o seu pet",
+    depoimentos: [
+      { nome: "Beatriz A.", bairro: "Campo Comprido", texto: "Agendei o banho e tosa online e o atendimento foi impecável. Meu cachorro saiu lindo!" },
+      { nome: "Carlos M.", bairro: "Fazendinha", texto: "Vacinação sem espera e recebo lembrete de retorno no WhatsApp. Recomendo." },
+      { nome: "Luciana P.", bairro: "Água Verde", texto: "Consulta agendada em 1 minuto e atendimento super atencioso com a minha gata." },
+    ],
+    cta_titulo: "Agende o cuidado do seu pet",
+    cta_sub: "Consulta, banho ou vacina — escolha o horário e confirme no WhatsApp.",
+    cta_btn: "Agendar atendimento",
+    whatsapp_msg: "Olá {nome}! Vi seu site e gostaria de agendar um atendimento para meu pet.",
+  },
   outro: {
     hero_titulo: ["Atendimento profissional,", "do jeito que você merece."],
     hero_destaque: "profissional",

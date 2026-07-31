@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ProfissionalConfig, Servico, Adicional, Frequencia } from "@/types";
 import { estimar } from "@/lib/precos";
 import { mensagemReserva, linkWhatsApp } from "@/lib/whatsapp";
-import { Calendar, Clock, Check, ChevronRight, Sparkles, Star } from "lucide-react";
+import { Calendar, Clock, Check, ChevronRight, Sparkles, Star, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 const round05 = (n: number) => Math.round(n * 2) / 2;
 
@@ -156,6 +156,8 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const secondary = config.configuracao?.cor_secundaria || "#1c1917";
   const headingFont = config.configuracao?.fonte_titulo || "Fraunces";
   const bodyFont = config.configuracao?.fonte_corpo || "Inter";
+  const categoria = config.profissional.categoria || "outro";
+  const usaComodos = categoria === "limpeza";
 
   const [servicoId, setServicoId] = useState<string>(config.servicos[0]?.id || "");
   const [quartos, setQuartos] = useState(0);
@@ -168,13 +170,15 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const [data, setData] = useState("");
   const [hora, setHora] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+  const [ocupados, setOcupados] = useState<{ inicio: string; minutos: number }[]>([]);
 
   const servico = config.servicos.find((s) => s.id === servicoId);
   const frequencia = config.frequencias.find((f) => f.slug === freqId) || null;
   const isPrecoFixo = servico?.tipo_preco === "fixo";
 
   const horasBase = servico && !isPrecoFixo
-    ? round05(servico.horas_base + quartos * 0.75 + banheiros * 0.75)
+    ? round05(servico.horas_base + (usaComodos ? quartos * 0.75 + banheiros * 0.75 : 0))
     : 0;
 
   const adicionaisFiltrados = config.adicionais.filter(
@@ -190,6 +194,58 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
         frequencia,
       })
     : null;
+
+  const horaParaMin = (h: string) => {
+    const [hh, mm] = h.split(":").map(Number);
+    return hh * 60 + mm;
+  };
+
+  const WORK_INICIO = 8 * 60;
+  const WORK_FIM = 20 * 60;
+
+  const duracaoMin = servico
+    ? isPrecoFixo
+      ? servico.duracao_minutos || 60
+      : Math.max(30, Math.round((orcamento?.horas || 1) * 60))
+    : 60;
+
+  const minDate = new Date().toISOString().split("T")[0];
+
+  const indisponivel = (h: string): boolean => {
+    const inicio = horaParaMin(h);
+    if (inicio < WORK_INICIO || inicio + duracaoMin > WORK_FIM) return true;
+    if (data === minDate) {
+      const agora = new Date().getHours() * 60 + new Date().getMinutes();
+      if (inicio <= agora) return true;
+    }
+    return ocupados.some((o) => {
+      const oIni = horaParaMin(o.inicio);
+      const oFim = oIni + o.minutos;
+      return inicio < oFim && inicio + duracaoMin > oIni;
+    });
+  };
+
+  useEffect(() => {
+    if (!data) {
+      setOcupados([]);
+      return;
+    }
+    let ativo = true;
+    fetch(`/api/agendamentos?slug=${config.profissional.slug}&data=${data}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (ativo) setOcupados(Array.isArray(j?.ocupados) ? j.ocupados : []);
+      })
+      .catch(() => {});
+    return () => {
+      ativo = false;
+    };
+  }, [data, config.profissional.slug]);
+
+  useEffect(() => {
+    if (hora && indisponivel(hora)) setHora("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [servicoId, data, ocupados, duracaoMin]);
 
   const handleSubmit = async () => {
     if (!orcamento || !nome || !whatsapp || !data || !hora) return;
@@ -222,6 +278,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
         }),
       });
       if (!res.ok) throw new Error("Falha ao salvar agendamento");
+      setEnviado(true);
     } catch (err) {
       console.error("Erro ao salvar:", err);
     }
@@ -249,8 +306,6 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
     return slots;
   }, []);
 
-  const minDate = new Date().toISOString().split("T")[0];
-
   let passo = 2;
   if (isPrecoFixo) passo = 1;
 
@@ -273,6 +328,15 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
           <div className="absolute -bottom-10 -left-10 h-60 w-60 rounded-full bg-white" />
         </div>
         <div className="container-x relative">
+          <motion.a
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            href={`/${config.profissional.slug}`}
+            className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium text-white backdrop-blur transition-all hover:bg-white/25"
+          >
+            <ArrowLeft size={15} />
+            Voltar para o site
+          </motion.a>
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -302,6 +366,51 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
       </div>
 
       <div className="container-x -mt-8 pb-16">
+        {enviado ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-auto max-w-lg"
+          >
+            <div className="overflow-hidden rounded-3xl bg-white shadow-xl shadow-neutral-200/50">
+              <div className="p-8 text-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.15 }}
+                  className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full"
+                  style={{ backgroundColor: `${primary}15` }}
+                >
+                  <CheckCircle2 size={34} style={{ color: primary }} />
+                </motion.div>
+                <h2 className="text-2xl font-bold" style={{ fontFamily: headingFont }}>
+                  Solicitação enviada!
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-neutral-500">
+                  Abrimos o WhatsApp para você confirmar o pedido com{" "}
+                  <b className="text-neutral-800">{config.profissional.primeiro_nome}</b>.
+                  Se o WhatsApp não abriu, toque no botão abaixo.
+                </p>
+                <a
+                  href={linkWhatsApp(`Olá ${config.profissional.primeiro_nome}! Confirmando meu agendamento que enviei pelo site.`, config.profissional.whatsapp)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-semibold text-white transition-transform hover:scale-[1.01]"
+                  style={{ backgroundColor: primary }}
+                >
+                  Abrir WhatsApp
+                </a>
+                <a
+                  href={`/${config.profissional.slug}`}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-neutral-200 px-6 py-3.5 text-sm font-medium text-neutral-600 transition-all hover:border-neutral-300 hover:bg-neutral-50"
+                >
+                  <ArrowLeft size={15} />
+                  Voltar para o site
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -327,8 +436,8 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                 </div>
               </motion.section>
 
-              {/* Step 2: Rooms (only for por_hora) */}
-              {servico && !isPrecoFixo && (
+              {/* Step 2: Rooms (only for limpeza por_hora) */}
+              {servico && !isPrecoFixo && usaComodos && (
                 <motion.section
                   variants={itemVariants}
                   initial="hidden"
@@ -417,11 +526,21 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                         style={{ borderColor: hora ? primary : undefined }}
                       >
                         <option value="">Selecione</option>
-                        {horarios.map((h) => (
-                          <option key={h} value={h}>{h}</option>
-                        ))}
+                        {horarios.map((h) => {
+                          const ocupado = indisponivel(h);
+                          return (
+                            <option key={h} value={h} disabled={ocupado}>
+                              {h}{ocupado ? " — indisponível" : ""}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
+                    {data && horarios.every((h) => indisponivel(h)) && (
+                      <p className="mt-2 text-xs font-medium" style={{ color: "#d97706" }}>
+                        Sem horários livres neste dia — escolha outra data.
+                      </p>
+                    )}
                   </div>
                 </div>
               </motion.section>
@@ -565,6 +684,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
             </div>
           </div>
         </motion.div>
+        )}
       </div>
     </div>
   );

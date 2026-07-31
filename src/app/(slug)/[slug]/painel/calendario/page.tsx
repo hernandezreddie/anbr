@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ocorrenciasRecorrentes } from "@/lib/agenda";
 import { Plus, X, Check } from "lucide-react";
+import { Dica } from "@/components/painel/Dica";
 
 type Servico = { id: number; nome: string; valor: number; ativo: boolean };
 type Agendamento = {
@@ -309,6 +310,13 @@ export default function CalendarioPage() {
           <button onClick={() => mudarMes(1)} className="rounded-xl px-3 py-2 text-sm text-ink-soft hover:bg-gray-100 hover:text-ink">→</button>
         </div>
         <button onClick={() => { setAno(hoje.getFullYear()); setMes(hoje.getMonth()); }} className="text-sm font-medium text-teal-600 hover:text-teal-700">Hoje</button>
+      </div>
+
+      <div className="mb-4">
+        <Dica>
+          Toque em um dia para ver os horários e criar um agendamento na mão.
+          As bolinhas coloridas mostram o status de cada serviço.
+        </Dica>
       </div>
 
       {/* Grade do calendário */}

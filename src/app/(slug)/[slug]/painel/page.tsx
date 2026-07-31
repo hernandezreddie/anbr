@@ -1,5 +1,6 @@
 "use client";
 
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
@@ -25,7 +26,11 @@ import {
   Sparkles,
   ArrowUpRight,
   MoreHorizontal,
+  Palette,
+  QrCode,
+  ListOrdered,
 } from "lucide-react";
+import Link from "next/link";
 
 type Agendamento = {
   id: string;
@@ -415,6 +420,78 @@ function EmptyState({ icon: Icon, text }: { icon: any; text: string }) {
   );
 }
 
+function GuiaPainel({ slug, onFechar }: { slug: string; onFechar: () => void }) {
+  const base = `/${slug}/painel`;
+  const passos = [
+    {
+      href: `${base}/perfil`,
+      icon: <Palette size={18} />,
+      titulo: "1. Deixe sua página bonita",
+      texto: "Coloque suas cores, seu logo e uma foto de fundo. É a vitrine do seu negócio.",
+    },
+    {
+      href: `${base}/qr`,
+      icon: <QrCode size={18} />,
+      titulo: "2. Imprima o QR e coloque no balcão",
+      texto: "O cliente aponta a câmera e agenda sozinho. Você não precisa anotar nada.",
+    },
+    {
+      href: `${base}`,
+      icon: <ListOrdered size={18} />,
+      titulo: "3. Confirme os pedidos aqui",
+      texto: "Cada agendamento novo aparece nesta tela. Um toque para confirmar, outro para concluir.",
+    },
+    {
+      href: `${base}`,
+      icon: <MessageCircle size={18} />,
+      titulo: "4. Edite, cancele e converse",
+      texto: "Mude o horário, cancele, cobre Pix e mande mensagem para o cliente — tudo com toques simples.",
+    },
+  ];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      className="relative rounded-2xl border border-neutral-100 bg-white p-5 shadow-sm sm:p-6"
+    >
+      <button
+        onClick={onFechar}
+        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-neutral-400 transition-all hover:bg-neutral-100 hover:text-neutral-700"
+        title="Entendi, fechar"
+      >
+        <X size={16} />
+      </button>
+      <div className="mb-4 flex items-center gap-2">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl text-white" style={{ backgroundColor: "#059669" }}>
+          <Sparkles size={16} />
+        </span>
+        <div>
+          <h2 className="font-bold text-neutral-900">Como usar seu sistema</h2>
+          <p className="text-xs text-neutral-500">Só 4 passos — bem fácil:</p>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {passos.map((p) => (
+          <Link
+            key={p.titulo}
+            href={p.href}
+            className="group flex items-start gap-3 rounded-xl border border-neutral-100 bg-neutral-50/50 p-3.5 transition-all hover:border-teal-200 hover:bg-teal-50/50"
+          >
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-teal-600" style={{ backgroundColor: "#05966914" }}>
+              {p.icon}
+            </span>
+            <span>
+              <span className="block text-sm font-semibold text-neutral-900 group-hover:text-teal-700">{p.titulo}</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500">{p.texto}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 function SectionCard({
   title,
   count,
@@ -451,6 +528,8 @@ function SectionCard({
 }
 
 export default function PainelPage() {
+  const params = useParams();
+  const slug = params.slug as string;
   const supabase = createClient();
   const [items, setItems] = useState<Agendamento[]>([]);
   const [profissional, setProfissional] = useState<Profissional | null>(null);
@@ -467,6 +546,24 @@ export default function PainelPage() {
   const [aviso, setAviso] = useState("");
   const [confirmacao, setConfirmacao] = useState<{ tipo: "cancelar" | "pago"; a: Agendamento } | null>(null);
   const [primary, setPrimary] = useState("#059669");
+  const [guiaAberto, setGuiaAberto] = useState(false);
+
+  useEffect(() => {
+    const abrir = () => {
+      if (window.location.search.includes("guia=1")) {
+        localStorage.removeItem("anbr_guia_visto");
+        setGuiaAberto(true);
+      } else if (localStorage.getItem("anbr_guia_visto") !== "1") {
+        setGuiaAberto(true);
+      }
+    };
+    abrir();
+  }, []);
+
+  const fecharGuia = () => {
+    localStorage.setItem("anbr_guia_visto", "1");
+    setGuiaAberto(false);
+  };
 
   const load = useCallback(async () => {
     const [ag, pg, prof, config] = await Promise.all([
@@ -627,6 +724,11 @@ export default function PainelPage() {
           <p className="mt-1 text-sm text-white/60 capitalize">{hojeStr}</p>
         </div>
       </div>
+
+      {/* Guia de uso */}
+      <AnimatePresence>
+        {guiaAberto && <GuiaPainel slug={slug} onFechar={fecharGuia} />}
+      </AnimatePresence>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
