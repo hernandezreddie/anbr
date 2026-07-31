@@ -1,5 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="32" fill="#059669"/>
-  <text x="50%" y="54%" dominant-baseline="central" text-anchor="middle"
-    font-family="Georgia, 'Times New Roman', serif" font-size="78" font-weight="700" fill="white">AN</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="g" x1="4" y1="0" x2="46" y2="50" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2DD4BF"/><stop offset="0.55" stop-color="#14B8A6"/><stop offset="1" stop-color="#0F766E"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" fill="url(#g)"/>
+  <circle cx="40.5" cy="8.5" r="4.6" stroke="white" stroke-opacity="0.5" stroke-width="1.7"/>
+  <path d="M24 12.5 Q28.35 17.35 36.5 25 Q28.35 32.65 24 37.5 Q19.65 32.65 11.5 25 Q19.65 17.35 24 12.5 Z" fill="white"/>
+  <path d="M13 29.5 Q14.925 31.425 18.5 35 Q14.925 38.575 13 40.5 Q11.075 38.575 7.5 35 Q11.075 31.425 13 29.5 Z" fill="white" fill-opacity="0.7"/>
 </svg>

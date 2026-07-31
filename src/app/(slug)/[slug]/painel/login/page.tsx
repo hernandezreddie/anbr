@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useParams, useRouter } from "next/navigation";
+import { Logo } from "@/components/Logo";
 
 export default function PainelLogin() {
   const [email, setEmail] = useState("");
@@ -42,8 +43,8 @@ export default function PainelLogin() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50 to-white p-4">
       <form onSubmit={handleLogin} className="w-full max-w-sm rounded-2xl border border-neutral-100 bg-white p-8 shadow-lg shadow-neutral-200/50">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-600 text-xl font-bold text-white shadow-sm">
-            L
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center">
+            <Logo className="h-14 w-14" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900">AN.BR</h1>
           <p className="mt-1 text-sm text-neutral-500">Acesse seu painel de agendamentos</p>

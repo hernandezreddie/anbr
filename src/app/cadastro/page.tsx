@@ -9,6 +9,7 @@ import {
   MonitorSmartphone, Sparkles,
 } from "lucide-react";
 import { getServicosPadrao, getSloganPadrao, type CategoriaId } from "@/lib/servicos-padrao";
+import { Logo } from "@/components/Logo";
 
 const categorias = [
   { id: "limpeza" as CategoriaId, icone: <Wrench size={24} />, nome: "Limpeza e Conservação" },
@@ -125,7 +126,7 @@ export default function CadastroPage() {
             Voltar
           </a>
           <div className="ml-auto flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--color-primary)] text-white text-xs font-bold">L</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-md"><Logo className="h-6 w-6" /></span>
             <span className="font-serif text-sm font-semibold">AN.BR</span>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/Logo";
 
 const links = [
   { href: "", label: "Dashboard", icon: "📊" },
@@ -17,7 +18,7 @@ export function Sidebar({ slug }: { slug: string }) {
     <aside className="hidden w-64 shrink-0 lg:block">
       <div className="sticky top-0 flex h-screen flex-col border-r border-line bg-paper">
         <div className="flex items-center gap-2 border-b border-line px-6 py-5">
-          <span className="text-xl">⚡</span>
+          <Logo className="h-8 w-8" />
           <span className="text-lg font-bold">AN.BR</span>
         </div>
         <nav className="flex-1 space-y-1 p-4">

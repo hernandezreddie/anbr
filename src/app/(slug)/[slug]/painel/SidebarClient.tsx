@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Logo } from "@/components/Logo";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -50,12 +51,7 @@ export function SidebarClient({ slug }: { slug: string }) {
       <aside className="hidden w-64 shrink-0 lg:block">
         <div className="sticky top-0 flex h-screen flex-col border-r border-neutral-200 bg-white">
           <div className="flex items-center gap-3 border-b border-neutral-100 px-6 py-6">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white"
-              style={{ backgroundColor: primary }}
-            >
-              L
-            </div>
+            <Logo className="h-9 w-9" />
             <span className="text-lg font-bold text-neutral-900">AN.BR</span>
           </div>
           <nav className="flex-1 space-y-1 p-4">

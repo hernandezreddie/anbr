@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
+import { Logo } from "@/components/Logo";
 import {
   Sparkles, Palette, ChevronRight, Check, Star, ArrowRight,
   MonitorSmartphone, MessageCircle, Wrench, Scissors, Stethoscope,
@@ -153,7 +154,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 border-b border-[var(--color-line)]/50 bg-[var(--color-bg)]/90 backdrop-blur-md">
         <div className="container-x flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary)] text-white text-sm font-bold">A</span>
+            <Logo className="h-8 w-8" />
             <span className="font-serif text-xl">AN.BR</span>
           </Link>
           <nav className="hidden items-center gap-6 sm:flex">
