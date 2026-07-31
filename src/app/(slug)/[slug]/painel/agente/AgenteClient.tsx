@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bot, Send, MessageSquare, BarChart3, Clock, DollarSign } from "lucide-react";
+import { Bot, Send, MessageSquare, BarChart3, Clock, Gauge } from "lucide-react";
+import { AGENTE_MSG_POR_MES } from "@/lib/planos";
 
 interface Props {
   profissionalId: string
@@ -290,12 +291,18 @@ function ConversasView({ profissionalId }: { profissionalId: string }) {
 
 function UsageView({ profissionalId }: { profissionalId: string }) {
   const [usage, setUsage] = useState<any>(null);
+  const [plano, setPlano] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/agent/usage?profissional_id=${profissionalId}&period=30d`)
-      .then((r) => r.json())
-      .then(setUsage)
+    Promise.all([
+      fetch(`/api/agent/usage?profissional_id=${profissionalId}&period=30d`).then((r) => r.json()),
+      fetch("/api/planos/me").then((r) => r.json()),
+    ])
+      .then(([u, p]) => {
+        setUsage(u);
+        setPlano(p && !p.error ? p : null);
+      })
       .finally(() => setLoading(false));
   }, [profissionalId]);
 
@@ -303,9 +310,19 @@ function UsageView({ profissionalId }: { profissionalId: string }) {
     return <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-400">Carregando...</div>;
   }
 
+  const limite = plano ? AGENTE_MSG_POR_MES[plano.plano as keyof typeof AGENTE_MSG_POR_MES] || 0 : 0;
+
+  const agora = new Date();
+  const mesAtual = usage?.usage?.filter((r: any) => {
+    const d = new Date(r.date);
+    return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
+  });
+  const msgsMes = (mesAtual || []).reduce((s: number, r: any) => s + (r.messages || 0), 0);
+  const pctCota = limite > 0 ? Math.min(100, Math.round((msgsMes / limite) * 100)) : 0;
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-2xl border border-gray-200 bg-white p-5">
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <BarChart3 size={16} />
@@ -323,22 +340,42 @@ function UsageView({ profissionalId }: { profissionalId: string }) {
         <div className="rounded-2xl border border-gray-200 bg-white p-5">
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <MessageSquare size={16} />
-            Mensagens
+            Mensagens (30d)
           </div>
           <p className="mt-2 text-3xl font-bold">{usage?.totals?.messages || 0}</p>
         </div>
+      </div>
+
+      {limite > 0 && (
         <div className="rounded-2xl border border-gray-200 bg-white p-5">
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <DollarSign size={16} />
-            Custo Total (30d)
+            <Gauge size={16} />
+            Cota de IA do mês
           </div>
-          <p className="mt-2 text-3xl font-bold">${Number(usage?.totals?.cost || 0).toFixed(2)}</p>
+          <div className="mt-3 flex items-end justify-between">
+            <p className="text-3xl font-bold">
+              {msgsMes}
+              <span className="text-base font-normal text-gray-400"> / {limite} mensagens</span>
+            </p>
+            <span className={`text-sm font-semibold ${pctCota >= 90 ? "text-red-600" : pctCota >= 70 ? "text-amber-600" : "text-teal-600"}`}>
+              {pctCota}%
+            </span>
+          </div>
+          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-gray-100">
+            <div
+              className={`h-full rounded-full transition-all ${pctCota >= 90 ? "bg-red-500" : pctCota >= 70 ? "bg-amber-500" : "bg-teal-500"}`}
+              style={{ width: `${Math.max(4, pctCota)}%` }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-gray-400">
+            Seu plano inclui {limite} mensagens de IA por mês. Para mais, faça upgrade no menu &ldquo;Meu Plano&rdquo;.
+          </p>
         </div>
-      </div>
+      )}
 
       <div className="rounded-2xl border border-gray-200 bg-white">
         <div className="border-b border-gray-200 px-6 py-4">
-          <h3 className="font-semibold">Histórico Diário</h3>
+          <h3 className="font-semibold">Histórico (30d)</h3>
         </div>
         {(!usage?.usage || usage.usage.length === 0) ? (
           <div className="p-8 text-center text-sm text-gray-400">Sem dados de uso nos últimos 30 dias</div>
@@ -351,7 +388,6 @@ function UsageView({ profissionalId }: { profissionalId: string }) {
                   <th className="px-5 py-3">Tokens In</th>
                   <th className="px-5 py-3">Tokens Out</th>
                   <th className="px-5 py-3">Msgs</th>
-                  <th className="px-5 py-3">Custo</th>
                 </tr>
               </thead>
               <tbody>
@@ -361,7 +397,6 @@ function UsageView({ profissionalId }: { profissionalId: string }) {
                     <td className="px-5 py-3">{row.tokens_input?.toLocaleString() || 0}</td>
                     <td className="px-5 py-3">{row.tokens_output?.toLocaleString() || 0}</td>
                     <td className="px-5 py-3">{row.messages || 0}</td>
-                    <td className="px-5 py-3 font-medium">${Number(row.cost || 0).toFixed(4)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -76,7 +76,7 @@ export default function RootLayout({
                 "@type": "AggregateOffer",
                 priceCurrency: "BRL",
                 lowPrice: "0",
-                highPrice: "129",
+                highPrice: "99",
                 offerCount: "4",
               },
               author: {
@@ -104,7 +104,7 @@ export default function RootLayout({
                 {
                   "@type": "Question",
                   name: "Quanto custa um sistema de agendamento online?",
-                  acceptedAnswer: { "@type": "Answer", text: "O AN.BR oferece plano gratuito sem custos. Planos premium a partir de R$ 29/mês para recursos avançados como Google Calendar, domínio próprio e AI Agent." },
+                  acceptedAnswer: { "@type": "Answer", text: "O AN.BR oferece plano gratuito sem custos. Planos premium a partir de R$ 49/mês para recursos avançados como Google Calendar, domínio próprio e AI Agent." },
                 },
                 {
                   "@type": "Question",

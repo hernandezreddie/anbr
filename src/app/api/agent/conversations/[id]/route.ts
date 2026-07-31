@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verificarAcessoProfissional, isAdminPlataforma } from "@/lib/auth-roles";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  if (!(await isAdminPlataforma())) {
+    return NextResponse.json({ error: "Acesso restrito ao admin" }, { status: 403 });
+  }
+
   const body = await req.json();
   const adminDb = createAdminClient();
 
@@ -48,17 +53,24 @@ export async function GET(
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const adminDb = createAdminClient();
-  const { data: messages } = await adminDb
-    .from("agent_messages")
-    .select("*")
-    .eq("conversation_id", id)
-    .order("created_at", { ascending: true });
-
   const { data: conversation } = await adminDb
     .from("agent_conversations")
     .select("*")
     .eq("id", id)
     .single();
+
+  if (!conversation) return NextResponse.json({ error: "Conversa não encontrada" }, { status: 404 });
+
+  const acesso = await verificarAcessoProfissional(conversation.profissional_id);
+  if (!acesso.permitido) {
+    return NextResponse.json({ error: "Sem permissão para esta conversa" }, { status: 403 });
+  }
+
+  const { data: messages } = await adminDb
+    .from("agent_messages")
+    .select("*")
+    .eq("conversation_id", id)
+    .order("created_at", { ascending: true });
 
   return NextResponse.json({ conversation, messages: messages || [] });
 }

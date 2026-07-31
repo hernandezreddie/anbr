@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, Check, ChevronRight, User, Globe,
   Wrench, Scissors, Stethoscope, Dumbbell, Brush, ChefHat, Camera,
-  MonitorSmartphone, Sparkles,
+  MonitorSmartphone, Sparkles, Briefcase,
 } from "lucide-react";
 import { getServicosPadrao, getSloganPadrao, type CategoriaId } from "@/lib/servicos-padrao";
 import { Logo } from "@/components/Logo";
@@ -20,6 +20,7 @@ const categorias = [
   { id: "gastronomia" as CategoriaId, icone: <ChefHat size={24} />, nome: "Gastronomia" },
   { id: "fotografia" as CategoriaId, icone: <Camera size={24} />, nome: "Fotografia e Eventos" },
   { id: "consultoria" as CategoriaId, icone: <MonitorSmartphone size={24} />, nome: "Consultoria e Aulas" },
+  { id: "outro" as CategoriaId, icone: <Briefcase size={24} />, nome: "Outro Negócio" },
 ];
 
 type ServicoForm = {
@@ -272,7 +273,11 @@ export default function CadastroPage() {
               <motion.div key="passo4" variants={containerVar} initial="hidden" animate="visible" exit="exit">
                 <div className="card p-8">
                   <div className="flex items-center justify-between mb-6">
-                    <p className="text-sm text-ink-soft">Adicione os serviços que você oferece</p>
+                    <p className="text-sm text-ink-soft">
+                      {categoria === "outro"
+                        ? "Configure seus serviços manualmente — do seu jeito, no seu detalhe."
+                        : "Adicione os serviços que você oferece"}
+                    </p>
                     <button onClick={addServico}
                       className="rounded-lg bg-[var(--color-primary)]/10 px-4 py-2 text-sm font-medium text-[var(--color-primary)] transition-all hover:bg-[var(--color-primary)]/20">
                       + Adicionar

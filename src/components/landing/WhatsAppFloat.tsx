@@ -3,15 +3,19 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { linkWhatsApp } from "@/lib/whatsapp";
+import { getCopyPadrao, preencherCopy } from "@/lib/copys-padrao";
 import type { ProfissionalConfig } from "@/types";
 
 export function WhatsAppFloat({ config }: { config: ProfissionalConfig }) {
   const { profissional } = config;
   const reduce = useReducedMotion();
 
+  const copy = getCopyPadrao(profissional.categoria);
+  const msg = preencherCopy(copy.whatsapp_msg, { nome: profissional.primeiro_nome });
+
   return (
     <motion.a
-      href={linkWhatsApp(`Olá ${profissional.primeiro_nome}! Gostaria de agendar um serviço. 😊`, profissional.whatsapp)}
+      href={linkWhatsApp(msg, profissional.whatsapp)}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar no WhatsApp"

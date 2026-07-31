@@ -6,7 +6,8 @@ export type CategoriaId =
   | "artes"
   | "gastronomia"
   | "fotografia"
-  | "consultoria";
+  | "consultoria"
+  | "outro";
 
 export type TipoPreco = "por_hora" | "fixo";
 
@@ -144,6 +145,15 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     ],
     msg_confirmacao: "Olá! Sua sessão de {servico} no dia {data} às {hora} está agendada. Te espero!",
     msg_lembrete: "Oi! Lembrando da nossa sessão de {servico} amanhã às {hora}. Confirmado?",
+  },
+  {
+    id: "outro",
+    nome: "Outro Negócio",
+    icone: "Briefcase",
+    slogan: "Atendimento profissional de confiança",
+    servicos: [],
+    msg_confirmacao: "Olá! Recebemos seu agendamento de {servico} no dia {data} às {hora}. Confirmado! Qualquer dúvida, estou à disposição.",
+    msg_lembrete: "Olá! Lembrando que amanhã temos {servico} às {hora}. Confirmado? Qualquer imprevisto, me avise!",
   },
 ];
 

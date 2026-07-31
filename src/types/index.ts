@@ -10,6 +10,7 @@ export interface Profissional {
   pix_chave: string
   pix_nome: string
   pix_cidade: string
+  categoria?: string | null
   template_id: number
   link_avaliacao: string
   status: 'ativo' | 'suspenso' | 'inativo'

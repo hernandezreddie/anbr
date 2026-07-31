@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SiteNav } from "@/components/site/SiteNav";
 import { Logo } from "@/components/Logo";
 
 export const metadata: Metadata = {
@@ -119,15 +120,7 @@ const sections = [
 export default function TermosPage() {
   return (
     <div className="bg-[var(--color-bg)]">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-[var(--color-line)]/50 bg-[var(--color-bg)]/90 backdrop-blur-md">
-        <div className="container-x flex h-16 items-center justify-between">
-          <a href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg"><Logo className="h-8 w-8" /></span>
-            <span className="font-serif text-xl">AN.BR</span>
-          </a>
-        </div>
-      </header>
+      <SiteNav />
 
       {/* Conteúdo */}
       <div className="container-x py-16 sm:py-24">

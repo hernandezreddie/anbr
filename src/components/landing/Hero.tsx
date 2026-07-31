@@ -2,19 +2,25 @@
 
 import { Fragment } from "react";
 import { motion, useReducedMotion, type Easing } from "framer-motion";
-import { ArrowRight, Star, Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { linkWhatsApp } from "@/lib/whatsapp";
+import { getCopyPadrao, preencherCopy } from "@/lib/copys-padrao";
 import type { ProfissionalConfig } from "@/types";
 
 export function Hero({ config }: { config: ProfissionalConfig }) {
   const { profissional, configuracao } = config;
   const reduce = useReducedMotion();
   const primary = configuracao.cor_primaria;
-  const nomeParts = profissional.primeiro_nome.split(" ");
-  const primeiroNome = nomeParts[0];
 
-  const tituloLinha1 = ["Sempre", "a", "mesma", "pessoa"];
-  const tituloLinha2 = ["de", "confiança", "na", "sua", "casa."];
+  const copy = getCopyPadrao(profissional.categoria);
+  const preencher = (texto: string) =>
+    preencherCopy(texto, {
+      nome: profissional.primeiro_nome,
+      cidade: profissional.cidade,
+    });
+
+  const tituloLinha1 = preencher(copy.hero_titulo[0]).split(" ");
+  const tituloLinha2 = preencher(copy.hero_titulo[1]).split(" ");
 
   const container = {
     hidden: {},
@@ -82,8 +88,8 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
                 <Fragment key={i}>
                   <motion.span
                     variants={word}
-                    className={`inline-block ${w === "confiança" ? "italic" : ""}`}
-                    style={w === "confiança" ? { color: primary } : {}}
+                    className={`inline-block ${w === copy.hero_destaque ? "italic" : ""}`}
+                    style={w === copy.hero_destaque ? { color: primary } : {}}
                   >
                     {w}
                   </motion.span>{" "}
@@ -98,7 +104,7 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
             animate="show"
             className="mt-7 max-w-xl text-lg leading-relaxed text-ink-soft"
           >
-            {profissional.slogan || `Sou ${profissional.primeiro_nome}. Cuido do seu lar com capricho e dedicação — direto com você, sem aplicativos no meio.`}
+            {preencher(copy.hero_sub)}
           </motion.p>
 
           <motion.div
@@ -113,16 +119,16 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
               className="btn-primary btn-lg"
               style={{ backgroundColor: primary }}
             >
-              Ver meu preço em 1 minuto
+              {copy.hero_cta1}
               <ArrowRight size={18} />
             </a>
             <a
-              href={linkWhatsApp(`Olá ${profissional.primeiro_nome}! Vi seu site e gostaria de agendar um serviço. 😊`, profissional.whatsapp)}
+              href={linkWhatsApp(preencher(copy.whatsapp_msg), profissional.whatsapp)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-ghost btn-lg"
             >
-              Tirar dúvida no WhatsApp
+              {copy.hero_cta2}
             </a>
           </motion.div>
 
@@ -134,15 +140,19 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
             className="mt-12 flex flex-wrap items-center gap-x-7 gap-y-3 text-sm text-ink-soft"
           >
             <span className="flex items-center gap-1.5">
-              <span className="flex text-yellow-500">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <Star key={i} size={16} fill="currentColor" />
-                ))}
-              </span>
-              <b className="font-semibold text-ink">5,0</b>
+              <Check size={15} style={{ color: primary }} />
+              <b className="font-semibold text-ink">Agendamento online 24h</b>
             </span>
             <span className="h-4 w-px bg-line" />
-            <span><b className="font-semibold text-ink">+{profissional.cidade === "Curitiba" ? "200" : "50"}</b> clientes atendidos</span>
+            <span className="flex items-center gap-1.5">
+              <Check size={15} style={{ color: primary }} />
+              <b className="font-semibold text-ink">Confirmação no WhatsApp</b>
+            </span>
+            <span className="h-4 w-px bg-line" />
+            <span className="flex items-center gap-1.5">
+              <Check size={15} style={{ color: primary }} />
+              <b className="font-semibold text-ink">Pagamento via Pix</b>
+            </span>
           </motion.div>
         </div>
       </div>

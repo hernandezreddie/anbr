@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { exigirPlano, PLANOS_COM_AGENTE, checarCotaAgente } from "@/lib/planos";
+import { verificarAcessoProfissional } from "@/lib/auth-roles";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,14 +17,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "profissional_id e mensagem são obrigatórios" }, { status: 400 });
     }
 
+    const acesso = await verificarAcessoProfissional(profissional_id);
+    if (!acesso.permitido) {
+      return NextResponse.json({ error: "Sem permissão para este profissional" }, { status: 403 });
+    }
+
+    const bloqueio = await exigirPlano(profissional_id, PLANOS_COM_AGENTE, "AI Agent");
+    if (bloqueio) return NextResponse.json({ error: bloqueio.error }, { status: bloqueio.status });
+
+    const adminDb = createAdminClient();
+
+    // Limite mensal de mensagens do agente por plano
+    const semCota = await checarCotaAgente(profissional_id, adminDb);
+    if (semCota) return NextResponse.json({ error: semCota.error }, { status: semCota.status });
+
     const { chatComAgente } = await import("@/lib/ai/agent");
     const result = await chatComAgente(profissional_id, mensagem, historico || []);
 
     if (result.status === 400) {
       return NextResponse.json(result, { status: 400 });
     }
-
-    const adminDb = createAdminClient();
     let convId = conversation_id;
 
     if (!convId) {

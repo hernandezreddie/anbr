@@ -1,7 +1,5 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Star } from "lucide-react";
 import { linkWhatsApp } from "@/lib/whatsapp";
 import type { ProfissionalConfig } from "@/types";
 

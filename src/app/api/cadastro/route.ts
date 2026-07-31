@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getServicosPadrao, getSloganPadrao } from "@/lib/servicos-padrao";
 import type { CategoriaId } from "@/lib/servicos-padrao";
+import { gerarLogoSVG } from "@/lib/logo-padrao";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -47,6 +48,16 @@ export async function POST(request: Request) {
     return Response.json({ error: profError?.message || "Erro ao criar profissional" }, { status: 500 });
   }
 
+  if (categoria) {
+    const { error: catError } = await supabase
+      .from("profissionais")
+      .update({ categoria })
+      .eq("id", prof.id);
+    if (catError) {
+      console.warn("Categoria não salva (coluna ausente?):", catError.message);
+    }
+  }
+
   await supabase.from("configuracoes").insert({
     profissional_id: prof.id,
     template_id: template_id || 1,
@@ -58,6 +69,25 @@ export async function POST(request: Request) {
     profissional_id: prof.id,
     role: "owner",
   });
+
+  try {
+    const svg = gerarLogoSVG(nome, Number(template_id) || 1);
+    const logoNome = `${prof.id}/logo.svg`;
+    const { error: logoError } = await supabase.storage
+      .from("logos")
+      .upload(logoNome, svg, { upsert: true, contentType: "image/svg+xml" });
+    if (!logoError) {
+      const { data: url } = supabase.storage.from("logos").getPublicUrl(logoNome);
+      await supabase
+        .from("configuracoes")
+        .update({ logo_url: url.publicUrl })
+        .eq("profissional_id", prof.id);
+    } else {
+      console.warn("Logo padrão não criado:", logoError.message);
+    }
+  } catch (e) {
+    console.warn("Falha ao criar logo padrão:", e);
+  }
 
   if (servicos && servicos.length > 0) {
     for (const s of servicos) {

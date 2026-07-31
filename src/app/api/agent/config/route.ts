@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { verificarAcessoProfissional, isAdminPlataforma } from "@/lib/auth-roles";
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -9,6 +10,11 @@ export async function GET(req: NextRequest) {
 
   const profissionalId = req.nextUrl.searchParams.get("profissional_id");
   if (!profissionalId) return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 });
+
+  const acesso = await verificarAcessoProfissional(profissionalId);
+  if (!acesso.permitido) {
+    return NextResponse.json({ error: "Sem permissão para este profissional" }, { status: 403 });
+  }
 
   const adminDb = createAdminClient();
   const { data: agentConfig } = await adminDb
@@ -42,6 +48,10 @@ export async function PUT(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+  if (!(await isAdminPlataforma())) {
+    return NextResponse.json({ error: "Acesso restrito ao admin" }, { status: 403 });
+  }
 
   const body = await req.json();
   const { profissional_id, ...configData } = body;

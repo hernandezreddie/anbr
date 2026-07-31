@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { AdminClient } from "./AdminClient";
+import { PlanosAdmin } from "./PlanosAdmin";
+import { PLANOS } from "@/lib/planos";
+import { isAdminPlataforma } from "@/lib/auth-roles";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -9,14 +12,7 @@ export default async function AdminPage() {
 
   if (!user) redirect("/");
 
-  // Check if user has admin role
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || (profile.role !== "owner" && profile.role !== "admin")) {
+  if (!(await isAdminPlataforma())) {
     redirect("/");
   }
 
@@ -62,6 +58,22 @@ export default async function AdminPage() {
     customDomain: domainMap.get(p.id),
   }));
 
+  const agora = Date.now();
+  const comPlanoPago = tenants.filter((t: any) => t.plano && t.plano !== "gratis");
+  const expirando = comPlanoPago.filter((t: any) => {
+    const exp = t.plano_expira_em ? new Date(t.plano_expira_em).getTime() : null;
+    return exp && exp > agora && exp - agora <= 5 * 86400000;
+  });
+  const expirados = comPlanoPago.filter((t: any) => {
+    const exp = t.plano_expira_em ? new Date(t.plano_expira_em).getTime() : null;
+    return !exp || exp <= agora;
+  });
+
+  const diasRestantes = (expiraEm: string | null) => {
+    if (!expiraEm) return null;
+    return Math.ceil((new Date(expiraEm).getTime() - agora) / 86400000);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur-md">
@@ -106,6 +118,52 @@ export default async function AdminPage() {
           <AdminClient />
         </div>
 
+        <div className="mt-6">
+          <PlanosAdmin />
+        </div>
+
+        {(expirados.length > 0 || expirando.length > 0) && (
+          <div className="mt-6 space-y-3">
+            {expirados.length > 0 && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-red-700">
+                  <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+                  Planos expirados ({expirados.length})
+                </h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {expirados.map((t: any) => (
+                    <span key={t.id} className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700">
+                      {t.nome} <span className="text-red-400">·</span> /{t.slug}
+                      <a href={`/admin/domains/${t.slug}`} className="ml-1 font-semibold underline hover:text-red-900">ver</a>
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-red-500">
+                  Os recursos pagos (Google Calendar, DM, AI Agent, domínio) já estão bloqueados para estes tenants.
+                </p>
+              </div>
+            )}
+            {expirando.length > 0 && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-amber-700">
+                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-500" />
+                  Renovações próximas ({expirando.length})
+                </h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {expirando.map((t: any) => (
+                    <span key={t.id} className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white px-3 py-1.5 text-xs font-medium text-amber-700">
+                      {t.nome} <span className="text-amber-400">·</span> /{t.slug}
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 font-bold">
+                        {diasRestantes(t.plano_expira_em)} dia(s)
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-white">
           <table className="w-full">
             <thead>
@@ -117,6 +175,7 @@ export default async function AdminPage() {
                 <th className="px-5 py-4">Serviços</th>
                 <th className="px-5 py-4">Agend.</th>
                 <th className="px-5 py-4">Receita</th>
+                <th className="px-5 py-4">Plano</th>
                 <th className="px-5 py-4">Domínio</th>
                 <th className="px-5 py-4">Status</th>
                 <th className="px-5 py-4">Ações</th>
@@ -139,6 +198,27 @@ export default async function AdminPage() {
                   <td className="px-5 py-4 text-sm">{t.agendamentos.total}</td>
                   <td className="px-5 py-4 text-sm font-medium">
                     R$ {t.agendamentos.receita.toFixed(2).replace(".", ",")}
+                  </td>
+                  <td className="px-5 py-4">
+                    {(() => {
+                      const pid = (t.plano || "gratis") as keyof typeof PLANOS;
+                      const dias = diasRestantes(t.plano_expira_em);
+                      const expirado = dias !== null && dias <= 0;
+                      return (
+                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          pid === "ia_premium" ? "bg-purple-100 text-purple-700" :
+                          pid === "profissional" ? "bg-teal-100 text-teal-700" :
+                          "bg-gray-100 text-gray-500"
+                        }`}>
+                          {PLANOS[pid]?.nome || pid}
+                          {pid !== "gratis" && dias !== null && (
+                            <span className={`ml-1 text-[10px] font-bold ${expirado ? "text-red-600" : dias <= 5 ? "text-amber-600" : "text-teal-700"}`}>
+                              {expirado ? "· expirado" : `· ${dias}d`}
+                            </span>
+                          )}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-5 py-4 text-xs">
                     {t.customDomain ? (

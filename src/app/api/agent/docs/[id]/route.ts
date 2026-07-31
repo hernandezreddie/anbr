@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { isAdminPlataforma } from "@/lib/auth-roles"
 
 export async function DELETE(
   req: NextRequest,
@@ -9,6 +10,10 @@ export async function DELETE(
 
   if (!id) {
     return NextResponse.json({ error: "ID é obrigatório" }, { status: 400 })
+  }
+
+  if (!(await isAdminPlataforma())) {
+    return NextResponse.json({ error: "Acesso restrito ao admin" }, { status: 403 })
   }
 
   try {

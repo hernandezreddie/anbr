@@ -2,12 +2,17 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { redirect } from "next/navigation"
 import { DomainClient } from "./DomainClient"
+import { isAdminPlataforma } from "@/lib/auth-roles"
 
 export default async function DomainPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/")
+
+  if (!(await isAdminPlataforma())) {
+    redirect("/")
+  }
 
   const adminDb = createAdminClient()
 

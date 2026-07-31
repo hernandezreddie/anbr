@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
 import { AgentConfigClient } from "./AgentConfigClient";
+import { isAdminPlataforma } from "@/lib/auth-roles";
 
 export default async function AgentPage({
   params,
@@ -13,13 +14,7 @@ export default async function AgentPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || (profile.role !== "owner" && profile.role !== "admin")) {
+  if (!(await isAdminPlataforma())) {
     redirect("/");
   }
 

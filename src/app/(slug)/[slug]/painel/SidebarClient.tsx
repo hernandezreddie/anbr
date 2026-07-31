@@ -16,6 +16,7 @@ import {
   ListOrdered,
   Settings,
   Bot,
+  CreditCard,
 } from "lucide-react";
 
 const links = [
@@ -26,6 +27,7 @@ const links = [
   { href: "/perfil", label: "Perfil", icon: Settings, mobIcon: Settings },
   { href: "/qr", label: "Meu QR", icon: QrCode, mobIcon: QrCode },
   { href: "/agente", label: "AI Agent", icon: Bot, mobIcon: Bot },
+  { href: "/plano", label: "Meu Plano", icon: CreditCard, mobIcon: CreditCard },
 ];
 
 export function SidebarClient({ slug }: { slug: string }) {

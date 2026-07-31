@@ -2,6 +2,7 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
+import { SiteNav } from "@/components/site/SiteNav";
 import { Logo } from "@/components/Logo";
 import {
   Check, X, Sparkles, HelpCircle, ArrowRight, ChevronRight, Bell, Globe, Palette,
@@ -48,42 +49,19 @@ const planos: Plano[] = [
     ],
   },
   {
-    nome: "Starter",
-    slug: "starter",
-    precoMensal: 29,
-    desc: "Para autônomos que querem organização profissional.",
-    idealPara: "Autônomos",
-    cor: "text-teal-600",
-    icone: <Bell size={20} />,
-    features: [
-      { nome: "Agendamentos ilimitados", incluido: true },
-      { nome: "Página pública de agendamento", incluido: true },
-      { nome: "Link: autonexabrasil.com.br/seu-slug", incluido: true },
-      { nome: "Receba pagamento via Pix", incluido: true },
-      { nome: "Marca AN.BR visível", incluido: true },
-      { nome: "Cores e logo personalizados", incluido: true },
-      { nome: "Google Calendar sincronizado", incluido: true },
-      { nome: "Notificação push de novo agendamento", incluido: true, detalhe: "navegador" },
-      { nome: "Lembrete automático 12h antes do horário", incluido: true, detalhe: "push notificação" },
-      { nome: "Resumo diário matinal de agendamentos", incluido: true, detalhe: "push notificação" },
-      { nome: "Relatórios básicos", incluido: true },
-      { nome: "Domínio personalizado", incluido: false },
-      { nome: "Instagram DM + Facebook Messenger", incluido: false },
-      { nome: "AI Agent", incluido: false },
-    ],
-  },
-  {
     nome: "Profissional",
     slug: "profissional",
-    precoMensal: 69,
-    desc: "Presença completa: domínio próprio, redes sociais e IA.",
+    precoMensal: 49,
+    desc: "Presença completa: domínio próprio, Google Calendar, redes sociais e IA.",
     idealPara: "Profissionais estabelecidos",
-    cor: "text-blue-600",
+    destaque: true,
+    cor: "text-teal-600",
     icone: <Globe size={20} />,
     features: [
       { nome: "Agendamentos ilimitados", incluido: true },
       { nome: "Página pública de agendamento", incluido: true },
-      { nome: "Domínio personalizado (seu-site.com.br)", incluido: true },
+      { nome: "Link: autonexabrasil.com.br/seu-slug", incluido: true },
+      { nome: "Domínio personalizado com SSL grátis", incluido: true },
       { nome: "Receba pagamento via Pix", incluido: true },
       { nome: "Sem marca AN.BR", incluido: true },
       { nome: "Cores e logo personalizados", incluido: true },
@@ -101,10 +79,9 @@ const planos: Plano[] = [
   {
     nome: "IA Premium",
     slug: "ia-premium",
-    precoMensal: 129,
+    precoMensal: 99,
     desc: "Automação total com AI Agent inteligente e todos os recursos.",
     idealPara: "Automação com IA",
-    destaque: true,
     cor: "text-purple-600",
     icone: <Bot size={20} />,
     features: [
@@ -163,7 +140,7 @@ const faqPrecos = [
 
 function precoAnual(mensal: number): number {
   if (mensal === 0) return 0;
-  return Math.round(mensal * 12 * 0.85);
+  return Math.round(mensal * 12 * 0.8);
 }
 
 function formatoBRL(valor: number): string {
@@ -204,7 +181,7 @@ function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 
 function CardPlano({ plano, frequencia, indice }: { plano: Plano; frequencia: Frequencia; indice: number }) {
   const precoExibido = frequencia === "anual" && plano.precoMensal > 0
-    ? Math.round(plano.precoMensal * 0.85)
+    ? Math.round(plano.precoMensal * 0.8)
     : plano.precoMensal;
   const totalAnual = precoAnual(plano.precoMensal);
 
@@ -318,7 +295,7 @@ function ToggleFrequencia({ frequencia, onChange }: { frequencia: Frequencia; on
       >
         Anual
         <span className="ml-1.5 inline-flex items-center rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold text-teal-700">
-          -15%
+          -20%
         </span>
       </button>
     </div>
@@ -327,25 +304,25 @@ function ToggleFrequencia({ frequencia, onChange }: { frequencia: Frequencia; on
 
 function ComparacaoTable({ frequencia }: { frequencia: Frequencia }) {
   const linhas: { label: string; valores: (string | boolean)[] }[] = [
-    { label: "Agendamentos", valores: ["30/mês", "Ilimitados", "Ilimitados", "Ilimitados"] },
-    { label: "Marca AN.BR", valores: [true, true, false, false] },
-    { label: "Cores e logo", valores: [false, true, true, true] },
-    { label: "Google Calendar", valores: [false, "Sincronizado", "Sincronizado", "Bidirecional"] },
-    { label: "Notificação novo agendamento", valores: [true, true, true, true] },
-    { label: "Lembrete 12h antes", valores: [false, true, true, true] },
-    { label: "Resumo matinal diário", valores: [false, true, true, true] },
-    { label: "Instagram DM + Facebook", valores: [false, false, true, true] },
-    { label: "Domínio personalizado", valores: [false, false, true, true] },
-    { label: "AI Agent mensagens/mês", valores: [false, false, "500", "2.000"] },
-    { label: "Tokens excedentes IA", valores: [false, false, "R$ 0,005/msg", "R$ 0,005/msg"] },
-    { label: "WhatsApp API", valores: [false, false, false, true] },
-    { label: "Suporte prioritário", valores: [false, false, false, true] },
+    { label: "Agendamentos", valores: ["30/mês", "Ilimitados", "Ilimitados"] },
+    { label: "Marca AN.BR", valores: [true, false, false] },
+    { label: "Cores e logo", valores: [false, true, true] },
+    { label: "Google Calendar", valores: [false, "Sincronizado", "Bidirecional"] },
+    { label: "Notificação novo agendamento", valores: [true, true, true] },
+    { label: "Lembrete 12h antes", valores: [false, true, true] },
+    { label: "Resumo matinal diário", valores: [false, true, true] },
+    { label: "Instagram DM + Facebook", valores: [false, true, true] },
+    { label: "Domínio personalizado", valores: [false, true, true] },
+    { label: "AI Agent mensagens/mês", valores: [false, "500", "2.000"] },
+    { label: "Tokens excedentes IA", valores: [false, false, "R$ 0,005/msg"] },
+    { label: "WhatsApp API", valores: [false, false, true] },
+    { label: "Suporte prioritário", valores: [false, false, true] },
   ];
 
   const precoExibido = (i: number) => {
     const p = planos[i];
     if (p.precoMensal === 0) return "Grátis";
-    const val = frequencia === "anual" ? Math.round(p.precoMensal * 0.85) : p.precoMensal;
+    const val = frequencia === "anual" ? Math.round(p.precoMensal * 0.8) : p.precoMensal;
     return `${formatoBRL(val)}/mês`;
   };
 
@@ -393,43 +370,11 @@ function ComparacaoTable({ frequencia }: { frequencia: Frequencia }) {
 export default function PrecosPage() {
   const [frequencia, setFrequencia] = useState<Frequencia>("mensal");
   const [faqAberto, setFaqAberto] = useState<number | null>(null);
-  const [mobileMenu, setMobileMenu] = useState(false);
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-    setMobileMenu(false);
-  };
 
   return (
     <div className="bg-[var(--color-bg)]">
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-[var(--color-line)]/50 bg-[var(--color-bg)]/90 backdrop-blur-md">
-        <div className="container-x flex h-16 items-center justify-between">
-          <a href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg"><Logo className="h-8 w-8" /></span>
-            <span className="font-serif text-xl">AN.BR</span>
-          </a>
-          <nav className="hidden items-center gap-6 sm:flex">
-            <a href="/#categorias" className="text-sm text-ink-soft transition-colors hover:text-ink">Serviços</a>
-            <a href="/blog" className="text-sm text-ink-soft transition-colors hover:text-ink">Blog</a>
-            <span className="text-sm font-semibold text-[var(--color-primary)]">Preços</span>
-            <a href="/#faq" className="text-sm text-ink-soft transition-colors hover:text-ink">FAQ</a>
-            <a href="/cadastro" className="btn-primary text-sm px-5 py-2.5">Criar meu sistema</a>
-          </nav>
-          <button onClick={() => setMobileMenu(!mobileMenu)} className="sm:hidden p-2 text-ink">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-          </button>
-        </div>
-        {mobileMenu && (
-          <div className="border-t border-[var(--color-line)] bg-[var(--color-bg)] px-6 pb-6 pt-4 sm:hidden space-y-3">
-            <a href="/#categorias" className="block w-full text-left text-sm text-ink-soft py-2">Serviços</a>
-            <a href="/blog" className="block w-full text-left text-sm text-ink-soft py-2">Blog</a>
-            <span className="block w-full text-left text-sm font-semibold text-[var(--color-primary)] py-1">Preços</span>
-            <a href="/#faq" className="block w-full text-left text-sm text-ink-soft py-2">FAQ</a>
-            <a href="/cadastro" className="btn-primary w-full justify-center text-sm py-3">Criar meu sistema</a>
-          </div>
-        )}
-      </header>
+      <SiteNav />
 
       {/* Hero */}
       <Secao className="pt-28 sm:pt-36 overflow-hidden relative">

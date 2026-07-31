@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { SidebarClient } from "./SidebarClient";
 import { PushSubscriber } from "@/components/PushSubscriber";
+import { UpgradeBanner } from "@/components/painel/UpgradeBanner";
 
 export function PainelAuthGate({
   slug,
@@ -65,7 +66,10 @@ export function PainelAuthGate({
       {!isLoginPage && <PushSubscriber />}
       {!isLoginPage && <SidebarClient slug={slug} />}
       <main className="flex-1 overflow-auto pb-20 lg:pb-20">
-        <div className={isLoginPage ? "" : "container-x py-8"}>{children}</div>
+        <div className={isLoginPage ? "" : "container-x py-8"}>
+          {!isLoginPage && <UpgradeBanner slug={slug} />}
+          {children}
+        </div>
       </main>
     </>
   );

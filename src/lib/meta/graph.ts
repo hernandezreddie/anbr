@@ -217,6 +217,10 @@ export async function handleWebhookEvent(
 
   if (config?.enabled && config.connectors?.[platform]) {
     try {
+      const { checarCotaAgente } = await import("@/lib/planos")
+      const semCota = await checarCotaAgente(profissional_id, supabase)
+      if (semCota) return
+
       const { chatComAgente } = await import("@/lib/ai/agent")
       const result = await chatComAgente(profissional_id, text, [])
 

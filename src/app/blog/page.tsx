@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { posts } from "@/lib/blog/posts";
 import { ArrowRight, CalendarDays, Tag } from "lucide-react";
+import { SiteNav } from "@/components/site/SiteNav";
 
 export const metadata: Metadata = {
   title: "Blog | AN.BR — Dicas para Profissionais Autônomos",
@@ -17,21 +18,7 @@ export const metadata: Metadata = {
 export default function BlogIndex() {
   return (
     <div className="bg-[var(--color-bg)]">
-      <header className="sticky top-0 z-50 border-b border-[var(--color-line)]/50 bg-[var(--color-bg)]/90 backdrop-blur-md">
-        <div className="container-x flex h-16 items-center justify-between">
-          <a href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary)] text-white text-sm font-bold">A</span>
-            <span className="font-serif text-xl">AN.BR</span>
-          </a>
-          <nav className="hidden items-center gap-6 sm:flex">
-            <a href="/#categorias" className="text-sm text-ink-soft transition-colors hover:text-ink">Serviços</a>
-            <a href="/#funciona" className="text-sm text-ink-soft transition-colors hover:text-ink">Como funciona</a>
-            <a href="/#recursos" className="text-sm text-ink-soft transition-colors hover:text-ink">Recursos</a>
-            <a href="/blog" className="text-sm font-medium text-[var(--color-primary)]">Blog</a>
-            <a href="/cadastro" className="btn-primary text-sm px-5 py-2.5">Criar meu sistema</a>
-          </nav>
-        </div>
-      </header>
+      <SiteNav />
 
       <section className="py-20 sm:py-28">
         <div className="container-x">

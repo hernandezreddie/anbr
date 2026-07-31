@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { Logo } from "@/components/Logo";
+import { SiteNav } from "@/components/site/SiteNav";
 import {
-  Sparkles, Palette, ChevronRight, Check, Star, ArrowRight,
-  MonitorSmartphone, MessageCircle, Wrench, Scissors, Stethoscope,
-  Dumbbell, Brush, ChefHat, Camera, Bell, Moon, Bot,
-  Zap, LayoutDashboard, Menu, HelpCircle,
+  Check, ArrowRight, CalendarCheck, MessageCircle, Bot,
+  Palette, LayoutDashboard, Bell, Moon, Zap, Shield,
+  Wrench, Scissors, Stethoscope, Dumbbell, Brush, ChefHat,
+  Camera, MonitorSmartphone, HelpCircle, Globe,
 } from "lucide-react";
 
 type CategoriaServico = {
@@ -25,7 +25,25 @@ const categorias: CategoriaServico[] = [
   { icone: <Brush size={28} />, nome: "Artes e Ofícios", exemplos: "Tatuagem, pintura, artesanato" },
   { icone: <ChefHat size={28} />, nome: "Gastronomia", exemplos: "Chef em casa, buffet, confeitaria" },
   { icone: <Camera size={28} />, nome: "Fotografia e Eventos", exemplos: "Ensaio, festa, casamento" },
-  { icone: <MonitorSmartphone size={28} />, nome: "Consultoria", exemplos: "Mentoria, coaching, aulas particulares" },
+  { icone: <MonitorSmartphone size={28} />, nome: "Consultoria e Aulas", exemplos: "Mentoria, coaching, aulas particulares" },
+];
+
+const pilares = [
+  {
+    icone: <Globe size={24} />,
+    titulo: "Site profissional com a sua cara",
+    desc: "Página completa com seus serviços, preços e horários — suas cores, seu logo, seu domínio próprio nos planos Profissional e IA Premium.",
+  },
+  {
+    icone: <CalendarCheck size={24} />,
+    titulo: "Agenda, Pix e lembretes no WhatsApp",
+    desc: "O cliente marca sozinho, 24h por dia. Confirmação e lembrete automáticos no WhatsApp reduzem as faltas — e o pagamento via Pix chega direto pra você.",
+  },
+  {
+    icone: <Bot size={24} />,
+    titulo: "AI Agent nas suas redes sociais",
+    desc: "Conecte WhatsApp, Instagram e Facebook: a IA responde dúvidas, qualifica clientes e agenda por você — de dia, de noite, sem folga.",
+  },
 ];
 
 const beneficios = [
@@ -46,13 +64,13 @@ const beneficios = [
   },
   {
     icone: <LayoutDashboard size={24} />,
-    titulo: "Tudo em um lugar só",
-    desc: "Agenda centralizada, cadastro de clientes, relatórios de faturamento e Pix integrado. Um painel completo sem precisar de planilha, caderninho ou maquininha.",
+    titulo: "Tudo em um painel só",
+    desc: "Agenda centralizada, cadastro de clientes, relatórios de faturamento e Pix integrado. Um painel completo sem planilha, caderninho ou maquininha.",
   },
   {
-    icone: <Bot size={24} />,
-    titulo: "IA que atende por você",
-    desc: "O AI Agent do AN.BR responde dúvidas comuns, qualifica leads e até agenda serviços automaticamente. Seus clientes são atendidos na hora, mesmo sem você disponível.",
+    icone: <Shield size={24} />,
+    titulo: "Seus dados, seu negócio",
+    desc: "Você é dono da sua página, do seu domínio e da sua base de clientes. Sem dependência de marketplace, sem comissão sobre cada atendimento.",
   },
   {
     icone: <Zap size={24} />,
@@ -64,46 +82,24 @@ const beneficios = [
 const passos = [
   { titulo: "Cadastre seus serviços", desc: "Informe o que você faz, seus preços, horários e dias de atendimento. Leva 2 minutos — e não precisa de experiência nenhuma." },
   { titulo: "Personalize sua página", desc: "Escolha cores, logo, fonte e template. Sua página de agendamento fica pronta com a sua cara, do seu jeito." },
-  { titulo: "Compartilhe e receba clientes", desc: "Cole o link no Instagram, WhatsApp ou Google. Seus clientes marcam horário sozinhos, 24h por dia, sem você precisar atender telefone." },
+  { titulo: "Conecte o AI Agent e receba clientes", desc: "Conecte o agente ao seu WhatsApp e às suas redes sociais, cole o link no Instagram e comece a receber clientes 24h por dia." },
 ];
 
 const precosPreview = [
   { nome: "Grátis", preco: "R$ 0", destaque: false, slug: "/precos#gratis", desc: "30 agendamentos/mês" },
-  { nome: "Starter", preco: "R$ 29", destaque: false, slug: "/precos#starter", desc: "Agendamentos ilimitados" },
-  { nome: "Profissional", preco: "R$ 69", destaque: true, slug: "/precos#profissional", desc: "Domínio próprio + AI Agent" },
-  { nome: "IA Premium", preco: "R$ 129", destaque: false, slug: "/precos#ia-premium", desc: "AI Agent + WhatsApp API" },
-];
-
-const depoimentos = [
-  {
-    nome: "Ana Paula Mendes",
-    role: "Salão de Beleza",
-    cidade: "São Paulo, SP",
-    texto: "Antes eu perdia clientes porque não tinha onde agendar. Hoje meu link está no Instagram e recebo agendamentos 24h por dia. Minha agenda encheu e as faltas diminuíram muito com os lembretes do WhatsApp.",
-  },
-  {
-    nome: "Carlos Eduardo",
-    role: "Personal Trainer",
-    cidade: "Belo Horizonte, MG",
-    texto: "O AI Agent é surreal. Responde meus clientes de madrugada perguntando horários e já deixa tudo agendado. Acordo com a agenda pronta. Parece que contratei uma secretária.",
-  },
-  {
-    nome: "Fernanda Lima",
-    role: "Clínica de Estética",
-    cidade: "Curitiba, PR",
-    texto: "Testei vários sistemas de agendamento online, mas o AN.BR foi o único que realmente ficou com a minha cara. Domínio próprio, suporte em português e sem aquela taxa absurda. Não troco mais.",
-  },
+  { nome: "Profissional", preco: "R$ 49", destaque: true, slug: "/precos#profissional", desc: "Domínio próprio + Google Calendar + AI Agent" },
+  { nome: "IA Premium", preco: "R$ 99", destaque: false, slug: "/precos#ia-premium", desc: "AI Agent + WhatsApp API" },
 ];
 
 const faq = [
-  { q: "Preciso saber programação para criar meu sistema de agendamento?", r: "Não. Você cadastra seus dados, escolhe um template e pronto — seu sistema está no ar em menos de 5 minutos. Tudo visual, sem uma linha de código." },
-  { q: "Quanto tempo leva para ficar pronto?", r: "Menos de 5 minutos. Depois de criado, você pode ajustar cores, fotos e serviços pelo painel a hora que quiser." },
+  { q: "Preciso saber programação para criar meu sistema?", r: "Não. Você cadastra seus dados, escolhe um template e pronto — seu sistema está no ar em menos de 5 minutos. Tudo visual, sem uma linha de código." },
+  { q: "O que está incluído no sistema?", r: "Tudo o que seu negócio precisa: página profissional com seus serviços e preços, agendamento online 24h, confirmação e lembretes no WhatsApp, pagamento via Pix, painel completo de gestão e o AI Agent que atende no WhatsApp, Instagram e Facebook." },
+  { q: "Como funciona o AI Agent?", r: "Você conecta suas redes sociais ao agente e ele passa a atender no seu lugar: responde dúvidas sobre serviços e horários, qualifica clientes e agenda compromissos automaticamente, em português e em tempo real. Você acompanha tudo pelo painel." },
   { q: "Posso usar meu próprio domínio?", r: "Sim! Nos planos Profissional e IA Premium você pode usar seu próprio domínio (ex: seu-nome.com.br). Ajudamos com a configuração do DNS." },
-  { q: "O AI Agent realmente funciona em português?", r: "Funciona. O AI Agent entende português natural, responde perguntas comuns sobre serviços e horários, qualifica leads e agenda compromissos automaticamente. Tudo em tempo real." },
-  { q: "Tem suporte em português?", r: "Sim, suporte humanizado em português. Nossa equipe está no Brasil e responde por WhatsApp e email de segunda a sexta." },
+  { q: "Como recebo os pagamentos?", r: "Seu cliente escolhe o serviço, agenda e paga com Pix direto para a sua chave. O valor cai na sua conta na hora, sem taxa da plataforma em cima." },
+  { q: "Tem algum custo? É realmente grátis?", r: "O plano Grátis é 100% gratuito, sem cartão de crédito, com 30 agendamentos por mês. Conforme seu negócio cresce, você pode migrar para um plano pago a partir de R$ 49/mês." },
   { q: "Quais tipos de serviço funcionam no AN.BR?", r: "Qualquer serviço profissional: beleza, estética, saúde, limpeza, consultoria, aulas particulares, fotografia, eventos, personal trainer, tatuagem e muito mais. Se você cobra pelo seu tempo, o AN.BR funciona para você." },
-  { q: "Tem algum custo? É realmente grátis?", r: "O plano Grátis é 100% gratuito, sem cartão de crédito, com 30 agendamentos por mês. Conforme seu negócio cresce, você pode migrar para um plano pago a partir de R$ 29/mês." },
-  { q: "Como funciona o teste grátis de 7 dias?", r: "Ao assinar um plano pago, você tem 7 dias para testar todas as funcionalidades sem custo. Se não gostar, cancele antes de pagar. Sem compromisso." },
+  { q: "Tem suporte em português?", r: "Sim, suporte humanizado em português. Nossa equipe está no Brasil e responde por WhatsApp e email de segunda a sexta." },
 ];
 
 function Secao({ children, className = "", id }: { children: React.ReactNode; className?: string; id?: string }) {
@@ -140,44 +136,11 @@ function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 
 export default function HomePage() {
   const [faqAberto, setFaqAberto] = useState<number | null>(null);
-  const [mobileMenu, setMobileMenu] = useState(false);
-
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-    setMobileMenu(false);
-  };
 
   return (
     <div className="bg-[var(--color-bg)]">
 
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-[var(--color-line)]/50 bg-[var(--color-bg)]/90 backdrop-blur-md">
-        <div className="container-x flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <Logo className="h-8 w-8" />
-            <span className="font-serif text-xl">AN.BR</span>
-          </Link>
-          <nav className="hidden items-center gap-6 sm:flex">
-            <button onClick={() => scrollTo("beneficios")} className="text-sm text-ink-soft transition-colors hover:text-ink">Serviços</button>
-            <Link href="/precos" className="text-sm text-ink-soft transition-colors hover:text-ink">Preços</Link>
-            <Link href="/blog" className="text-sm text-ink-soft transition-colors hover:text-ink">Blog</Link>
-            <button onClick={() => scrollTo("faq")} className="text-sm text-ink-soft transition-colors hover:text-ink">FAQ</button>
-            <Link href="/cadastro" className="btn-primary text-sm px-5 py-2.5">Criar meu sistema</Link>
-          </nav>
-          <button onClick={() => setMobileMenu(!mobileMenu)} className="sm:hidden p-2 text-ink">
-            <Menu size={24} />
-          </button>
-        </div>
-        {mobileMenu && (
-          <div className="border-t border-[var(--color-line)] bg-[var(--color-bg)] px-6 pb-6 pt-4 sm:hidden space-y-3">
-            <button onClick={() => scrollTo("beneficios")} className="block w-full text-left text-sm text-ink-soft py-2">Serviços</button>
-            <Link href="/precos" className="block w-full text-left text-sm text-ink-soft py-2">Preços</Link>
-            <Link href="/blog" className="block w-full text-left text-sm text-ink-soft py-2">Blog</Link>
-            <button onClick={() => scrollTo("faq")} className="block w-full text-left text-sm text-ink-soft py-2">FAQ</button>
-            <Link href="/cadastro" className="btn-primary w-full justify-center text-sm py-3">Criar meu sistema</Link>
-          </div>
-        )}
-      </header>
+      <SiteNav />
 
       {/* Hero */}
       <Secao className="pt-28 sm:pt-36 overflow-hidden relative" id="hero">
@@ -188,33 +151,37 @@ export default function HomePage() {
         <div className="mx-auto max-w-5xl text-center">
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[var(--color-primary)]/10 px-4 py-1.5 text-sm font-medium text-[var(--color-primary)]">
-              <Sparkles size={14} />
-              Sistema de agendamento online
+              <Check size={14} />
+              Site + agenda + pagamentos + IA — tudo conectado
             </div>
             <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Sistema de agendamento online<br />
-              <span className="italic text-[var(--color-primary)]">que funciona de verdade</span>
+              Seu negócio inteiro online:<br />
+              <span className="italic text-[var(--color-primary)]">site, agenda e IA atendendo por você</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-ink-soft sm:text-xl">
-              Página profissional, agenda online e lembretes automáticos. <br className="hidden sm:block" />
-              Menos faltas, mais clientes e zero programação.
+              Página profissional, agendamento 24h, Pix e lembretes no WhatsApp. <br className="hidden sm:block" />
+              Conecte o AI Agent às suas redes sociais e ele atende por você — de dia e de noite.
             </p>
 
-            {/* Social proof inline */}
-            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-ink-soft">
-              <span className="flex -space-x-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <span key={i} className="inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--color-bg)] bg-[var(--color-primary)]/20 text-[10px] font-bold text-[var(--color-primary)]">
-                    {["A", "C", "R", "P"][i - 1]}
-                  </span>
-                ))}
+            {/* Honest facts */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-sm text-ink-soft">
+              <span className="flex items-center gap-1.5">
+                <Check size={15} className="text-[var(--color-primary)]" />
+                <strong className="text-ink">30 agendamentos grátis</strong> por mês
               </span>
-              <span><strong className="text-ink">+8.000 profissionais</strong> já usam o AN.BR</span>
+              <span className="flex items-center gap-1.5">
+                <Check size={15} className="text-[var(--color-primary)]" />
+                <strong className="text-ink">Pronto em 5 minutos</strong> sem programação
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Check size={15} className="text-[var(--color-primary)]" />
+                <strong className="text-ink">Sem cartão de crédito</strong> para começar
+              </span>
             </div>
 
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link href="/cadastro" className="btn-primary gap-2 px-8 py-4 text-lg shadow-lg shadow-[var(--color-primary)]/20">
-                Criar gratuitamente
+                Criar meu sistema grátis
                 <ArrowRight size={20} />
               </Link>
               <Link href="/precos" className="flex items-center gap-2 rounded-xl border border-[var(--color-line)] bg-white px-8 py-4 text-sm font-medium text-ink transition-all hover:bg-[var(--color-bg)]">
@@ -224,7 +191,7 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* Premium mockup */}
+          {/* Premium mockup + AI chat card */}
           <motion.div
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
@@ -274,8 +241,8 @@ export default function HomePage() {
                   <div className="mb-4 flex items-center justify-between">
                     <span className="text-sm font-semibold text-ink">Julho 2026</span>
                     <span className="flex gap-1 text-ink-soft">
-                      <ChevronRight size={16} className="rotate-180" />
-                      <ChevronRight size={16} />
+                      <Chevron size={16} className="rotate-180" />
+                      <Chevron size={16} />
                     </span>
                   </div>
                   <div className="mb-4 grid grid-cols-7 gap-1 text-center text-xs">
@@ -284,8 +251,8 @@ export default function HomePage() {
                     ))}
                     {Array.from({ length: 35 }, (_, i) => {
                       const day = i - 2;
-                  const isSelected = day === 15;
-                  const isAvail = day >= 1 && day <= 31;
+                      const isSelected = day === 15;
+                      const isAvail = day >= 1 && day <= 31;
                       return (
                         <span key={i} className={`rounded-lg py-1.5 text-xs transition-all ${
                           isSelected
@@ -320,6 +287,33 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+
+            {/* AI Agent chat card */}
+            <div className="absolute -bottom-10 -left-2 hidden w-80 rounded-2xl border border-[var(--color-line)] bg-white p-5 text-left shadow-2xl shadow-[var(--color-primary)]/10 lg:block xl:-left-10">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary)] text-white">
+                  <Bot size={16} />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-ink">AI Agent</p>
+                  <p className="text-[11px] text-teal-600">Online · atende 24h</p>
+                </div>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="ml-auto max-w-[85%] rounded-xl rounded-br-sm bg-[var(--color-primary)] px-3 py-2 text-white">
+                  Oi! Tem horário livre amanhã?
+                </div>
+                <div className="max-w-[90%] rounded-xl rounded-bl-sm border border-[var(--color-line)] bg-[var(--color-bg)] px-3 py-2 text-ink">
+                  Tenho sim! Corte às 10h ou 15h — qual prefere? Posso confirmar aqui mesmo.
+                </div>
+                <div className="max-w-[90%] rounded-xl rounded-bl-sm border border-[var(--color-line)] bg-[var(--color-bg)] px-3 py-2 text-ink">
+                  Pronto: Corte Feminino, amanhã 15h. Confirmação e lembrete enviados no WhatsApp.
+                </div>
+              </div>
+              <p className="mt-3 border-t border-[var(--color-line)] pt-2 text-[11px] text-ink-soft">
+                WhatsApp, Instagram e Facebook conectados ao seu agente
+              </p>
+            </div>
           </motion.div>
         </div>
       </Secao>
@@ -327,7 +321,7 @@ export default function HomePage() {
       {/* Social Proof Marquee */}
       <section className="border-y border-[var(--color-line)]/50 bg-white py-8 overflow-hidden">
         <div className="container-x">
-          <p className="mb-6 text-center text-sm font-medium text-ink-soft">Usado por profissionais em todo o Brasil</p>
+          <p className="mb-6 text-center text-sm font-medium text-ink-soft">Feito para quem vive de hora marcada</p>
           <div className="flex overflow-hidden">
             <motion.div
               className="flex shrink-0 gap-8"
@@ -349,9 +343,29 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Complete package pillars */}
+      <Secao id="pacote">
+        <TituloSecao subtitulo="Enquanto os outros vendem uma peça do quebra-cabeça, o AN.BR entrega tudo conectado em uma assinatura.">
+          Um sistema, <span className="text-[var(--color-primary)]">tudo conectado</span>
+        </TituloSecao>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {pilares.map((p, i) => (
+            <FadeIn key={p.titulo} delay={i * 0.08}>
+              <article className="card group h-full p-6 transition-all hover:shadow-lg hover:border-[var(--color-primary)]/20">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] transition-transform group-hover:scale-110">
+                  {p.icone}
+                </div>
+                <h3 className="text-lg font-semibold text-ink">{p.titulo}</h3>
+                <p className="mt-2 text-sm text-ink-soft leading-relaxed">{p.desc}</p>
+              </article>
+            </FadeIn>
+          ))}
+        </div>
+      </Secao>
+
       {/* Benefits */}
-      <Secao id="beneficios">
-        <TituloSecao subtitulo="Mais de 8.000 profissionais já escolheram o AN.BR para gerenciar seus agendamentos.">
+      <Secao id="beneficios" className="bg-white">
+        <TituloSecao subtitulo="Cada peça trabalha junto: a página atrai, a agenda organiza, o Pix cobra e o AI Agent atende.">
           Por que profissionais escolhem o <span className="text-[var(--color-primary)]">AN.BR</span>
         </TituloSecao>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -370,7 +384,7 @@ export default function HomePage() {
       </Secao>
 
       {/* How it works */}
-      <Secao id="funciona" className="bg-white">
+      <Secao id="funciona">
         <TituloSecao subtitulo="Você está a poucos passos de nunca mais precisar atender telefone para marcar horário.">
           Como <span className="text-[var(--color-primary)]">funciona</span>
         </TituloSecao>
@@ -385,9 +399,31 @@ export default function HomePage() {
                 <p className="mt-2 text-sm text-ink-soft leading-relaxed">{passo.desc}</p>
                 {i < passos.length - 1 && (
                   <div className="hidden sm:block absolute -right-4 top-7 text-[var(--color-primary)]/30">
-                    <ChevronRight size={24} />
+                    <Chevron size={24} />
                   </div>
                 )}
+              </div>
+            </FadeIn>
+          ))}
+        </div>
+      </Secao>
+
+      {/* Categorias */}
+      <Secao id="categorias" className="bg-white">
+        <TituloSecao subtitulo="Beleza, limpeza, consultoria, aulas, eventos — qualquer serviço profissional, com página e copy prontas para o seu nicho.">
+          Para todo tipo de <span className="text-[var(--color-primary)]">serviço</span>
+        </TituloSecao>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {categorias.map((cat, i) => (
+            <FadeIn key={cat.nome} delay={i * 0.05}>
+              <div className="card flex items-start gap-4 p-5 transition-all hover:shadow-md hover:border-[var(--color-primary)]/20 group">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-hover:scale-110 transition-transform">
+                  {cat.icone}
+                </div>
+                <div>
+                  <p className="font-semibold text-ink">{cat.nome}</p>
+                  <p className="mt-0.5 text-sm text-ink-soft">{cat.exemplos}</p>
+                </div>
               </div>
             </FadeIn>
           ))}
@@ -415,7 +451,7 @@ export default function HomePage() {
               >
                 {p.destaque && (
                   <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-[var(--color-primary)] px-3 py-0.5 text-[10px] font-semibold text-white shadow-sm">
-                    <Sparkles size={10} />
+                    <Check size={10} />
                     POPULAR
                   </div>
                 )}
@@ -434,60 +470,6 @@ export default function HomePage() {
         </div>
       </Secao>
 
-      {/* Testimonials */}
-      <Secao id="depoimentos" className="bg-white">
-        <TituloSecao subtitulo="Profissionais reais, resultados reais.">
-          Quem usa <span className="text-[var(--color-primary)]">recomenda</span>
-        </TituloSecao>
-        <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-3">
-          {depoimentos.map((d, i) => (
-            <FadeIn key={d.nome} delay={i * 0.1}>
-              <figure className="card flex h-full flex-col p-6 transition-all hover:shadow-md">
-                <div className="mb-4 flex gap-0.5 text-yellow-500">
-                  {[0, 1, 2, 3, 4].map((s) => (
-                    <Star key={s} size={15} fill="currentColor" />
-                  ))}
-                </div>
-                <blockquote className="flex-1 text-sm text-ink-soft leading-relaxed">
-                  &ldquo;{d.texto}&rdquo;
-                </blockquote>
-                <figcaption className="mt-4 flex items-center gap-3 border-t border-[var(--color-line)] pt-4">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/10 text-sm font-bold text-[var(--color-primary)]">
-                    {d.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-ink">{d.nome}</p>
-                    <p className="text-xs text-ink-soft">{d.role} · {d.cidade}</p>
-                  </div>
-                </figcaption>
-              </figure>
-            </FadeIn>
-          ))}
-        </div>
-      </Secao>
-
-      {/* Categorias */}
-      <Secao id="categorias">
-        <TituloSecao subtitulo="Beleza, limpeza, consultoria, aulas, eventos — qualquer serviço profissional.">
-          Para todo tipo de <span className="text-[var(--color-primary)]">serviço</span>
-        </TituloSecao>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {categorias.map((cat, i) => (
-            <FadeIn key={cat.nome} delay={i * 0.05}>
-              <div className="card flex items-start gap-4 p-5 transition-all hover:shadow-md hover:border-[var(--color-primary)]/20 group">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-hover:scale-110 transition-transform">
-                  {cat.icone}
-                </div>
-                <div>
-                  <p className="font-semibold text-ink">{cat.nome}</p>
-                  <p className="mt-0.5 text-sm text-ink-soft">{cat.exemplos}</p>
-                </div>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
-      </Secao>
-
       {/* Numbers / Stats bar */}
       <section className="bg-[var(--color-primary)] text-white">
         <div className="container-x py-16 sm:py-20">
@@ -495,9 +477,9 @@ export default function HomePage() {
             <div className="grid gap-10 text-center sm:grid-cols-4">
               {[
                 { valor: "5 min", label: "Para criar seu sistema" },
-                { valor: "+8.000", label: "Profissionais ativos" },
+                { valor: "30/mês", label: "Agendamentos grátis" },
                 { valor: "-40%", label: "Menos faltas em média" },
-                { valor: "Grátis", label: "Para começar hoje" },
+                { valor: "24h", label: "AI Agent atendendo por você" },
               ].map((n, i) => (
                 <FadeIn key={n.label} delay={i * 0.1}>
                   <p className="text-3xl font-bold sm:text-4xl">{n.valor}</p>
@@ -527,7 +509,7 @@ export default function HomePage() {
                     <span itemProp="name">{item.q}</span>
                   </span>
                   <span className={`shrink-0 transition-transform duration-200 ${faqAberto === i ? "rotate-180" : ""}`}>
-                    <ChevronRight size={18} className="text-ink-soft" />
+                    <Chevron size={18} className="text-ink-soft" />
                   </span>
                 </button>
                 <motion.div
@@ -556,15 +538,15 @@ export default function HomePage() {
               </div>
               <div className="relative z-10">
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-white">
-                  <Sparkles size={14} />
-                  Comece agora
+                  <Check size={14} />
+                  Comece agora, grátis
                 </div>
                 <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  Mais de 8.000 profissionais já modernizaram<br />
-                  seus agendamentos. <span className="italic">Comece você também.</span>
+                  Seu negócio completo online,<br />
+                  <span className="italic">em minutos.</span>
                 </h2>
                 <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
-                  Crie seu sistema de agendamento online grátis em 5 minutos. Sem cartão de crédito, sem compromisso.
+                  Site, agenda, pagamentos e AI Agent — sem cartão de crédito, sem compromisso.
                 </p>
                 <Link href="/cadastro" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-lg font-semibold text-[var(--color-primary)] shadow-lg transition-all hover:brightness-105">
                   Criar meu sistema grátis
@@ -586,7 +568,7 @@ export default function HomePage() {
                 <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--color-primary)] text-white text-xs font-bold">A</span>
                 <span className="font-serif text-base font-semibold">AN.BR</span>
               </Link>
-              <p className="text-xs text-ink-soft">Sistema de agendamento online<br />Feito no Brasil</p>
+              <p className="text-xs text-ink-soft">Sistema completo online<br />Feito no Brasil</p>
             </div>
             <nav className="flex flex-wrap justify-center gap-6 text-sm text-ink-soft">
               <Link href="/" className="transition-colors hover:text-ink">Início</Link>
@@ -608,3 +590,10 @@ export default function HomePage() {
   );
 }
 
+function Chevron({ size, className }: { size: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}

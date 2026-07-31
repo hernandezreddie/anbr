@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createOAuthState, getAuthUrl } from "@/lib/google/oauth"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { exigirPlano, PLANOS_COM_GOOGLE } from "@/lib/planos"
+import { verificarAcessoProfissional } from "@/lib/auth-roles"
 
 export async function POST(req: NextRequest) {
   const { profissional_id } = await req.json()
   if (!profissional_id) return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 })
+
+  const acesso = await verificarAcessoProfissional(profissional_id)
+  if (!acesso.permitido) return NextResponse.json({ error: "Sem permissão para este profissional" }, { status: 403 })
+
+  const bloqueio = await exigirPlano(profissional_id, PLANOS_COM_GOOGLE, "Google Calendar")
+  if (bloqueio) return NextResponse.json({ error: bloqueio.error }, { status: bloqueio.status })
 
   const state = await createOAuthState(profissional_id)
   const url = getAuthUrl(state)

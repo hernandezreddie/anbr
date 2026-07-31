@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAdminPlataforma } from "@/lib/auth-roles";
 
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+    if (!(await isAdminPlataforma())) {
+      return NextResponse.json({ error: "Acesso restrito ao admin" }, { status: 403 });
+    }
 
     const formData = await req.formData();
     const file = formData.get("file") as File;

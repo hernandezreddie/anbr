@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkFreeBusy, createCalendarEvent, deleteCalendarEvent, getCalendarStatus } from "@/lib/google/calendar"
+import { exigirPlano, PLANOS_COM_GOOGLE } from "@/lib/planos"
+import { verificarAcessoProfissional } from "@/lib/auth-roles"
 
 export async function GET(req: NextRequest) {
   const profissional_id = req.nextUrl.searchParams.get("profissional_id")
   if (!profissional_id) return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 })
+
+  const acesso = await verificarAcessoProfissional(profissional_id)
+  if (!acesso.permitido) return NextResponse.json({ error: "Sem permissão para este profissional" }, { status: 403 })
 
   const status = await getCalendarStatus(profissional_id)
   return NextResponse.json(status)
@@ -16,6 +21,12 @@ export async function POST(req: NextRequest) {
   if (!profissional_id) {
     return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 })
   }
+
+  const acesso = await verificarAcessoProfissional(profissional_id)
+  if (!acesso.permitido) return NextResponse.json({ error: "Sem permissão para este profissional" }, { status: 403 })
+
+  const bloqueio = await exigirPlano(profissional_id, PLANOS_COM_GOOGLE, "Google Calendar")
+  if (bloqueio) return NextResponse.json({ error: bloqueio.error }, { status: bloqueio.status })
 
   try {
     switch (action) {
