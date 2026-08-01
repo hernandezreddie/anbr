@@ -69,6 +69,7 @@ export default function CadastroPage() {
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [verSenha, setVerSenha] = useState(false);
+  const [consentimento, setConsentimento] = useState(false);
 
   const slugFromNome = (nome: string) =>
     nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -93,6 +94,10 @@ export default function CadastroPage() {
 
   const handleSubmit = async () => {
     if (!categoria) return;
+    if (!consentimento) {
+      setErro("Para criar sua conta, aceite os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
     setErro(""); setEnviando(true);
     const payload = {
       nome: form.nome, email: form.email, senha: form.senha,
@@ -101,6 +106,7 @@ export default function CadastroPage() {
       template_id: form.template_id,
       copy_variante: copyVariante,
       categoria,
+      consentimento: true,
       servicos: servicos.filter((s) => s.nome.trim()),
     };
     const res = await fetch("/api/cadastro", {
@@ -535,6 +541,23 @@ export default function CadastroPage() {
                   </div>
 
                   {erro && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{erro}</div>}
+
+                  {/* Consentimento LGPD */}
+                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-bg)]/50 p-4 transition-colors hover:border-[var(--color-primary)]/40">
+                    <input
+                      type="checkbox"
+                      checked={consentimento}
+                      onChange={(e) => setConsentimento(e.target.checked)}
+                      className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--color-primary)]"
+                    />
+                    <span className="text-sm leading-relaxed text-ink-soft">
+                      Li e aceito os{" "}
+                      <a href="/termos" target="_blank" rel="noopener noreferrer" className="font-medium text-[var(--color-primary)] underline underline-offset-2">Termos de Uso</a>{" "}
+                      e a{" "}
+                      <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="font-medium text-[var(--color-primary)] underline underline-offset-2">Política de Privacidade</a>{" "}
+                      e autorizo o tratamento dos meus dados pessoais conforme a LGPD (Lei 13.709/2018).
+                    </span>
+                  </label>
 
                 <Button variant="primary" size="lg" className="w-full gap-2" onClick={handleSubmit} disabled={enviando}>
                   {enviando ? "Criando sistema..." : "Criar meu sistema"}

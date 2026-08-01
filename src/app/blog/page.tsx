@@ -8,7 +8,18 @@ export const metadata: Metadata = {
   title: "Blog | AN.BR — Dicas para Profissionais Autônomos",
   description:
     "Artigos sobre agendamento online, redução de faltas, marketing digital e tecnologia para profissionais autônomos.",
+  alternates: { canonical: "https://autonexabrasil.com.br/blog" },
   openGraph: {
+    title: "Blog | AN.BR",
+    description:
+      "Artigos sobre agendamento online, redução de faltas, marketing digital e tecnologia para autônomos.",
+    url: "https://autonexabrasil.com.br/blog",
+    siteName: "AN.BR",
+    locale: "pt_BR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
     title: "Blog | AN.BR",
     description:
       "Artigos sobre agendamento online, redução de faltas, marketing digital e tecnologia para autônomos.",
@@ -16,9 +27,28 @@ export const metadata: Metadata = {
 };
 
 export default function BlogIndex() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: "Blog AN.BR",
+    url: "https://autonexabrasil.com.br/blog",
+    inLanguage: "pt-BR",
+    description:
+      "Artigos sobre agendamento online, redução de faltas, marketing digital e tecnologia para profissionais autônomos.",
+    publisher: {
+      "@type": "Organization",
+      name: "AN.BR",
+      url: "https://autonexabrasil.com.br",
+    },
+  };
+
   return (
     <div className="bg-[var(--color-bg)]">
       <SiteNav />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       <section className="py-20 sm:py-28">
         <div className="container-x">

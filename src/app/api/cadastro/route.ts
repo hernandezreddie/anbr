@@ -11,10 +11,17 @@ import { gerarLogoSVG } from "@/lib/logo-padrao";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { nome, email, senha, slug, whatsapp, cidade, pix_chave, servicos, slogan, template_id, categoria, copy_variante, msg_variante } = body;
+  const { nome, email, senha, slug, whatsapp, cidade, pix_chave, servicos, slogan, template_id, categoria, copy_variante, msg_variante, consentimento } = body;
 
   if (!nome || !email || !senha || !slug) {
     return Response.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
+  }
+
+  if (!consentimento) {
+    return Response.json(
+      { error: "Para criar sua conta, é necessário aceitar os Termos de Uso e a Política de Privacidade (LGPD)." },
+      { status: 400 }
+    );
   }
 
   const supabase = createAdminClient();
@@ -45,6 +52,8 @@ export async function POST(request: Request) {
       pix_chave: pix_chave || email,
       pix_nome,
       pix_cidade,
+      consentimento_lgpd: true,
+      consentimento_data: new Date().toISOString(),
     })
     .select()
     .single();

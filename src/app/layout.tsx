@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces } from "next/font/google";
+import { ConsentBanner } from "@/components/site/ConsentBanner";
 import "./globals.css";
 
 const inter = Inter({
@@ -118,6 +119,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <main className="flex-1">{children}</main>
+        <ConsentBanner />
       </body>
     </html>
   );

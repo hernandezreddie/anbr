@@ -391,6 +391,226 @@ O AI Agent conhece seus serviços, preços e políticas. Ele pode responder perg
 
 <p>O AN.BR já está desenvolvendo recursos de AI Agent para seus usuários. Crie seu sistema gratuitamente e fique de olho nas novidades.</p>`,
   },
+  {
+    slug: "lgpd-profissional-autonomo-consentimento-dados",
+    title: "LGPD para Profissionais Autônomos: Consentimento e Proteção de Dados",
+    description:
+      "O que a LGPD exige de você, profissional autônomo, na coleta de dados de clientes: consentimento, registro, direitos do titular e boas práticas simples.",
+    category: "Legal",
+    date: "2026-08-01",
+    imageAlt: "Profissional autônomo protegendo dados de clientes conforme a LGPD",
+    content: `<p>Você anota o nome, o WhatsApp e o endereço dos seus clientes na agenda? Se sim, você trata dados pessoais — e a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018) se aplica a você, mesmo sendo um profissional autônomo ou microempreendedor.</p>
+
+<p>Não precisa entrar em pânico: a lei foi feita para ser cumprida por negócios de todos os tamanhos, e para quem é autônomo as exigências são proporcionais. Este guia mostra o que você precisa fazer, na prática.</p>
+
+<h3>O que é consentimento na LGPD?</h3>
+
+<p>O consentimento é uma das bases legais para tratar dados pessoais. Na prática, significa que o cliente deve concordar de forma livre, informada e inequívoca com o uso das informações dele. Não vale silêncio, não vale "deixar passar" — precisa haver uma ação afirmativa, como marcar uma caixa.</p>
+
+<p>No <strong>agendamento online</strong>, isso acontece naturalmente: o cliente marca uma caixa de aceite dos termos antes de confirmar a reserva. Essa é a forma mais simples de coletar consentimento válido.</p>
+
+<h3>O que a lei exige na prática</h3>
+
+<ul>
+  <li><strong>Registrar o consentimento:</strong> guarde a data e a hora em que o cliente aceitou os termos. A lei exige comprovação (art. 8º, § 2º)</li>
+  <li><strong>Informar a finalidade:</strong> explique para que os dados serão usados (agendar, avisar sobre horários, cobrar, enviar promoções)</li>
+  <li><strong>Coletar só o necessário:</strong> não peça informações que você não vai usar. Cada dado coletado sem necessidade é um risco a mais</li>
+  <li><strong>Permitir a revogação:</strong> o cliente pode retirar o consentimento a qualquer momento, e você deve parar de usar os dados a partir dali</li>
+  <li><strong>Responder a pedidos:</strong> se um cliente pedir acesso, correção ou exclusão dos dados, atenda — e atenda rápido</li>
+</ul>
+
+<h3>Como um sistema de agendamento ajuda</h3>
+
+<p>Fazer tudo isso na agenda de papel ou na memória é inviável. Um <a href="/blog/sistema-agendamento-para-autonomos-vale-pena">sistema de agendamento online</a> cuida da parte chata:</p>
+
+<ul>
+  <li>Registra automaticamente a data do consentimento de cada cliente</li>
+  <li>Mantém os dados organizados em um só lugar, com acesso restrito</li>
+  <li>Permite excluir ou corrigir o cadastro de um cliente quando ele pedir</li>
+  <li>Reduz o uso de papel e cadernos soltos com informações sensíveis</li>
+</ul>
+
+<h3>Erros comuns que você deve evitar</h3>
+
+<p><strong>Compartilhar dados sem necessidade.</strong> Mandar lista de clientes para grupos de WhatsApp, postar foto com dados visíveis ou repassar contatos a terceiros são práticas que violam a LGPD.</p>
+
+<p><strong>Guardar dados para sempre.</strong> Mantenha os dados só pelo tempo necessário. Cliente que não agenda há anos não precisa continuar no seu cadastro.</p>
+
+<p><strong>Pedir mais do que precisa.</strong> Para agendar, você precisa de nome e WhatsApp. Endereço completo, CPF e documentos só fazem sentido quando são realmente necessários.</p>
+
+<h3>Conclusão</h3>
+
+<p>A LGPD não é um bicho de sete cabeças. Com consentimento claro, registro do aceite e organização dos dados, você está em conformidade — e ainda transmite mais confiança para os clientes, que hoje valorizam quem respeita a privacidade.</p>
+
+<p>Com o AN.BR, o consentimento é coletado e registrado automaticamente em cada agendamento. <a href="/cadastro">Crie seu sistema gratuitamente</a> e atenda à LGPD sem esforço.</p>`,
+  },
+  {
+    slug: "pix-profissional-autonomo-como-receber",
+    title: "Pix para Autônomos: Como Receber Pagamentos na Hora",
+    description:
+      "Saiba como usar o Pix para receber mais rápido, reduzir calotes e facilitar a vida do cliente — incluindo a chave Pix no seu fluxo de agendamento.",
+    category: "Finanças",
+    date: "2026-07-15",
+    imageAlt: "Pagamento via Pix sendo recebido por profissional autônomo",
+    content: `<p>Se você ainda recebe só em dinheiro, cartão ou transferência com dias para cair, está deixando dinheiro na mesa. O Pix é hoje a forma de pagamento preferida dos brasileiros — e para o autônomo, é uma ferramenta de gestão poderosa.</p>
+
+<h3>Por que o Pix mudou o jogo</h3>
+
+<p>O Pix cai na hora, funciona 24 horas por dia, todos os dias, e não tem custo para receber. Para o profissional autônomo, isso significa:</p>
+
+<ul>
+  <li>Fim da espera de dias para o dinheiro cair na conta</li>
+  <li>Menos calotes: o cliente paga antes de receber o serviço</li>
+  <li>Menos dinheiro vivo circulando, mais segurança</li>
+  <li>Comprovante digital em caso de disputa</li>
+</ul>
+
+<h3>Como cobrar com Pix sem constrangimento</h3>
+
+<p>O segredo é tirar a cobrança do momento do "vamos ver". Quando o pagamento faz parte do fluxo de <strong>agendamento online</strong>, ele acontece de forma natural:</p>
+
+<ul>
+  <li>O cliente escolhe o serviço e o horário na sua página</li>
+  <li>Na confirmação, ele recebe seus dados de pagamento e o valor total</li>
+  <li>Se você usa Pix com copia e cola, o cliente paga com dois toques no celular</li>
+</ul>
+
+<p>Pedir sinal ou pagamento adiantado também reduz drasticamente as faltas: quem já pagou, costuma aparecer.</p>
+
+<h3>Tipos de chave Pix que você pode usar</h3>
+
+<p>Você pode cadastrar a chave que preferir: CPF, celular, e-mail ou chave aleatória. Para receber de clientes, o recomendado é uma chave de uso pessoal que você já usa — ou, se o volume crescer, uma chave separada para o negócio. O importante é que a chave apareça clara, sem erro de digitação.</p>
+
+<p>Se a chave for difícil de digitar (como uma chave aleatória longa), use o Pix copia e cola: o cliente cola o código e confere o valor antes de pagar.</p>
+
+<h3>E o comprovante?</h3>
+
+<p>Guarde os comprovantes de recebimento. Além de organização financeira, eles servem para comprovar pagamento caso o cliente questione. Se você registra o pagamento no mesmo lugar em que organiza os <a href="/blog/como-reduzir-faltas-no-show-agendamento-online">agendamentos</a>, fica tudo em um só lugar.</p>
+
+<h3>Segurança no recebimento</h3>
+
+<ul>
+  <li>Confira sempre o valor e o nome do pagador antes de liberar o serviço</li>
+  <li>Desconfie de pedidos para "devolver" valores ou de pagamentos acima do combinado — é golpe clássico</li>
+  <li>Nunca passe senha, token ou informações bancárias por WhatsApp</li>
+  <li>Prefira receber pela chave oficial cadastrada no banco, não por links suspeitos</li>
+</ul>
+
+<h3>Conclusão</h3>
+
+<p>O Pix é a forma mais rápida e barata de receber pelo seu trabalho. Combinado com um sistema de agendamento que mostra seus dados de pagamento automaticamente, ele elimina a maior dor do autônomo: cobrar.</p>
+
+<p>No AN.BR, você cadastra sua chave Pix uma vez e ela aparece na confirmação de cada agendamento. <a href="/cadastro">Crie seu sistema agora</a> e receba na hora.</p>`,
+  },
+  {
+    slug: "lembrete-whatsapp-agendamento-automatico",
+    title: "Lembrete Automático por WhatsApp: Acabe com as Faltas",
+    description:
+      "Confirmações e lembretes automáticos de agendamento por WhatsApp reduzem faltas em até 40%. Veja como funcionam e como configurar no seu negócio.",
+    category: "Gestão",
+    date: "2026-07-05",
+    imageAlt: "Cliente recebendo lembrete de agendamento no WhatsApp",
+    content: `<p>O cliente confirmou o horário, prometeu comparecer... e não apareceu. Essa cena se repete milhares de vezes por dia no Brasil, e o prejuízo é todo do profissional: tempo parado, agenda furada e receita perdida.</p>
+
+<p>A boa notícia: uma das ferramentas mais eficazes contra faltas é também uma das mais simples — o lembrete automático por WhatsApp.</p>
+
+<h3>Por que o lembrete funciona</h3>
+
+<p>Na maioria dos casos, a falta não é má vontade: é esquecimento. A vida do cliente é corrida, e uma confirmação visual no WhatsApp muda o comportamento. Estudos do setor de serviços mostram que sistemas com lembrete automático reduzem as faltas em até 40%.</p>
+
+<p>Além de lembrar, o lembrete permite ao cliente <strong>avisar com antecedência</strong> que não vai poder ir — e aí você remaneja o horário em vez de ficar com o buraco na agenda.</p>
+
+<h3>Como funciona na prática</h3>
+
+<p>Quando o agendamento é feito em um <a href="/blog/sistema-agendamento-para-autonomos-vale-pena">sistema de agendamento online</a>, o fluxo é automático:</p>
+
+<ul>
+  <li><strong>Confirmação na hora:</strong> assim que o cliente agenda, ele recebe no WhatsApp o resumo: serviço, data, horário e valor</li>
+  <li><strong>Lembrete:</strong> um dia antes, o sistema envia uma mensagem educada: "Olá, Mariana! Lembrando do seu horário amanhã às 14h. Qualquer imprevisto, é só avisar."</li>
+  <li><strong>Mensagem de pós-atendimento:</strong> depois do serviço, um agradecimento — e o pedido de avaliação</li>
+</ul>
+
+<h3>O que escrever no lembrete</h3>
+
+<p>Mensagens curtas funcionam melhor. Um bom lembrete tem:</p>
+
+<ul>
+  <li>Saudação com o nome do cliente</li>
+  <li>Serviço e horário (ex.: "corte + barba, amanhã às 14h")</li>
+  <li>Endereço ou confirmação de que o profissional vai até o local</li>
+  <li>Um convite gentil para reagendar em caso de imprevisto</li>
+</ul>
+
+<p>Evite jargões e mensagens genéricas do tipo "confirme sua presença". O tom pessoal aumenta a taxa de comparecimento.</p>
+
+<h3>O que evitar</h3>
+
+<p><strong>Enviar na hora errada.</strong> Lembrete com 10 minutos de antecedência não adianta. O ideal é entre 24h e 2h antes do horário.</p>
+
+<p><strong>Floodar o cliente.</strong> Cinco mensagens por agendamento é excesso. Uma confirmação, um lembrete e um agradecimento bastam.</p>
+
+<p><strong>Esquecer a LGPD.</strong> O cliente aceitou receber mensagens sobre o agendamento dele — isso é legítimo. Mas não use o WhatsApp dele para enviar spam de promoções sem um consentimento específico. Veja o <a href="/blog/lgpd-profissional-autonomo-consentimento-dados">guia de LGPD para autônomos</a>.</p>
+
+<h3>Conclusão</h3>
+
+<p>O lembrete automático é o recurso de maior retorno com menor esforço que um autônomo pode adotar: menos faltas, mais previsibilidade e um atendimento que parece de grande empresa.</p>
+
+<p>Com o AN.BR, confirmações e lembretes por WhatsApp fazem parte do sistema. <a href="/cadastro">Crie seu sistema gratuitamente</a> e acabe com as faltas.</p>`,
+  },
+  {
+    slug: "geo-ser-encontrado-google-ia-profissionais",
+    title: "GEO: Como Ser Encontrado no Google e nas IAs em 2026",
+    description:
+      "Com as IAs respondendo cada vez mais perguntas, aparece quem está preparado. Aprenda GEO (Generative Engine Optimization) para atrair clientes locais.",
+    category: "Marketing",
+    date: "2026-06-25",
+    imageAlt: "Profissional sendo encontrado em buscas no Google e em assistentes de IA",
+    content: `<p>O jeito de procurar por serviços mudou. Antes, o cliente digitava "cabeleireira perto de mim" e via uma lista de sites. Hoje, ele pergunta ao ChatGPT, ao Gemini ou ao assistente do celular: "indique uma manicure em Curitiba com boa avaliação". E a IA responde citando quem? Quem estiver preparado.</p>
+
+<p>Esse novo campo se chama <strong>GEO — Generative Engine Optimization</strong>, a otimização para ser citado pelos motores de resposta com IA. E existe uma boa notícia: o que funciona para GEO também funciona para o Google tradicional.</p>
+
+<h3>Como as IAs escolhem quem citar</h3>
+
+<p>As IAs de busca se baseiam em fontes confiáveis e estruturadas. Elas preferem: informação clara, consistente, com dados organizados e páginas bem escritas. Na prática, isso favorece quem tem:</p>
+
+<ul>
+  <li>Uma página própria com descrição objetiva dos serviços e preços</li>
+  <li>Informações de contato consistentes em todos os lugares (Google Meu Negócio, WhatsApp, redes sociais)</li>
+  <li>Avaliações reais e organizadas</li>
+  <li>Conteúdo que responde perguntas que os clientes realmente fazem</li>
+</ul>
+
+<h3>O que fazer no seu negócio</h3>
+
+<p><strong>1. Tenha uma página que fala a língua do cliente.</strong> Descreva seus serviços com os termos que as pessoas usam para procurar: "corte masculino", "manicure em domicílio", "aulas de reforço para ensino médio". Nada de jargão técnico.</p>
+
+<p><strong>2. Deixe os preços e horários visíveis.</strong> IA adora informação concreta. "Corte e barba a partir de R$ 45" vale mais do que "valores sob consulta".</p>
+
+<p><strong>3. Tenha avaliações e responda a elas.</strong> Avaliações são um dos sinais mais fortes de confiança — para o Google e para as IAs.</p>
+
+<p><strong>4. Responda perguntas comuns.</strong> "Atende aos domingos?", "Faz atendimento em domicílio?", "Qual a duração do serviço?" — se você responder essas perguntas de forma clara na sua página, aumenta muito a chance de ser citado.</p>
+
+<p><strong>5. Consistência em todo lugar.</strong> Seu nome, endereço, WhatsApp e horários precisam ser idênticos na sua página, no Google Meu Negócio e no Instagram. Inconsistência confunde os sistemas.</p>
+
+<h3>Como o agendamento online ajuda</h3>
+
+<p>Um <a href="/blog/sistema-agendamento-para-autonomos-vale-pena">sistema de agendamento online</a> é, na prática, uma ferramenta de GEO:</p>
+
+<ul>
+  <li>Sua página fica com serviços, preços e horários sempre organizados e visíveis</li>
+  <li>Cada serviço aparece com descrição e valor — exatamente o formato que as IAs leem bem</li>
+  <li>Os clientes avaliam o atendimento pelo link, gerando avaliações reais</li>
+  <li>Você ganha um link fixo para colocar na bio do Instagram e no Google Meu Negócio, reforçando a consistência</li>
+</ul>
+
+<p>Combine isso com as estratégias de <a href="/blog/instagram-facebook-vender-servicos">divulgação no Instagram e Facebook</a> e você cobre os dois mundos: redes sociais e busca.</p>
+
+<h3>Conclusão</h3>
+
+<p>O cliente de 2026 não vai apenas "achar" você — ele vai pedir uma recomendação para uma IA. Quem tem página estruturada, preços claros e avaliações reais será o indicado. Quem depende só de post no Instagram, ficará de fora da conversa.</p>
+
+<p>No AN.BR, sua página de agendamento já nasce estruturada para buscas, com informações claras e organizadas. <a href="/cadastro">Crie a sua gratuitamente</a> e esteja pronto para o futuro das buscas.</p>`,
+  },
 ];
 
 export function getPost(slug: string): Post | undefined {

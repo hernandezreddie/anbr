@@ -170,6 +170,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const [nome, setNome] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [endereco, setEndereco] = useState("");
+  const [consentimento, setConsentimento] = useState(false);
   const [data, setData] = useState("");
   const [hora, setHora] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -268,6 +269,10 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
 
   const handleSubmit = async () => {
     if (!orcamento || !nome || !whatsapp || !data || !hora) return;
+    if (!consentimento) {
+      setErroMsg("Para confirmar, aceite os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
     setSubmitting(true);
 
     const extras = isPrecoFixo && orcamento.duracao_minutos
@@ -294,6 +299,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
           cliente_nome: nome,
           cliente_whatsapp: whatsapp,
           cliente_endereco: endereco,
+          consentimento: true,
         }),
       });
       if (!res.ok) {
@@ -658,6 +664,25 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                     onChange={(e) => setEndereco(e.target.value)}
                     className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 text-sm outline-none transition-all focus:border-teal-500 focus:shadow-md"
                   />
+                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-neutral-200 bg-white p-4 transition-all">
+                    <input
+                      type="checkbox"
+                      checked={consentimento}
+                      onChange={(e) => setConsentimento(e.target.checked)}
+                      className="mt-0.5 h-5 w-5 shrink-0 accent-teal-500"
+                    />
+                    <span className="text-sm leading-relaxed text-neutral-600">
+                      Li e aceito os{" "}
+                      <a href="/termos" target="_blank" rel="noopener noreferrer" className="font-medium underline underline-offset-2" style={{ color: primary }}>
+                        Termos de Uso
+                      </a>{" "}
+                      e a{" "}
+                      <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="font-medium underline underline-offset-2" style={{ color: primary }}>
+                        Política de Privacidade
+                      </a>{" "}
+                      e autorizo o tratamento dos meus dados conforme a LGPD (Lei 13.709/2018).
+                    </span>
+                  </label>
                 </div>
               </motion.section>
             </div>

@@ -43,7 +43,20 @@ const sections = [
     ],
   },
   {
-    title: "4. Compartilhamento com terceiros",
+    title: "4. Consentimento",
+    content:
+      "O tratamento dos seus dados pessoais nesta plataforma é realizado, em sua maioria, com base no seu consentimento (art. 7º, I, da LGPD). Ao se cadastrar como profissional ou ao realizar um agendamento, você deve marcar a caixa de consentimento, que registra sua aceitação expressa dos Termos de Uso e desta Política de Privacidade.",
+    items: [
+      "O consentimento é coletado de forma livre, informada e inequívoca, por meio de ação afirmativa (caixa de seleção)",
+      "A data e o horário da manifestação do consentimento são registrados em nossos sistemas para fins de comprovação (art. 8º, § 2º, da LGPD)",
+      "Exibimos um aviso de consentimento ao acessar o site, permitindo escolher entre aceitar todos os cookies ou somente os essenciais",
+      "Você pode revogar o consentimento a qualquer momento, com efeito a partir da revogação, conforme o item sobre direitos do titular",
+    ],
+    extra:
+      "A revogação do consentimento não afeta a legalidade do tratamento realizado anteriormente, nem os dados que precisamos manter para cumprir obrigações legais.",
+  },
+  {
+    title: "5. Compartilhamento com terceiros",
     content:
       "O AN.BR não vende dados pessoais. O compartilhamento de informações com terceiros ocorre apenas quando necessário para a prestação dos serviços, nas seguintes situações:",
     items: [
@@ -56,7 +69,7 @@ const sections = [
       "Em todos os casos, exigimos que os terceiros contratados adotem medidas de segurança compatíveis com as exigências da LGPD.",
   },
   {
-    title: "5. Direitos do titular (LGPD)",
+    title: "6. Direitos do titular (LGPD)",
     content:
       "Nos termos dos artigos 17 a 22 da Lei nº 13.709/2018, você possui os seguintes direitos em relação aos seus dados pessoais:",
     items: [
@@ -72,7 +85,7 @@ const sections = [
       "Para exercer qualquer um desses direitos, entre em contato conosco pelo e-mail do encarregado de proteção de dados (DPO).",
   },
   {
-    title: "6. Cookies e tecnologias similares",
+    title: "7. Cookies e tecnologias similares",
     content:
       "Utilizamos cookies e tecnologias semelhantes para melhorar a experiência de navegação, analisar o uso da plataforma e garantir a segurança. Os cookies podem ser:",
     items: [
@@ -84,7 +97,7 @@ const sections = [
       "Você pode gerenciar ou desabilitar os cookies nas configurações do seu navegador, mas isso pode afetar o funcionamento de algumas funcionalidades.",
   },
   {
-    title: "7. Segurança e armazenamento dos dados",
+    title: "8. Segurança e armazenamento dos dados",
     content:
       "Adotamos medidas técnicas e organizacionais para proteger os dados pessoais contra acessos não autorizados, perda, alteração ou divulgação inadequada. Entre as medidas implementadas estão:",
     items: [
@@ -97,7 +110,7 @@ const sections = [
       "Os dados são armazenados em servidores localizados no Brasil, salvo eventual necessidade de processamento em servidores no exterior, caso em que adotaremos garantias compatíveis com a legislação brasileira. O período de armazenamento é o necessário para cumprir as finalidades descritas nesta política ou para atender obrigações legais.",
   },
   {
-    title: "8. Encarregado de proteção de dados (DPO)",
+    title: "9. Encarregado de proteção de dados (DPO)",
     content:
       "O AN.BR nomeou um Encarregado de Proteção de Dados (Data Protection Officer — DPO) para atuar como canal de comunicação com os titulares dos dados e com a Autoridade Nacional de Proteção de Dados (ANPD).",
     contact: true,
@@ -105,7 +118,7 @@ const sections = [
       "Para qualquer questão relacionada à privacidade ou para exercer seus direitos, entre em contato:",
   },
   {
-    title: "9. Alterações nesta política",
+    title: "10. Alterações nesta política",
     content:
       "Esta Política de Privacidade pode ser atualizada periodicamente. Recomendamos a consulta regular desta página para se manter informado sobre eventuais mudanças. O AN.BR notificará os usuários sobre alterações relevantes por meio dos canais de comunicação disponíveis.",
   },

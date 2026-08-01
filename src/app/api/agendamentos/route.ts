@@ -80,8 +80,16 @@ export async function POST(request: NextRequest) {
       hora, 
       cliente_nome, 
       cliente_whatsapp, 
-      cliente_endereco 
+      cliente_endereco,
+      consentimento
     } = body;
+
+    if (!consentimento) {
+      return NextResponse.json(
+        { error: "É necessário aceitar os Termos de Uso e a Política de Privacidade (LGPD) para agendar." },
+        { status: 400 }
+      );
+    }
 
     const supabase = await createClient();
 
@@ -208,6 +216,8 @@ export async function POST(request: NextRequest) {
         adicionais: adicionais || [],
         recorrencia: frequencia?.slug || null,
         token_avaliacao: crypto.randomUUID(),
+        consentimento_lgpd: true,
+        consentimento_data: new Date().toISOString(),
       })
       .select("id")
       .single();

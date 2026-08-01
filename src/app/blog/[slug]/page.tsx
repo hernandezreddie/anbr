@@ -15,10 +15,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) return {};
+  const url = `https://autonexabrasil.com.br/blog/${post.slug}`;
   return {
     title: `${post.title} | Blog AN.BR`,
     description: post.description,
+    alternates: { canonical: url },
+    keywords: ["agendamento online", "profissional autônomo", post.category, post.title.split(":")[0]],
     openGraph: {
+      title: `${post.title} | Blog AN.BR`,
+      description: post.description,
+      url,
+      type: "article",
+      siteName: "AN.BR",
+      locale: "pt_BR",
+      publishedTime: post.date,
+    },
+    twitter: {
+      card: "summary_large_image",
       title: `${post.title} | Blog AN.BR`,
       description: post.description,
     },
@@ -30,9 +43,36 @@ export default async function BlogPostPage({ params }: Props) {
   const post = getPost(slug);
   if (!post) notFound();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.date,
+    inLanguage: "pt-BR",
+    mainEntityOfPage: `https://autonexabrasil.com.br/blog/${post.slug}`,
+    publisher: {
+      "@type": "Organization",
+      name: "AN.BR",
+      url: "https://autonexabrasil.com.br",
+    },
+    author: {
+      "@type": "Organization",
+      name: "AN.BR",
+      url: "https://autonexabrasil.com.br",
+    },
+    articleSection: post.category,
+    keywords: ["agendamento online", "profissional autônomo", post.category],
+  };
+
   return (
     <div className="bg-[var(--color-bg)]">
       <SiteNav />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       <article>
         <div className="container-x py-12 sm:py-16">
