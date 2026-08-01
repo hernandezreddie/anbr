@@ -11,7 +11,7 @@ import { gerarLogoSVG } from "@/lib/logo-padrao";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { nome, email, senha, slug, whatsapp, cidade, pix_chave, servicos, slogan, template_id, categoria } = body;
+  const { nome, email, senha, slug, whatsapp, cidade, pix_chave, servicos, slogan, template_id, categoria, copy_variante, msg_variante } = body;
 
   if (!nome || !email || !senha || !slug) {
     return Response.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
@@ -64,11 +64,28 @@ export async function POST(request: Request) {
     }
   }
 
-  await supabase.from("configuracoes").insert({
+  const configRow = {
     profissional_id: prof.id,
     template_id: template_id || 1,
     slogan: slogan || `${nome} — Profissional de confiança`,
-  });
+  };
+  const { error: configError } = await supabase
+    .from("configuracoes")
+    .insert({
+      ...configRow,
+      copy_variante: Number(copy_variante) || 0,
+      msg_variante: Number(msg_variante) || 0,
+    });
+  if (configError?.code === "PGRST204") {
+    const { error: e2 } = await supabase
+      .from("configuracoes")
+      .insert({ ...configRow, copy_variante: Number(copy_variante) || 0 });
+    if (e2?.code === "PGRST204") {
+      await supabase.from("configuracoes").insert(configRow);
+    }
+  } else if (configError) {
+    return Response.json({ error: configError.message || "Erro ao criar configuração" }, { status: 500 });
+  }
 
   await supabase.from("profiles").insert({
     id: authUser.user.id,

@@ -2,6 +2,7 @@
 
 import { Shield, Wallet, Heart } from "lucide-react";
 import { getCopyPadrao, preencherCopy } from "@/lib/copys-padrao";
+import { accento } from "@/lib/cores";
 import type { ProfissionalConfig } from "@/types";
 
 const ICONES = [Shield, Wallet, Heart];
@@ -10,7 +11,7 @@ export function Confianca({ config }: { config: ProfissionalConfig }) {
   const { profissional, configuracao } = config;
   const primary = configuracao.cor_primaria;
 
-  const copy = getCopyPadrao(profissional.categoria);
+  const copy = getCopyPadrao(profissional.categoria, (configuracao as any).copy_variante);
   const preencher = (texto: string) =>
     preencherCopy(texto, {
       nome: profissional.primeiro_nome,
@@ -21,7 +22,7 @@ export function Confianca({ config }: { config: ProfissionalConfig }) {
     <section className="relative py-20 sm:py-28">
       <div className="container-x">
         <div className="max-w-2xl">
-          <p className="eyebrow mb-4" style={{ color: primary }}>
+          <p className="eyebrow mb-4" style={{ color: accento(primary) }}>
             {preencher(copy.confianca_eyebrow)}
           </p>
           <h2 className="font-serif text-3xl font-semibold leading-tight text-ink sm:text-[2.6rem]">
@@ -34,7 +35,7 @@ export function Confianca({ config }: { config: ProfissionalConfig }) {
             const Icone = ICONES[i] ?? Shield;
             return (
               <div key={h.titulo} className="flex h-full flex-col bg-paper p-8">
-                <span className="mb-6" style={{ color: primary }}>
+                <span className="mb-6" style={{ color: accento(primary) }}>
                   <Icone size={24} />
                 </span>
                 <h3 className="font-serif text-xl font-semibold text-ink">{h.titulo}</h3>

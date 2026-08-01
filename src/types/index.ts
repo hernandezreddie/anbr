@@ -28,6 +28,9 @@ export interface ConfiguracaoVisual {
   foto_fundo: string
   slogan: string
   fundo_estilo: string
+  instagram?: string | null
+  facebook?: string | null
+  google_maps?: string | null
 }
 
 export type TipoPreco = "por_hora" | "fixo";
@@ -135,6 +138,19 @@ export interface Frequencia {
   ordem: number
 }
 
+export interface Promocao {
+  id: string
+  profissional_id: string
+  titulo: string
+  texto: string
+  tipo: 'porcentagem' | 'fixo'
+  valor: number
+  servico_id: string | null
+  dias_semana: string[] | null
+  ativo: boolean
+  criado_em: string
+}
+
 export interface Cliente {
   id: string
   profissional_id: string
@@ -214,6 +230,7 @@ export interface ProfissionalConfig {
   servicos: Servico[]
   adicionais: Adicional[]
   frequencias: Frequencia[]
+  promocoes: Promocao[]
 }
 
 export interface GoogleCalendarToken {

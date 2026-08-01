@@ -75,85 +75,84 @@ export default async function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="font-serif text-lg font-semibold">AN.BR · Admin</span>
+    <div className="min-h-screen bg-gray-100">
+      <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5 sm:px-6">
+          <span className="text-sm font-bold">AN.BR · Admin</span>
           <form action="/auth/signout" method="post">
             <button className="btn-ghost btn-sm">Sair</button>
           </form>
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-6 py-8">
-        <h1 className="text-2xl font-bold tracking-tight">Super Admin</h1>
-        <p className="mt-1 text-sm text-ink-soft">{tenants.length} tenente(s)</p>
+      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
+        <div className="flex items-baseline justify-between gap-3">
+          <h1 className="text-xl font-bold tracking-tight">Super Admin</h1>
+          <p className="text-xs text-neutral-500">{tenants.length} tenente(s)</p>
+        </div>
 
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-line bg-white p-5">
-            <p className="text-sm text-ink-soft">Total de tenants</p>
-            <p className="mt-1 text-3xl font-bold">{tenants.length}</p>
+        <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
+          <div className="rounded-xl border border-neutral-200 bg-white px-4 py-3">
+            <p className="text-[11px] text-neutral-500">Total de tenants</p>
+            <p className="mt-0.5 text-xl font-bold">{tenants.length}</p>
           </div>
-          <div className="rounded-2xl border border-line bg-white p-5">
-            <p className="text-sm text-ink-soft">Serviços ativos</p>
-            <p className="mt-1 text-3xl font-bold">
+          <div className="rounded-xl border border-neutral-200 bg-white px-4 py-3">
+            <p className="text-[11px] text-neutral-500">Serviços ativos</p>
+            <p className="mt-0.5 text-xl font-bold">
               {servicos.data?.length || 0}
             </p>
           </div>
-          <div className="rounded-2xl border border-line bg-white p-5">
-            <p className="text-sm text-ink-soft">Agendamentos</p>
-            <p className="mt-1 text-3xl font-bold">
+          <div className="rounded-xl border border-neutral-200 bg-white px-4 py-3">
+            <p className="text-[11px] text-neutral-500">Agendamentos</p>
+            <p className="mt-0.5 text-xl font-bold">
               {agendamentos.data?.length || 0}
             </p>
           </div>
-          <div className="rounded-2xl border border-line bg-white p-5">
-            <p className="text-sm text-ink-soft">Receita total</p>
-            <p className="mt-1 text-3xl font-bold">
+          <div className="rounded-xl border border-neutral-200 bg-white px-4 py-3">
+            <p className="text-[11px] text-neutral-500">Receita total</p>
+            <p className="mt-0.5 text-xl font-bold">
               R$ {(tenants.reduce((s, t) => s + t.agendamentos.receita, 0)).toFixed(2).replace(".", ",")}
             </p>
           </div>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-5">
           <AdminClient />
         </div>
 
-        <div className="mt-6">
+        <div className="mt-4">
           <PlanosAdmin />
         </div>
 
         {(expirados.length > 0 || expirando.length > 0) && (
-          <div className="mt-6 space-y-3">
+          <div className="mt-4 space-y-2">
             {expirados.length > 0 && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
-                <h3 className="flex items-center gap-2 text-sm font-bold text-red-700">
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <h3 className="flex items-center gap-2 text-xs font-bold text-red-700">
                   <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
                   Planos expirados ({expirados.length})
                 </h3>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-1.5">
                   {expirados.map((t: any) => (
-                    <span key={t.id} className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700">
+                    <span key={t.id} className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2 py-1 text-xs font-medium text-red-700">
                       {t.nome} <span className="text-red-400">·</span> /{t.slug}
-                      <a href={`/admin/domains/${t.slug}`} className="ml-1 font-semibold underline hover:text-red-900">ver</a>
+                      <a href={`/admin/tenant/${t.slug}`} className="ml-1 font-semibold underline hover:text-red-900">gerir</a>
                     </span>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-red-500">
-                  Os recursos pagos (Google Calendar, DM, AI Agent, domínio) já estão bloqueados para estes tenants.
-                </p>
               </div>
             )}
             {expirando.length > 0 && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-                <h3 className="flex items-center gap-2 text-sm font-bold text-amber-700">
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <h3 className="flex items-center gap-2 text-xs font-bold text-amber-700">
                   <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-500" />
                   Renovações próximas ({expirando.length})
                 </h3>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-1.5">
                   {expirando.map((t: any) => (
-                    <span key={t.id} className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white px-3 py-1.5 text-xs font-medium text-amber-700">
+                    <span key={t.id} className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-white px-2 py-1 text-xs font-medium text-amber-700">
                       {t.nome} <span className="text-amber-400">·</span> /{t.slug}
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 font-bold">
+                      <span className="rounded-full bg-amber-100 px-1.5 py-0.5 font-bold">
                         {diasRestantes(t.plano_expira_em)} dia(s)
                       </span>
                     </span>
@@ -164,48 +163,51 @@ export default async function AdminPage() {
           </div>
         )}
 
-        <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-white">
-          <table className="w-full">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+          <table className="w-full min-w-[820px] text-sm">
             <thead>
-              <tr className="border-b border-line bg-gray-50 text-left text-sm font-medium text-ink-soft">
-                <th className="px-5 py-4">Slug</th>
-                <th className="px-5 py-4">Nome</th>
-                <th className="px-5 py-4">Email</th>
-                <th className="px-5 py-4">Role</th>
-                <th className="px-5 py-4">Serviços</th>
-                <th className="px-5 py-4">Agend.</th>
-                <th className="px-5 py-4">Receita</th>
-                <th className="px-5 py-4">Plano</th>
-                <th className="px-5 py-4">Domínio</th>
-                <th className="px-5 py-4">Status</th>
-                <th className="px-5 py-4">Ações</th>
+              <tr className="border-b border-neutral-200 bg-gray-50 text-left text-xs font-medium text-neutral-500">
+                <th className="px-3 py-2.5">Tenant</th>
+                <th className="px-3 py-2.5">Role</th>
+                <th className="px-3 py-2.5">Svc</th>
+                <th className="px-3 py-2.5">Agend.</th>
+                <th className="px-3 py-2.5">Receita</th>
+                <th className="px-3 py-2.5">Plano</th>
+                <th className="px-3 py-2.5">Status</th>
+                <th className="px-3 py-2.5 text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
               {tenants.map((t: any) => (
-                <tr key={t.id} className="border-b border-line last:border-0 hover:bg-gray-50/50">
-                  <td className="px-5 py-4 font-mono text-sm">{t.slug}</td>
-                  <td className="px-5 py-4 font-medium">{t.nome}</td>
-                  <td className="px-5 py-4 text-sm text-ink-soft">{t.email}</td>
-                  <td className="px-5 py-4">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                <tr key={t.id} className="border-b border-neutral-100 last:border-0 hover:bg-gray-50/70">
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <a href={`/admin/tenant/${t.slug}`} className="font-semibold text-neutral-900 hover:text-teal-700">
+                        {t.nome}
+                      </a>
+                      <span className="font-mono text-[11px] text-neutral-400">/{t.slug}</span>
+                    </div>
+                    <p className="truncate text-xs text-neutral-400 max-w-[220px]">{t.email}</p>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${
                       t.role === "owner" ? "bg-teal-100 text-teal-700" :
                       t.role === "admin" ? "bg-blue-100 text-blue-700" :
                       "bg-gray-100 text-gray-500"
                     }`}>{t.role}</span>
                   </td>
-                  <td className="px-5 py-4 text-sm">{t.servicos}</td>
-                  <td className="px-5 py-4 text-sm">{t.agendamentos.total}</td>
-                  <td className="px-5 py-4 text-sm font-medium">
+                  <td className="px-3 py-2.5 text-neutral-600">{t.servicos}</td>
+                  <td className="px-3 py-2.5 text-neutral-600">{t.agendamentos.total}</td>
+                  <td className="px-3 py-2.5 font-medium">
                     R$ {t.agendamentos.receita.toFixed(2).replace(".", ",")}
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-3 py-2.5">
                     {(() => {
                       const pid = (t.plano || "gratis") as keyof typeof PLANOS;
                       const dias = diasRestantes(t.plano_expira_em);
                       const expirado = dias !== null && dias <= 0;
                       return (
-                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${
                           pid === "ia_premium" ? "bg-purple-100 text-purple-700" :
                           pid === "profissional" ? "bg-teal-100 text-teal-700" :
                           "bg-gray-100 text-gray-500"
@@ -213,57 +215,51 @@ export default async function AdminPage() {
                           {PLANOS[pid]?.nome || pid}
                           {pid !== "gratis" && dias !== null && (
                             <span className={`ml-1 text-[10px] font-bold ${expirado ? "text-red-600" : dias <= 5 ? "text-amber-600" : "text-teal-700"}`}>
-                              {expirado ? "· expirado" : `· ${dias}d`}
+                              {expirado ? "· exp." : `· ${dias}d`}
                             </span>
                           )}
                         </span>
                       );
                     })()}
                   </td>
-                  <td className="px-5 py-4 text-xs">
-                    {t.customDomain ? (
-                      <span className={`inline-block rounded-full px-2 py-0.5 font-medium ${
-                        t.customDomain.verified ? "bg-teal-100 text-teal-700" : "bg-amber-100 text-amber-700"
-                      }`}>
-                        {t.customDomain.domain}
-                        {t.customDomain.verified ? " ✓" : " (pendente)"}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  <td className="px-3 py-2.5">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${
                       t.status === "ativo" ? "bg-teal-100 text-teal-700" :
                       t.status === "suspenso" ? "bg-amber-100 text-amber-700" :
                       "bg-gray-100 text-gray-500"
                     }`}>{t.status}</span>
                   </td>
-                  <td className="px-5 py-4">
-                    <div className="flex flex-wrap items-center gap-1.5">
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center justify-end gap-1">
+                      <a
+                        href={`/admin/tenant/${t.slug}`}
+                        className="rounded-lg bg-neutral-900 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-neutral-700 transition-colors"
+                      >
+                        Gerir
+                      </a>
                       <a
                         href={`/${t.slug}`}
                         target="_blank"
-                        className="btn-primary btn-sm"
+                        className="rounded-lg border border-neutral-200 px-2.5 py-1 text-[11px] font-medium text-neutral-600 hover:bg-neutral-100 transition-colors"
                       >
                         Booking
                       </a>
                       <a
                         href={`/${t.slug}/painel`}
                         target="_blank"
-                        className="btn-outline btn-sm"
+                        className="rounded-lg border border-neutral-200 px-2.5 py-1 text-[11px] font-medium text-neutral-600 hover:bg-neutral-100 transition-colors"
                       >
                         Painel
                       </a>
                       <a
                         href={`/admin/agent/${t.slug}`}
-                        className="rounded-lg bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors inline-flex items-center gap-1"
+                        className="rounded-lg bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700 hover:bg-purple-100 transition-colors"
                       >
-                        AI Agent
+                        AI
                       </a>
                       <a
                         href={`/admin/domains/${t.slug}`}
-                        className="btn-ghost btn-sm"
+                        className="rounded-lg border border-neutral-200 px-2.5 py-1 text-[11px] font-medium text-neutral-600 hover:bg-neutral-100 transition-colors"
                       >
                         Domínio
                       </a>

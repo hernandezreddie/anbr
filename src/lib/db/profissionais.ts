@@ -35,11 +35,12 @@ export const getProfissionalFullConfig = cache(async (slug: string) => {
 
   const pid = profissional.id;
 
-  const [servicos, adicionais, frequencias, configuracao] = await Promise.all([
+  const [servicos, adicionais, frequencias, configuracao, promocoes] = await Promise.all([
     supabase.from("servicos").select("*").eq("profissional_id", pid).eq("ativo", true).order("ordem"),
     supabase.from("adicionais").select("*").eq("profissional_id", pid).eq("ativo", true),
     supabase.from("frequencias").select("*").eq("profissional_id", pid).order("ordem"),
     getConfiguracaoVisual(pid),
+    supabase.from("promocoes").select("*").eq("profissional_id", pid).eq("ativo", true),
   ]);
 
   return {
@@ -59,5 +60,6 @@ export const getProfissionalFullConfig = cache(async (slug: string) => {
     servicos: (servicos.data || []) as any[],
     adicionais: (adicionais.data || []) as any[],
     frequencias: (frequencias.data || []) as any[],
+    promocoes: (promocoes.data || []) as any[],
   };
 });

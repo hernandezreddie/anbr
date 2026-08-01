@@ -14,6 +14,18 @@ export async function PATCH(request: NextRequest) {
     .update(updates)
     .eq("profissional_id", profissional_id);
 
+  if (error?.code === "PGRST204") {
+    const { copy_variante, msg_variante, ...rest } = updates as any;
+    if (copy_variante !== undefined || msg_variante !== undefined) {
+      const { error: e2 } = await supabase
+        .from("configuracoes")
+        .update(rest)
+        .eq("profissional_id", profissional_id);
+      if (e2) return Response.json({ error: e2.message }, { status: 500 });
+      return Response.json({ success: true, copy_variante_ignorado: true });
+    }
+  }
+
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
   return Response.json({ success: true });

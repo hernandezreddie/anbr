@@ -9,7 +9,10 @@ import {
   MonitorSmartphone, Sparkles, Briefcase, Hand, HeartPulse, Car, PawPrint,
 } from "lucide-react";
 import { getServicosPadrao, getSloganPadrao, type CategoriaId } from "@/lib/servicos-padrao";
+import { getCopyPadrao } from "@/lib/copys-padrao";
 import { Logo } from "@/components/Logo";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
 const categorias = [
   { id: "limpeza" as CategoriaId, icone: <Wrench size={24} />, nome: "Limpeza e Conservação" },
@@ -60,6 +63,8 @@ export default function CadastroPage() {
     nome: "", email: "", senha: "", slug: "",
     whatsapp: "", cidade: "", pix_chave: "", slogan: "", template_id: 1,
   });
+  const [copyVariante, setCopyVariante] = useState(0);
+  const [slugEditado, setSlugEditado] = useState(false);
   const [servicos, setServicos] = useState<ServicoForm[]>([]);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -71,8 +76,10 @@ export default function CadastroPage() {
 
   const updateField = (field: string, value: string) => {
     const next = { ...form, [field]: value };
-    if (field === "nome" && form.slug === slugFromNome(form.nome))
+    if (field === "nome" && !slugEditado)
       next.slug = slugFromNome(value);
+    if (field === "slug" && value !== slugFromNome(form.nome))
+      setSlugEditado(true);
     setForm(next);
   };
 
@@ -92,6 +99,7 @@ export default function CadastroPage() {
       slug: form.slug, whatsapp: form.whatsapp, cidade: form.cidade,
       pix_chave: form.pix_chave, slogan: form.slogan || `${form.nome} — Profissional de confiança`,
       template_id: form.template_id,
+      copy_variante: copyVariante,
       categoria,
       servicos: servicos.filter((s) => s.nome.trim()),
     };
@@ -171,14 +179,14 @@ export default function CadastroPage() {
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
               {passo === 1 && "Qual seu tipo de serviço?"}
-              {passo === 2 && "Seus dados"}
-              {passo === 3 && "Seu endereço online"}
-              {passo === 4 && "Seus serviços"}
-              {passo === 5 && "Finalizar"}
+            {passo === 2 && "Seu negócio"}
+            {passo === 3 && "Seu endereço online"}
+            {passo === 4 && "Seus serviços"}
+            {passo === 5 && "Finalizar"}
             </h1>
             <p className="mt-1.5 text-sm text-ink-soft">
               {passo === 1 && "Escolha a categoria que melhor descreve seu negócio."}
-              {passo === 2 && "Informações básicas para criar sua conta."}
+              {passo === 2 && "O nome que seus clientes vão ver — e o acesso ao seu painel."}
               {passo === 3 && "Defina seu link público e contato."}
               {passo === 4 && "Quais serviços você oferece?"}
               {passo === 5 && "Revise e personalize seu sistema."}
@@ -231,86 +239,106 @@ export default function CadastroPage() {
                   })}
                 </div>
                 <div className="mt-8 flex justify-end">
-                  <button onClick={() => setPasso(2)} disabled={!categoria}
-                    className="btn-primary gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
-                    Continuar <ChevronRight size={16} />
-                  </button>
+                <Button variant="primary" size="lg" className="gap-2" onClick={() => setPasso(2)} disabled={!categoria}>
+                  Continuar <ChevronRight size={16} />
+                </Button>
                 </div>
               </motion.div>
             )}
 
             {passo === 2 && (
               <motion.div key="passo2" variants={containerVar} initial="hidden" animate="visible" exit="exit">
-                <div className="card space-y-4 p-8">
-                  <input type="text" placeholder="Seu nome completo" value={form.nome}
-                    onChange={(e) => updateField("nome", e.target.value)} className={inp} />
-                  <input type="email" placeholder="Seu email" value={form.email}
-                    onChange={(e) => updateField("email", e.target.value)} className={inp} />
-                  <div className="relative">
-                    <input type={verSenha ? "text" : "password"} placeholder="Sua senha" value={form.senha}
-                      onChange={(e) => updateField("senha", e.target.value)} className={inp} />
-                    <button type="button" onClick={() => setVerSenha((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors">
-                      {verSenha ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
+                <Card className="space-y-5 p-8">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-ink">Nome do seu negócio</label>
+                    <input type="text" placeholder="Ex: Dona Maria Limpeza" value={form.nome}
+                      onChange={(e) => updateField("nome", e.target.value)} className={inp} />
+                    <p className="mt-1.5 text-xs text-ink-soft">
+                      Como seus clientes vão te encontrar. Pode ser seu nome, o da empresa ou uma marca —
+                      aparece na sua página, no WhatsApp e no Pix. Você pode mudar depois.
+                    </p>
                   </div>
-                </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-ink">Seu email</label>
+                    <input type="email" placeholder="voce@email.com" value={form.email}
+                      onChange={(e) => updateField("email", e.target.value)} className={inp} />
+                    <p className="mt-1.5 text-xs text-ink-soft">Usamos para você entrar no painel.</p>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-ink">Sua senha</label>
+                    <div className="relative">
+                      <input type={verSenha ? "text" : "password"} placeholder="No mínimo 6 caracteres" value={form.senha}
+                        onChange={(e) => updateField("senha", e.target.value)} className={inp} />
+                      <button type="button" onClick={() => setVerSenha((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors">
+                        {verSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                </Card>
                 <div className="mt-6 flex gap-3">
-                  <button onClick={() => setPasso(1)}
-                    className="flex w-32 items-center justify-center gap-2 rounded-xl border border-[var(--color-line)] px-6 py-3 text-sm font-medium text-ink transition-all hover:bg-white">
+                  <Button variant="outline" size="lg" className="gap-2" onClick={() => setPasso(1)}>
                     <ArrowLeft size={16} /> Voltar
-                  </button>
-                  <button onClick={() => setPasso(3)} disabled={!form.nome || !form.email || !form.senha}
-                    className="flex-1 btn-primary gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
+                  </Button>
+                  <Button variant="primary" size="lg" className="flex-1 gap-2" onClick={() => setPasso(3)} disabled={!form.nome || !form.email || !form.senha}>
                     Continuar <ChevronRight size={16} />
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             )}
 
             {passo === 3 && (
               <motion.div key="passo3" variants={containerVar} initial="hidden" animate="visible" exit="exit">
-                <div className="card space-y-4 p-8">
+                <Card className="space-y-5 p-8">
                   <div>
-                    <label className="text-sm text-ink-soft mb-1.5 block">Seu link</label>
+                    <label className="mb-1.5 block text-sm font-medium text-ink">Seu link</label>
                     <div className="flex items-center gap-2 rounded-xl border border-[var(--color-line)] bg-white px-4 has-[input:focus]:border-[var(--color-primary)]">
                       <span className="text-sm text-ink-soft shrink-0">autonexabrasil.com.br/</span>
                       <input type="text" placeholder="seu-negocio" value={form.slug}
                         onChange={(e) => updateField("slug", e.target.value)}
                         className="flex-1 py-3 text-sm outline-none bg-transparent" />
                     </div>
+                    <p className="mt-1.5 text-xs text-ink-soft">
+                      {slugEditado
+                        ? "Link personalizado — é assim que seus clientes vão te achar."
+                        : "Gerado a partir do nome do seu negócio — pode editar à vontade."}
+                    </p>
                   </div>
-                  <input type="text" placeholder="Seu WhatsApp com DDD (ex: 5541999999999)" value={form.whatsapp}
-                    onChange={(e) => updateField("whatsapp", e.target.value)} className={inp} />
-                  <input type="text" placeholder="Sua cidade" value={form.cidade}
-                    onChange={(e) => updateField("cidade", e.target.value)} className={inp} />
-                </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-ink">WhatsApp</label>
+                    <input type="text" placeholder="Ex: 5541999999999" value={form.whatsapp}
+                      onChange={(e) => updateField("whatsapp", e.target.value)} className={inp} />
+                    <p className="mt-1.5 text-xs text-ink-soft">Com DDI (55) e DDD. É por ele que você recebe confirmações e lembretes dos agendamentos.</p>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-ink">Sua cidade</label>
+                    <input type="text" placeholder="Ex: Curitiba" value={form.cidade}
+                      onChange={(e) => updateField("cidade", e.target.value)} className={inp} />
+                  </div>
+                </Card>
                 <div className="mt-6 flex gap-3">
-                  <button onClick={() => setPasso(2)}
-                    className="flex w-32 items-center justify-center gap-2 rounded-xl border border-[var(--color-line)] px-6 py-3 text-sm font-medium text-ink transition-all hover:bg-white">
+                  <Button variant="outline" size="lg" className="gap-2" onClick={() => setPasso(2)}>
                     <ArrowLeft size={16} /> Voltar
-                  </button>
-                  <button onClick={() => setPasso(4)} disabled={!form.slug || !form.whatsapp || !form.cidade}
-                    className="flex-1 btn-primary gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
+                  </Button>
+                  <Button variant="primary" size="lg" className="flex-1 gap-2" onClick={() => setPasso(4)} disabled={!form.slug || !form.whatsapp || !form.cidade}>
                     Continuar <ChevronRight size={16} />
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             )}
 
             {passo === 4 && (
               <motion.div key="passo4" variants={containerVar} initial="hidden" animate="visible" exit="exit">
-                <div className="card p-8">
+                <Card className="p-8">
                   <div className="flex items-center justify-between mb-6">
                     <p className="text-sm text-ink-soft">
                       {categoria === "outro"
                         ? "Configure seus serviços manualmente — do seu jeito, no seu detalhe."
                         : "Adicione os serviços que você oferece"}
                     </p>
-                    <button onClick={addServico}
-                      className="rounded-lg bg-[var(--color-primary)]/10 px-4 py-2 text-sm font-medium text-[var(--color-primary)] transition-all hover:bg-[var(--color-primary)]/20">
+                    <Button variant="primary" size="sm" onClick={addServico}>
                       + Adicionar
-                    </button>
+                    </Button>
                   </div>
                   <div className="space-y-4">
                     {servicos.map((s, i) => (
@@ -372,23 +400,21 @@ export default function CadastroPage() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </Card>
                 <div className="mt-6 flex gap-3">
-                  <button onClick={() => setPasso(3)}
-                    className="flex w-32 items-center justify-center gap-2 rounded-xl border border-[var(--color-line)] px-6 py-3 text-sm font-medium text-ink transition-all hover:bg-white">
+                  <Button variant="outline" size="lg" className="gap-2" onClick={() => setPasso(3)}>
                     <ArrowLeft size={16} /> Voltar
-                  </button>
-                  <button onClick={() => setPasso(5)} disabled={!servicos.some((s) => s.nome.trim())}
-                    className="flex-1 btn-primary gap-2 px-6 py-3 text-sm font-semibold disabled:opacity-50">
+                  </Button>
+                  <Button variant="primary" size="lg" className="flex-1 gap-2" onClick={() => setPasso(5)} disabled={!servicos.some((s) => s.nome.trim())}>
                     Continuar <ChevronRight size={16} />
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             )}
 
             {passo === 5 && (
               <motion.div key="passo5" variants={containerVar} initial="hidden" animate="visible" exit="exit">
-                <div className="card p-8 space-y-6">
+                <Card className="p-8 space-y-6">
                   {/* Recebimento */}
                   <div>
                     <label className="text-sm text-ink-soft mb-1.5 block font-medium">Chave Pix</label>
@@ -401,7 +427,56 @@ export default function CadastroPage() {
                     <input type="text" placeholder="Ex: Limpeza profissional em Curitiba" value={form.slogan}
                       onChange={(e) => updateField("slogan", e.target.value)}
                       className={inp} />
+                    <p className="mt-1.5 text-xs text-ink-soft">Aparece logo abaixo do nome no seu site. Se deixar vazio, criamos um pra você.</p>
                   </div>
+
+                  {/* Texto do site */}
+                  {categoria && (
+                    <div>
+                      <label className="text-sm text-ink-soft mb-1.5 block font-medium">Texto do seu site</label>
+                      <p className="mb-3 text-xs text-ink-soft">
+                        Textos prontos escritos para o seu tipo de negócio — título, subtítulo e chamadas.
+                        Escolha o que mais combina com você (dá pra trocar depois no painel).
+                      </p>
+                      <div className="grid gap-3">
+                        {[0, 1, 2].map((i) => {
+                          const copy = getCopyPadrao(categoria as CategoriaId, i);
+                          const baseCopy = getCopyPadrao(categoria as CategoriaId);
+                          const variante = i === 0
+                            ? { nome: "Equilibrado", descricao: "Texto padrão: claro e acolhedor" }
+                            : { nome: baseCopy.variantes?.[i]?.nome || `Opção ${i}`, descricao: baseCopy.variantes?.[i]?.descricao || "" };
+                          const selected = copyVariante === i;
+                          return (
+                            <motion.button
+                              key={i}
+                              type="button"
+                              onClick={() => setCopyVariante(i)}
+                              whileTap={{ scale: 0.98 }}
+                              className={`relative rounded-2xl border-2 p-4 text-left transition-all ${
+                                selected
+                                  ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/20 bg-[var(--color-primary)]/[0.03]"
+                                  : "border-[var(--color-line)] bg-white hover:border-[var(--color-primary)]/40"
+                              }`}
+                            >
+                              {selected && (
+                                <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-primary)]">
+                                  <Check size={12} className="text-white" />
+                                </span>
+                              )}
+                              <p className="text-sm font-semibold text-ink">
+                                {variante.nome}
+                                <span className="ml-2 text-xs font-normal text-ink-soft">{variante.descricao}</span>
+                              </p>
+                              <p className="mt-2 text-sm font-serif text-ink leading-snug">
+                                {copy.hero_titulo.join(" ")}
+                              </p>
+                              <p className="mt-1 text-xs text-ink-soft line-clamp-2">{copy.hero_sub}</p>
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Template selector */}
                   <div>
@@ -461,18 +536,16 @@ export default function CadastroPage() {
 
                   {erro && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{erro}</div>}
 
-                  <button onClick={handleSubmit} disabled={enviando}
-                    className="w-full btn-primary justify-center gap-2 px-6 py-3.5 text-sm font-semibold disabled:opacity-50">
-                    {enviando ? "Criando sistema..." : "Criar meu sistema"}
-                    {!enviando && <ChevronRight size={16} />}
-                  </button>
-                </div>
-                <div className="mt-6">
-                  <button onClick={() => setPasso(4)}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-[var(--color-line)] px-6 py-3 text-sm font-medium text-ink transition-all hover:bg-white w-full sm:w-32">
-                    <ArrowLeft size={16} /> Voltar
-                  </button>
-                </div>
+                <Button variant="primary" size="lg" className="w-full gap-2" onClick={handleSubmit} disabled={enviando}>
+                  {enviando ? "Criando sistema..." : "Criar meu sistema"}
+                  {!enviando && <ChevronRight size={16} />}
+                </Button>
+              </Card>
+              <div className="mt-6">
+                <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto" onClick={() => setPasso(4)}>
+                  <ArrowLeft size={16} /> Voltar
+                </Button>
+              </div>
               </motion.div>
             )}
           </AnimatePresence>

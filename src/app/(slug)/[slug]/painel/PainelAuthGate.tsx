@@ -18,6 +18,7 @@ export function PainelAuthGate({
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const isLoginPage = pathname.endsWith("/painel/login");
+  const isHome = pathname === `/${slug}/painel`;
 
   useEffect(() => {
     const supabase = createClient();
@@ -66,8 +67,8 @@ export function PainelAuthGate({
       {!isLoginPage && <PushSubscriber />}
       {!isLoginPage && <SidebarClient slug={slug} />}
       <main className="flex-1 overflow-auto pb-20 lg:pb-20">
-        <div className={isLoginPage ? "" : "container-x py-8"}>
-          {!isLoginPage && <UpgradeBanner slug={slug} />}
+        <div className={isLoginPage ? "" : "w-full px-4 py-8 sm:px-6 lg:px-8"}>
+          {!isLoginPage && !isHome && <UpgradeBanner slug={slug} />}
           {children}
         </div>
       </main>

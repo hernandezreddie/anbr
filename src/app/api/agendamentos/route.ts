@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Profissional não encontrado" }, { status: 404 });
     }
 
-    const [ags, servicos] = await Promise.all([
+    const [ags, servicos, config] = await Promise.all([
       supabase
         .from("agendamentos")
         .select("hora, servico_id, horas")
@@ -32,6 +32,11 @@ export async function GET(request: NextRequest) {
         .eq("data", data)
         .neq("status", "cancelado"),
       supabase.from("servicos").select("id, tipo_preco, duracao_minutos"),
+      supabase
+        .from("configuracoes")
+        .select("max_agendamentos_dia")
+        .eq("profissional_id", prof.id)
+        .single(),
     ]);
 
     const durPorServico = new Map<string, number>();
@@ -50,7 +55,11 @@ export async function GET(request: NextRequest) {
         return { inicio: a.hora.slice(0, 5), minutos };
       });
 
-    return NextResponse.json({ ocupados });
+    return NextResponse.json({
+      ocupados,
+      max_agendamentos_dia: Number(config.data?.max_agendamentos_dia) || 0,
+      total_dia: ags.data?.length || 0,
+    });
   } catch (err) {
     console.error("Erro:", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
@@ -110,6 +119,50 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Limite diário configurado pelo profissional
+    if (data) {
+      const { data: config } = await adminDb
+        .from("configuracoes")
+        .select("max_agendamentos_dia")
+        .eq("profissional_id", prof.id)
+        .single();
+
+      const maxDia = Number(config?.max_agendamentos_dia) || 0;
+      if (maxDia > 0) {
+        const { count } = await adminDb
+          .from("agendamentos")
+          .select("id", { count: "exact", head: true })
+          .eq("profissional_id", prof.id)
+          .eq("data", data)
+          .neq("status", "cancelado");
+
+        if ((count || 0) >= maxDia) {
+          return NextResponse.json({
+            error: "Esse dia já atingiu o limite de agendamentos. Escolha outra data.",
+            limite: true,
+          }, { status: 409 });
+        }
+      }
+    }
+
+    // Conflito de horário: impede duas reservas no mesmo horário
+    if (data && hora) {
+      const { count, error: conflitoError } = await adminDb
+        .from("agendamentos")
+        .select("id", { count: "exact", head: true })
+        .eq("profissional_id", prof.id)
+        .eq("data", data)
+        .eq("hora", hora)
+        .neq("status", "cancelado");
+
+      if (!conflitoError && (count || 0) > 0) {
+        return NextResponse.json({
+          error: "Esse horário já foi reservado. Escolha outro.",
+          conflito: true,
+        }, { status: 409 });
+      }
+    }
+
     // Create or get cliente
     let clienteId: string | null = null;
     if (cliente_whatsapp) {
@@ -154,6 +207,7 @@ export async function POST(request: NextRequest) {
         status: "solicitado",
         adicionais: adicionais || [],
         recorrencia: frequencia?.slug || null,
+        token_avaliacao: crypto.randomUUID(),
       })
       .select("id")
       .single();
@@ -161,6 +215,22 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error("Erro ao criar agendamento:", error);
       return NextResponse.json({ error: "Erro ao criar agendamento" }, { status: 500 });
+    }
+
+    try {
+      const { data: servico } = servico_id
+        ? await adminDb.from("servicos").select("nome").eq("id", servico_id).single()
+        : { data: null };
+      const { enviarConfirmacao } = await import("@/lib/notificacoes");
+      await enviarConfirmacao({
+        profissional_id: prof.id,
+        cliente_whatsapp,
+        servico_nome: servico?.nome ?? null,
+        data,
+        hora,
+      });
+    } catch (err) {
+      console.warn("Confirmação automática não enviada:", err);
     }
 
     return NextResponse.json({ success: true, agendamento_id: agendamento.id });

@@ -1,10 +1,13 @@
 "use client";
 
+import { contrastante, accento } from "@/lib/cores";
 import type { ProfissionalConfig } from "@/types";
 
 export function Hero({ config }: { config: ProfissionalConfig }) {
   const { profissional, configuracao } = config;
   const primary = configuracao.cor_primaria;
+  const primaryInk = contrastante(primary);
+  const accent = accento(primary);
 
   return (
     <section className="relative overflow-hidden py-24 md:py-32">
@@ -20,7 +23,7 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
             </div>
           )}
           <div className="mb-6 animate-fade-in-up inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium shadow-sm backdrop-blur-sm"
-            style={{ borderColor: primary + "40", backgroundColor: primary + "15", color: primary }}>
+            style={{ borderColor: primary + "40", backgroundColor: primary + "15", color: accent }}>
             <span className="h-2 w-2 animate-pulse-dot rounded-full" style={{ backgroundColor: primary }} />
             {profissional.cidade}
           </div>
@@ -36,8 +39,8 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
           <div className="flex animate-fade-in-up delay-300 flex-wrap items-center justify-center gap-4">
             <a
               href={`/${profissional.slug}/reservar`}
-              className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
-              style={{ backgroundColor: primary }}
+              className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg font-semibold shadow-lg transition-all hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+              style={{ backgroundColor: primary, color: primaryInk }}
             >
               Quero agendar
               <span aria-hidden="true">→</span>
@@ -46,7 +49,7 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
               href={`https://wa.me/${profissional.whatsapp}`}
               target="_blank"
               className="inline-flex items-center gap-2 rounded-full border px-8 py-4 text-lg font-semibold shadow-sm backdrop-blur-sm transition-all hover:shadow-md"
-              style={{ borderColor: primary + "40", backgroundColor: primary + "10", color: primary }}
+              style={{ borderColor: primary + "40", backgroundColor: primary + "10", color: accent }}
             >
               Tirar dúvidas
             </a>

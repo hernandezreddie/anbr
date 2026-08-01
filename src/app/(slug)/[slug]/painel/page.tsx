@@ -7,6 +7,14 @@ import { createClient } from "@/lib/supabase/client";
 import { linkWhatsApp } from "@/lib/whatsapp";
 import { MODELOS_MENSAGEM, type MsgCtx } from "@/lib/mensagens";
 import { QrPix } from "@/components/QrPix";
+import { Toast } from "@/components/ui/Toast";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { UpgradeBanner } from "@/components/painel/UpgradeBanner";
+import { usePainelPrimary } from "./primary-context";
+import { gerarAcoes, ACRO_TIPO_META, type AcaoPainel } from "@/lib/acoes-painel";
+import { getMensagensPadrao } from "@/lib/servicos-padrao";
+import { contrastante, accento } from "@/lib/cores";
 import {
   Check,
   X,
@@ -29,6 +37,8 @@ import {
   Palette,
   QrCode,
   ListOrdered,
+  BellRing,
+  RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -158,6 +168,7 @@ function Card({
   onCancelar,
   onPix,
   onQuando,
+  primary,
 }: {
   a: Agendamento;
   busy: boolean;
@@ -167,6 +178,7 @@ function Card({
   onCancelar: (a: Agendamento) => void;
   onPix: (a: Agendamento) => void;
   onQuando: (id: string, data: string, hora: string) => void;
+  primary: string;
 }) {
   const [copiado, setCopiado] = useState(false);
   const [edit, setEdit] = useState(false);
@@ -174,6 +186,7 @@ function Card({
   const [h, setH] = useState(a.hora ? a.hora.slice(0, 5) : "");
   const [msgAberto, setMsgAberto] = useState(false);
   const ativo = a.status === "solicitado" || a.status === "confirmado";
+  const primaryInk = contrastante(primary);
 
   const ctx: MsgCtx = {
     nome: a.cliente_nome,
@@ -200,49 +213,52 @@ function Card({
       exit={{ opacity: 0, scale: 0.95 }}
       className="rounded-2xl border border-neutral-100 bg-white shadow-sm shadow-neutral-100/50"
     >
-      {/* Top row: name + status */}
-      <div className="flex items-start justify-between gap-3 p-4 pb-3">
-        <div className="flex items-start gap-3">
+      {/* Top row: name + status + value */}
+      <div className="flex items-start justify-between gap-2 p-3 pb-2">
+        <div className="flex items-start gap-2.5 min-w-0">
           <StatusDot status={a.status} />
-          <div>
-            <p className="font-semibold text-neutral-900">{a.cliente_nome}</p>
-            <p className="mt-0.5 text-sm text-neutral-500">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="truncate font-semibold text-neutral-900">{a.cliente_nome}</p>
+              <span className="text-sm font-bold text-neutral-900">{fmtR$(a.valor)}</span>
+            </div>
+            <p className="mt-0.5 truncate text-xs text-neutral-500">
               {a.servico_nome ?? "Serviço"}
               {a.horas ? ` · ${a.horas}h` : ""}
               {a.origem === "web" ? " · 🌐 site" : ""}
             </p>
           </div>
         </div>
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_BADGE[a.status].cls}`}>
+        <Badge variant={a.status === "solicitado" ? "warning" : a.status === "confirmado" ? "success" : a.status === "concluido" ? "default" : "error"}>
           {STATUS_BADGE[a.status].label}
-        </span>
+        </Badge>
       </div>
 
       {/* Info rows */}
-      <div className="space-y-2 px-4 pb-3">
+      <div className="space-y-1 px-3 pb-2">
         {a.observacoes && (
-          <div className="flex gap-2 text-sm">
+          <div className="flex gap-2 text-xs">
             <span className="w-16 shrink-0 text-neutral-400">Obs</span>
-            <span className="text-neutral-600">{a.observacoes}</span>
+            <span className="truncate text-neutral-600">{a.observacoes}</span>
           </div>
         )}
         {a.endereco && (
-          <div className="flex gap-2 text-sm">
+          <div className="flex gap-2 text-xs">
             <span className="w-16 shrink-0 text-neutral-400">Endereço</span>
-            <span className="text-neutral-600">{a.endereco}</span>
+            <span className="truncate text-neutral-600">{a.endereco}</span>
           </div>
         )}
         {a.cliente_whatsapp && (
-          <div className="flex gap-2 text-sm">
+          <div className="flex gap-2 text-xs">
             <span className="w-16 shrink-0 text-neutral-400">Telefone</span>
             <span className="text-neutral-600">{a.cliente_whatsapp}</span>
           </div>
         )}
-        <div className="flex gap-2 text-sm">
+        <div className="flex gap-2 text-xs">
           <span className="w-16 shrink-0 text-neutral-400">Frequência</span>
           <span className="text-neutral-600">{a.recorrencia ?? "pontual"}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-xs">
           <span className="w-16 shrink-0 text-neutral-400">Quando</span>
           {!edit ? (
             <span className="text-neutral-600">
@@ -257,60 +273,56 @@ function Card({
             <div className="flex flex-wrap items-center gap-2">
               <input type="date" value={d} onChange={(e) => setD(e.target.value)} className={inp} />
               <input type="time" value={h} onChange={(e) => setH(e.target.value)} className={inp} />
-              <button onClick={() => { onQuando(a.id, d, h); setEdit(false); }}
-                className="btn-primary btn-sm">
+              <Button variant="primary" size="sm" onClick={() => { onQuando(a.id, d, h); setEdit(false); }}>
                 Salvar
-              </button>
-              <button onClick={() => setEdit(false)} className="btn-ghost btn-sm">cancelar</button>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setEdit(false)}>
+                cancelar
+              </Button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Value */}
-      <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-3">
-        <span className="text-xs font-medium text-neutral-400">Valor</span>
-        <span className="text-lg font-bold text-neutral-900">{fmtR$(a.valor)}</span>
-      </div>
-
       {/* Quick nav links (active only) */}
       {ativo && (
-        <div className="flex gap-1 border-t border-neutral-100 px-4 py-2">
+        <div className="flex gap-0.5 border-t border-neutral-100 px-2 py-1.5">
           <a href={mapsLink(a)} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
+            className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
             <MapPin size={13} /> Mapa
           </a>
           <a href={onibusLink(a)} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
+            className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
             <Bus size={13} /> Ônibus
           </a>
           {a.cliente_whatsapp && (
             <a href={`tel:+${a.cliente_whatsapp.replace(/\D/g, "")}`}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
+              className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
               <Phone size={13} /> Ligar
             </a>
           )}
           {googleCalLink(a, profissional.primeiro_nome) && (
             <a href={googleCalLink(a, profissional.primeiro_nome)!} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
+              className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
               <Calendar size={13} /> Agenda
             </a>
           )}
           <button onClick={copiar}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
+            className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
             <Copy size={13} /> {copiado ? "Copiado!" : "Copiar"}
           </button>
         </div>
       )}
 
       {/* Action buttons */}
-      <div className="flex flex-wrap gap-2 border-t border-neutral-100 bg-neutral-50/50 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-1.5 border-t border-neutral-100 bg-neutral-50/50 px-3 py-2">
         {a.status === "solicitado" && (
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => onStatus(a.id, "confirmado")}
             disabled={busy}
-            className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-teal-700 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold shadow-sm transition-all hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: primary, color: primaryInk }}
           >
             <Check size={14} /> Confirmar
           </motion.button>
@@ -320,7 +332,8 @@ function Card({
             whileTap={{ scale: 0.95 }}
             onClick={() => onStatus(a.id, "concluido")}
             disabled={busy}
-            className="flex items-center gap-1.5 rounded-xl bg-neutral-800 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-neutral-900 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold shadow-sm transition-all hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: primary, color: primaryInk }}
           >
             <Check size={14} /> Concluir
           </motion.button>
@@ -329,7 +342,7 @@ function Card({
           <>
             <div className="relative">
               <button onClick={() => setMsgAberto((v) => !v)}
-                className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 shadow-sm transition-all hover:bg-neutral-100 hover:text-neutral-800">
+                className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-600 shadow-sm transition-all hover:bg-neutral-100 hover:text-neutral-800">
                 <MessageCircle size={14} /> Mensagens
               </button>
               {msgAberto && (
@@ -357,15 +370,15 @@ function Card({
               )}
             </div>
             <button onClick={() => onPix(a)}
-              className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 shadow-sm transition-all hover:bg-neutral-100 hover:text-neutral-800">
+              className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-600 shadow-sm transition-all hover:bg-neutral-100 hover:text-neutral-800">
               <Wallet size={14} /> Cobrar Pix
             </button>
             <button onClick={() => onPago(a)} disabled={busy}
-              className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 shadow-sm transition-all hover:bg-neutral-100 hover:text-neutral-800 disabled:opacity-50">
+              className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-600 shadow-sm transition-all hover:bg-neutral-100 hover:text-neutral-800 disabled:opacity-50">
               <DollarSign size={14} /> Marcar pago
             </button>
             <button onClick={() => onCancelar(a)} disabled={busy}
-              className="ml-auto flex items-center gap-1 rounded-lg px-2 py-2 text-xs text-neutral-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50">
+              className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-neutral-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50">
               <X size={14} />
             </button>
           </>
@@ -391,18 +404,18 @@ function StatsCard({
   href?: string;
 }) {
   const content = (
-    <div className="relative overflow-hidden rounded-2xl border border-neutral-100 bg-white p-4 shadow-sm transition-all hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium text-neutral-400">{label}</p>
-          <p className="mt-1 text-xl font-bold text-neutral-900">{value}</p>
-          <p className="mt-1 text-xs text-neutral-500">{sub}</p>
+        <div className="relative overflow-hidden rounded-2xl border border-neutral-100 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-4">
+          <div className="flex items-start justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium text-neutral-400 sm:text-xs">{label}</p>
+              <p className="mt-1 truncate text-lg font-bold text-neutral-900 sm:text-xl">{value}</p>
+              <p className="mt-1 text-[11px] text-neutral-500 sm:text-xs">{sub}</p>
+            </div>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:h-9 sm:w-9" style={{ backgroundColor: `${color}15` }}>
+              <Icon size={17} style={{ color }} />
+            </div>
+          </div>
         </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ backgroundColor: `${color}15` }}>
-          <Icon size={18} style={{ color }} />
-        </div>
-      </div>
-    </div>
   );
 
   if (href) {
@@ -511,8 +524,8 @@ function SectionCard({
         <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
         {count > 0 && (
           <span
-            className="flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-bold text-white shadow-sm"
-            style={{ backgroundColor: color }}
+            className="flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-bold shadow-sm"
+            style={{ backgroundColor: color, color: contrastante(color) }}
           >
             {count}
           </span>
@@ -533,6 +546,9 @@ export default function PainelPage() {
   const supabase = createClient();
   const [items, setItems] = useState<Agendamento[]>([]);
   const [profissional, setProfissional] = useState<Profissional | null>(null);
+  const [categoria, setCategoria] = useState<string | null>(null);
+  const [msgVariante, setMsgVariante] = useState(0);
+  const [pagoIds, setPagoIds] = useState<Set<string>>(new Set());
   const [ganho, setGanho] = useState(0);
   const [nPagos, setNPagos] = useState(0);
   const [ganhoAnterior, setGanhoAnterior] = useState(0);
@@ -545,7 +561,9 @@ export default function PainelPage() {
   const [pix, setPix] = useState<{ valor: number; desc: string } | null>(null);
   const [aviso, setAviso] = useState("");
   const [confirmacao, setConfirmacao] = useState<{ tipo: "cancelar" | "pago"; a: Agendamento } | null>(null);
-  const [primary, setPrimary] = useState("#059669");
+  const primary = usePainelPrimary();
+  const primaryInk = contrastante(primary);
+  const primaryAccent = accento(primary);
   const [guiaAberto, setGuiaAberto] = useState(false);
 
   useEffect(() => {
@@ -566,20 +584,25 @@ export default function PainelPage() {
   };
 
   const load = useCallback(async () => {
-    const [ag, pg, prof, config] = await Promise.all([
+    const [ag, pg, prof, cfg] = await Promise.all([
       supabase.from("agendamentos").select("*").order("created_at", { ascending: false }),
       supabase.from("pagamentos").select("valor, pago_em, status, agendamento_id"),
       supabase.from("profissionais").select("*").single(),
-      supabase.from("configuracoes").select("cor_primaria").single(),
+      supabase.from("configuracoes").select("msg_variante").single(),
     ]);
-    if (config.data?.cor_primaria) setPrimary(config.data.cor_primaria);
     const lista = (ag.data as Agendamento[]) ?? [];
     setItems(lista);
     setProfissional((prof.data as Profissional) ?? null);
+    setCategoria((prof.data as { categoria?: string | null } | null)?.categoria ?? null);
+    setMsgVariante(Number((cfg.data as { msg_variante?: number | null } | null)?.msg_variante) || 0);
 
     const pgs = (pg.data ?? []) as Pagamento[];
     const soma = (xs: { valor: number }[]) => xs.reduce((s, p) => s + Number(p.valor), 0);
 
+    const idsPagos = new Set(
+      pgs.filter((p) => p.status === "pago").map((p) => p.agendamento_id).filter((id): id is string => !!id)
+    );
+    setPagoIds(idsPagos);
     const mes = HOJE().slice(0, 7);
     const dAnt = new Date();
     dAnt.setDate(1);
@@ -590,7 +613,6 @@ export default function PainelPage() {
     setNPagos(pagos.length);
     setGanhoAnterior(soma(pgs.filter((p) => p.status === "pago" && (p.pago_em ?? "").startsWith(mesAnt))));
 
-    const idsPagos = new Set(pgs.filter((p) => p.status === "pago").map((p) => p.agendamento_id));
     const pendentes = lista.filter((a) => a.status === "concluido" && !idsPagos.has(a.id));
     setAReceber(soma(pendentes));
     setNAReceber(pendentes.length);
@@ -664,6 +686,12 @@ export default function PainelPage() {
   const outros = items.filter((i) => i.status === "concluido" || i.status === "cancelado").slice(0, 12);
   const rota = rotaLink(items);
 
+  const msgsEstilo = getMensagensPadrao(categoria, msgVariante);
+  const acoes = gerarAcoes(items as any, pagoIds, {
+    confirmacao: msgsEstilo.confirmacao,
+    lembrete: msgsEstilo.lembrete,
+  });
+
   const nome = profissional?.primeiro_nome || "";
   const saudacao = (() => {
     const h = new Date().getHours();
@@ -685,6 +713,7 @@ export default function PainelPage() {
       onCancelar={(x) => setConfirmacao({ tipo: "cancelar", a: x })}
       onPix={onPix}
       onQuando={salvarQuando}
+      primary={primary}
     />
   );
 
@@ -697,33 +726,34 @@ export default function PainelPage() {
       {/* Toast */}
       <AnimatePresence>
         {aviso && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed left-1/2 top-4 z-50 -translate-x-1/2"
-          >
-            <p className="rounded-xl px-5 py-3 text-sm font-medium text-white shadow-lg" style={{ backgroundColor: primary }}>{aviso}</p>
-          </motion.div>
+          <Toast
+            message={aviso}
+            type="success"
+            duration={2500}
+            onClose={() => setAviso("")}
+          />
         )}
       </AnimatePresence>
 
       {/* Header */}
       <div
-        className="relative -mx-6 -mt-8 overflow-hidden px-6 pb-8 pt-8 lg:-mx-8 lg:px-8"
+        className="relative -mx-4 -mt-8 overflow-hidden px-4 pb-8 pt-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
         style={{ background: `linear-gradient(135deg, ${primary}, ${primary}dd)` }}
       >
         <div className="pointer-events-none absolute inset-0 opacity-[0.08]">
-          <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white" />
-          <div className="absolute -bottom-8 -left-8 h-48 w-48 rounded-full bg-white" />
-          <div className="absolute right-1/4 top-1/3 h-32 w-32 rounded-full bg-white" />
+          <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full" style={{ backgroundColor: primaryInk }} />
+          <div className="absolute -bottom-8 -left-8 h-48 w-48 rounded-full" style={{ backgroundColor: primaryInk }} />
+          <div className="absolute right-1/4 top-1/3 h-32 w-32 rounded-full" style={{ backgroundColor: primaryInk }} />
         </div>
         <div className="relative">
-          <p className="text-sm font-medium text-white/70">{saudacao},</p>
-          <h1 className="mt-0.5 text-2xl font-bold text-white">{nome}</h1>
-          <p className="mt-1 text-sm text-white/60 capitalize">{hojeStr}</p>
+          <p className="text-sm font-medium" style={{ color: primaryInk + "B3" }}>{saudacao},</p>
+          <h1 className="mt-0.5 text-xl font-bold sm:text-2xl" style={{ color: primaryInk }}>{nome}</h1>
+          <p className="mt-1 text-sm capitalize" style={{ color: primaryInk + "99" }}>{hojeStr}</p>
         </div>
       </div>
+
+      {/* Upgrade Banner */}
+      <UpgradeBanner slug={slug} />
 
       {/* Guia de uso */}
       <AnimatePresence>
@@ -737,21 +767,21 @@ export default function PainelPage() {
           value={fmtR$(ganho)}
           sub={`${nPagos} pago(s)`}
           icon={TrendingUp}
-          color={primary}
+          color={primaryAccent}
         />
         <StatsCard
           label="A receber"
           value={fmtR$(aReceber)}
           sub={nAReceber > 0 ? `${nAReceber} pendente(s)` : "Tudo em dia ✔"}
           icon={DollarSign}
-          color={aReceber > 0 ? "#d97706" : primary}
+          color={aReceber > 0 ? "#d97706" : primaryAccent}
         />
         <StatsCard
           label="Próximos 7 dias"
           value={fmtR$(semanaValor)}
           sub={`${semanaN} serviço(s)`}
           icon={Calendar}
-          color={primary}
+          color={primaryAccent}
         />
         {rota ? (
           <StatsCard
@@ -791,6 +821,77 @@ export default function PainelPage() {
           }}
           className="space-y-8"
         >
+          {acoes.length > 0 && (
+            <motion.section
+              variants={{
+                hidden: { opacity: 0, y: 10 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <div className="mb-4 flex items-center gap-3">
+                <h2 className="text-lg font-semibold text-neutral-900">Próximos passos</h2>
+                <span
+                  className="flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-bold text-white shadow-sm"
+                  style={{ backgroundColor: "#059669" }}
+                >
+                  {acoes.length}
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {acoes.map((acao) => {
+                  const ag = items.find((i) => i.id === acao.agendamento_id);
+                  const meta = ACRO_TIPO_META[acao.tipo];
+                  const Icon =
+                    acao.tipo === "lembrete" ? BellRing
+                    : acao.tipo === "receber" ? Wallet
+                    : acao.tipo === "retorno" ? Sparkles
+                    : acao.tipo === "remarcar" ? RefreshCw
+                    : Check;
+                  return (
+                    <div key={acao.id} className="flex items-start gap-3 rounded-2xl border border-neutral-100 bg-white p-4 shadow-sm shadow-neutral-100/50">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${meta.cor}15` }}>
+                        <Icon size={16} style={{ color: meta.cor }} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-neutral-900">{acao.titulo}</p>
+                        <p className="mt-0.5 text-xs leading-relaxed text-neutral-500">{acao.descricao}</p>
+                        <div className="mt-2.5 flex flex-wrap gap-2">
+                          {acao.mensagem && ag?.cliente_whatsapp && (
+                            <a
+                              href={linkWhatsApp(acao.mensagem, ag.cliente_whatsapp)}
+                              target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                            >
+                              <MessageCircle size={13} /> WhatsApp
+                            </a>
+                          )}
+                          {acao.tipo === "confirmar" && ag && (
+                            <button
+                              onClick={() => mudarStatus(ag.id, "confirmado")}
+                              disabled={busy === ag.id}
+                              className="flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-all hover:bg-neutral-100 disabled:opacity-50"
+                            >
+                              <Check size={13} /> Confirmar
+                            </button>
+                          )}
+                          {acao.tipo === "receber" && ag && (
+                            <button
+                              onClick={() => onPix(ag)}
+                              disabled={busy === ag.id}
+                              className="flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-all hover:bg-neutral-100 disabled:opacity-50"
+                            >
+                              <Wallet size={13} /> Gerar Pix
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.section>
+          )}
+
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 10 },
@@ -890,27 +991,17 @@ export default function PainelPage() {
                 </p>
               </div>
               <div className="flex border-t border-neutral-100">
-                <button
-                  onClick={() => setConfirmacao(null)}
-                  className="flex-1 py-4 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-50"
-                >
+                <Button variant="ghost" size="sm" onClick={() => setConfirmacao(null)}>
                   Voltar
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={executarConfirmacao}
-                  className="flex-1 py-4 text-sm font-semibold text-white transition-colors"
-                  style={{
-                    backgroundColor: confirmacao.tipo === "pago" ? primary : "#dc2626",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (confirmacao.tipo === "pago") e.currentTarget.style.backgroundColor = `${primary}dd`;
-                  }}
-                  onMouseLeave={(e) => {
-                    if (confirmacao.tipo === "pago") e.currentTarget.style.backgroundColor = primary;
-                  }}
+                  style={{ backgroundColor: confirmacao.tipo === "pago" ? primary : "#dc2626" }}
                 >
                   {confirmacao.tipo === "pago" ? "Sim, pagar" : "Sim, cancelar"}
-                </button>
+                </Button>
               </div>
             </motion.div>
           </motion.div>

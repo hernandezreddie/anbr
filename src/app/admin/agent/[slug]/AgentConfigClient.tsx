@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getAgentPrompt, TONS_ATENDIMENTO } from "@/lib/agent-prompts";
+import { getCategoriaPadrao } from "@/lib/servicos-padrao";
 
 interface Props {
   profissional: any
@@ -23,6 +25,15 @@ export function AgentConfigClient({ profissional, config: initialConfig, docs: i
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<"config" | "docs" | "chats" | "usage">("config");
   const [uploading, setUploading] = useState(false);
+  const [tomPrompt, setTomPrompt] = useState("equilibrado");
+
+  const applyPromptPronto = () => {
+    const prompt = getAgentPrompt(profissional?.categoria, tomPrompt)
+      .replace(/\{nome\}/g, profissional?.nome || "seu negócio")
+      .replace(/\{cidade\}/g, profissional?.cidade || "sua cidade");
+    setConfig({ ...config, system_prompt: prompt });
+    setSaved(false);
+  };
 
   const saveConfig = async () => {
     setSaving(true);
@@ -160,6 +171,41 @@ export function AgentConfigClient({ profissional, config: initialConfig, docs: i
             <p className="mt-1 text-sm text-gray-500">
               Instruções que definem a personalidade e regras do agente
             </p>
+
+            <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50/50 p-4">
+              <p className="text-sm font-medium text-teal-800">
+                Prompt pronto para {getCategoriaPadrao(profissional?.categoria)?.nome ?? "seu nicho"}
+              </p>
+              <p className="mt-1 text-xs text-teal-700">
+                Modelo de atendimento escrito por especialistas para profissionais de {getCategoriaPadrao(profissional?.categoria)?.nome ?? "sua área"}.
+                Escolha o tom e clique em aplicar — depois ajuste se quiser.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {TONS_ATENDIMENTO.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTomPrompt(t.id)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                      tomPrompt === t.id ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200 hover:bg-teal-50"
+                    }`}
+                  >
+                    {t.nome}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-xs text-teal-700">{TONS_ATENDIMENTO.find((t) => t.id === tomPrompt)?.instrucao}</span>
+                <button
+                  type="button"
+                  onClick={applyPromptPronto}
+                  className="shrink-0 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
+                >
+                  Aplicar prompt
+                </button>
+              </div>
+            </div>
+
             <textarea
               value={config.system_prompt}
               onChange={(e) => setConfig({ ...config, system_prompt: e.target.value })}

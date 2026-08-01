@@ -11,7 +11,11 @@ export function Nav({ config }: { config: ProfissionalConfig }) {
       <div className="container-x flex h-16 items-center justify-between">
         <a href={`/${profissional.slug}`} className="font-semibold text-ink">
           {configuracao.logo_url ? (
-            <img src={configuracao.logo_url} alt={profissional.nome} className="h-8 w-auto" />
+            <img
+              src={configuracao.logo_url}
+              alt={profissional.nome}
+              className="h-9 w-9 rounded-full object-cover shadow-sm ring-2 ring-white/70 transition-transform duration-200 hover:scale-105"
+            />
           ) : (
             <span className="text-lg font-semibold" style={{ fontFamily: configuracao.fonte_titulo }}>
               {profissional.primeiro_nome}

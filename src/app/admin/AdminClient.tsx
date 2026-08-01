@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
 export function AdminClient() {
@@ -15,6 +15,17 @@ export function AdminClient() {
   });
   const [erro, setErro] = useState("");
   const [ok, setOk] = useState("");
+
+  useEffect(() => {
+    if (window.location.hash === "#novo-tenant") {
+      setAberto(true);
+    }
+    const onHash = () => {
+      if (window.location.hash === "#novo-tenant") setAberto(true);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   const slugFromNome = (nome: string) =>
     nome
@@ -45,48 +56,48 @@ export function AdminClient() {
   };
 
   return (
-    <div>
+    <div id="novo-tenant">
       <button
         onClick={() => setAberto(!aberto)}
-        className="flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-teal-700"
+        className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-teal-700"
       >
-        <Plus size={16} /> Novo tenant
+        <Plus size={14} /> Novo tenant
       </button>
 
       {aberto && (
-        <div className="mt-4 rounded-2xl border border-line bg-white p-6">
-          <h3 className="mb-4 text-lg font-semibold">Criar novo tenant</h3>
-          {erro && <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{erro}</div>}
-          {ok && <div className="mb-4 rounded-lg bg-teal-50 p-3 text-sm text-teal-700">{ok}</div>}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+        <div className="mt-3 rounded-xl border border-neutral-200 bg-white p-4">
+          <h3 className="mb-3 text-sm font-semibold">Criar novo tenant</h3>
+          {erro && <div className="mb-3 rounded-lg bg-red-50 p-2.5 text-sm text-red-700">{erro}</div>}
+          {ok && <div className="mb-3 rounded-lg bg-teal-50 p-2.5 text-sm text-teal-700">{ok}</div>}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="grid gap-2 sm:grid-cols-2">
               <input type="text" placeholder="Nome completo" value={form.nome} required
                 onChange={(e) => {
                   const next = { ...form, nome: e.target.value };
                   if (next.slug === slugFromNome(form.nome)) next.slug = slugFromNome(e.target.value);
                   setForm(next);
                 }}
-                className="rounded-xl border border-line px-4 py-3 text-sm outline-none focus:border-teal-600" />
+                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-teal-600" />
               <input type="email" placeholder="Email" value={form.email} required
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="rounded-xl border border-line px-4 py-3 text-sm outline-none focus:border-teal-600" />
+                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-teal-600" />
               <input type="password" placeholder="Senha" value={form.senha} required
                 onChange={(e) => setForm({ ...form, senha: e.target.value })}
-                className="rounded-xl border border-line px-4 py-3 text-sm outline-none focus:border-teal-600" />
+                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-teal-600" />
               <div>
                 <input type="text" placeholder="Slug (URL)" value={form.slug} required
                   onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                  className="w-full rounded-xl border border-line px-4 py-3 text-sm outline-none focus:border-teal-600" />
-                <p className="mt-1 text-xs text-ink-mute">/{form.slug || "..."}</p>
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-teal-600" />
+                <p className="mt-1 text-xs text-neutral-400">/{form.slug || "..."}</p>
               </div>
               <input type="text" placeholder="WhatsApp (com DDD)" value={form.whatsapp}
                 onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-                className="rounded-xl border border-line px-4 py-3 text-sm outline-none focus:border-teal-600" />
+                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-teal-600" />
               <input type="text" placeholder="Cidade" value={form.cidade}
                 onChange={(e) => setForm({ ...form, cidade: e.target.value })}
-                className="rounded-xl border border-line px-4 py-3 text-sm outline-none focus:border-teal-600" />
+                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-teal-600" />
             </div>
-            <button type="submit" className="rounded-xl bg-ink px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-ink/90">
+            <button type="submit" className="rounded-lg bg-neutral-900 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-neutral-700">
               Criar tenant
             </button>
           </form>

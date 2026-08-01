@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
 import { AnimatePresence, motion } from "framer-motion";
+import { usePainelPrimary } from "./primary-context";
+import { accento } from "@/lib/cores";
 import {
   LayoutDashboard,
   ListOrdered,
@@ -20,6 +21,8 @@ import {
   LogOut,
   X,
   Sparkles,
+  BadgePercent,
+  Star,
 } from "lucide-react";
 
 const principais = [
@@ -31,6 +34,8 @@ const principais = [
 
 const extras = [
   { href: "/perfil", label: "Perfil", icon: Settings },
+  { href: "/ofertas", label: "Ofertas", icon: BadgePercent },
+  { href: "/avaliacoes", label: "Avaliações", icon: Star },
   { href: "/qr", label: "Meu QR", icon: QrCode },
   { href: "/agente", label: "AI Agent", icon: Bot },
   { href: "/plano", label: "Meu Plano", icon: CreditCard },
@@ -40,19 +45,10 @@ const extras = [
 export function SidebarClient({ slug }: { slug: string }) {
   const pathname = usePathname();
   const base = `/${slug}/painel`;
-  const [primary, setPrimary] = useState("#059669");
+  const primary = usePainelPrimary();
+  const accent = accento(primary);
   const [maisAberto, setMaisAberto] = useState(false);
   const maisRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    createClient()
-      .from("configuracoes")
-      .select("cor_primaria")
-      .single()
-      .then(({ data }) => {
-        if (data?.cor_primaria) setPrimary(data.cor_primaria);
-      });
-  }, []);
 
   useEffect(() => {
     setMaisAberto(false);
@@ -83,22 +79,29 @@ export function SidebarClient({ slug }: { slug: string }) {
               AN<span className="text-neutral-400">.</span>BR
             </span>
           </Link>
-          <Link
+          <motion.a
             href={`/${slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-800 sm:flex"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
+            className="hidden items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-xs font-medium text-neutral-600 shadow-sm transition-all duration-150 hover:border-teal-500 hover:text-teal-700 hover:shadow-md sm:flex"
+            style={{ color: accent }}
           >
             <ExternalLink size={14} />
             Ver página pública
-          </Link>
-          <button
+          </motion.a>
+          <motion.button
             onClick={() => setMaisAberto((v) => !v)}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-800 sm:hidden"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.92 }}
+            animate={maisAberto ? { rotate: 90 } : { rotate: 0 }}
+            className="flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-neutral-600 shadow-sm transition-all duration-150 hover:border-teal-500 hover:text-teal-700 hover:shadow-md sm:hidden"
+            style={{ color: maisAberto ? accent : undefined, borderColor: maisAberto ? accent : undefined }}
           >
             <MoreHorizontal size={16} />
             Menu
-          </button>
+          </motion.button>
         </div>
       </header>
 
@@ -113,13 +116,13 @@ export function SidebarClient({ slug }: { slug: string }) {
               <Link
                 key={link.href}
                 href={url}
-                className={`flex flex-col items-center gap-0.5 px-2 py-2 text-[11px] font-medium transition-all ${
+                className={`flex flex-col items-center gap-0.5 px-2 py-2 text-[10px] font-medium transition-all sm:text-[11px] ${
                   active ? "" : "text-neutral-400 hover:text-neutral-600"
                 }`}
-                style={active ? { color: primary } : {}}
+                style={active ? { color: accent } : {}}
               >
                 <div
-                  className="flex items-center justify-center rounded-xl px-4 py-1.5 transition-all"
+                  className="flex items-center justify-center rounded-xl px-3 py-1.5 transition-all sm:px-4"
                   style={active ? { backgroundColor: `${primary}12` } : {}}
                 >
                   <Icon size={22} />
@@ -133,13 +136,13 @@ export function SidebarClient({ slug }: { slug: string }) {
           <div className="relative" ref={maisRef}>
             <button
               onClick={() => setMaisAberto((v) => !v)}
-              className={`flex flex-col items-center gap-0.5 px-2 py-2 text-[11px] font-medium transition-all ${
+              className={`flex flex-col items-center gap-0.5 px-2 py-2 text-[10px] font-medium transition-all sm:text-[11px] ${
                 extras.some((e) => isActive(e.href)) ? "" : "text-neutral-400 hover:text-neutral-600"
               }`}
-              style={extras.some((e) => isActive(e.href)) ? { color: primary } : {}}
+              style={extras.some((e) => isActive(e.href)) ? { color: accent } : {}}
             >
               <div
-                className="flex items-center justify-center rounded-xl px-4 py-1.5 transition-all"
+                className="flex items-center justify-center rounded-xl px-3 py-1.5 transition-all sm:px-4"
                 style={
                   extras.some((e) => isActive(e.href))
                     ? { backgroundColor: `${primary}12` }
@@ -177,7 +180,7 @@ export function SidebarClient({ slug }: { slug: string }) {
                                 ? ""
                                 : "text-neutral-600 hover:bg-neutral-50"
                             }`}
-                            style={active ? { color: primary, backgroundColor: `${primary}12` } : {}}
+                            style={active ? { color: accent, backgroundColor: `${primary}12` } : {}}
                           >
                             <Icon size={18} />
                             {link.label}

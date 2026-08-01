@@ -54,6 +54,10 @@ export default async function proxy(req: NextRequest) {
 
     if (slug) {
       const url = new URL(req.url)
+      // Já está sob /slug/ (ex: manifest, assets ou navegação interna): não duplicar
+      if (pathname === `/${slug}` || pathname.startsWith(`/${slug}/`)) {
+        return NextResponse.next()
+      }
       url.pathname = `/${slug}${pathname === "/" ? "" : pathname}`
       return NextResponse.rewrite(url)
     }

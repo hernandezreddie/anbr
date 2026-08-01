@@ -1,5 +1,6 @@
 "use client";
 
+import { contrastante, accento } from "@/lib/cores";
 import type { ProfissionalConfig } from "@/types";
 
 function formatPreco(valor: number) {
@@ -17,12 +18,14 @@ function precoLabel(s: ProfissionalConfig["servicos"][number]) {
 
 export function Servicos({ config }: { config: ProfissionalConfig }) {
   const primary = config.configuracao.cor_primaria;
+  const primaryInk = contrastante(primary);
+  const accent = accento(primary);
 
   return (
     <section className="relative overflow-hidden py-20">
       <div className="container-x relative">
         <div className="mx-auto max-w-2xl text-center">
-          <div className="mb-3 animate-fade-in-up inline-block rounded-full px-4 py-1 text-sm font-medium" style={{ backgroundColor: primary + "15", color: primary }}>
+          <div className="mb-3 animate-fade-in-up inline-block rounded-full px-4 py-1 text-sm font-medium" style={{ backgroundColor: primary + "15", color: accent }}>
             Serviços
           </div>
           <h2 className="animate-fade-in-up delay-100 text-3xl font-bold tracking-tight">Meus serviços</h2>
@@ -45,8 +48,8 @@ export function Servicos({ config }: { config: ProfissionalConfig }) {
                   )}
                   <div className="mt-4 flex items-center gap-3">
                     <span
-                      className="inline-flex items-center rounded-full px-3.5 py-1 text-sm font-semibold text-white"
-                      style={{ backgroundColor: primary }}
+                      className="inline-flex items-center rounded-full px-3.5 py-1 text-sm font-semibold"
+                      style={{ backgroundColor: primary, color: primaryInk }}
                     >
                       {precoLabel(s)}
                     </span>

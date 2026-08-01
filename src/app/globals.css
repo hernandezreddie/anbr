@@ -1,20 +1,150 @@
 @import "tailwindcss";
 
 :root {
+  /* ===== Tokens de color ===== */
   --color-primary: #14b8a6;
+  --color-primary-ink: #ffffff;
+  --color-primary-accent: #0d9488;
   --color-secondary: #1c1917;
   --color-bg: #faf8f5;
   --color-paper: #ffffff;
   --color-ink: #1c1917;
   --color-ink-soft: #6b6560;
   --color-line: #e5e2df;
+
+  /* ===== Tokens de radio (escala) ===== */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --radius-pill: 9999px;
+  --radius-full: 9999px;
+
+  /* ===== Tokens de sombra ===== */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.03);
+  --shadow-2xl: 0 20px 25px rgba(0, 0, 0, 0.05), 0 10px 10px rgba(0, 0, 0, 0.03);
+
+  /* ===== Tokens de transición ===== */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ===== Tokens de espaciado ===== */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.5rem;
+  --space-2xl: 2rem;
+  --space-3xl: 3rem;
+  --space-4xl: 4rem;
+  --space-5xl: 5rem;
+  --space-6xl: 6rem;
+
+  /* ===== Tokens de tipografía ===== */
   --font-heading: "Fraunces", serif;
   --font-body: "Inter", sans-serif;
+
+  /* ===== Tokens de layout ===== */
+  --container-max: 1200px;
+  --nav-height: 64px;
+  --section-py: 5rem;
 }
 
 @theme inline {
   --font-sans: var(--font-inter);
   --font-serif: var(--font-fraunces);
+  --color-primary: var(--color-primary);
+  --color-primary-ink: var(--color-primary-ink);
+  --color-primary-accent: var(--color-primary-accent);
+  --color-secondary: var(--color-secondary);
+  --color-paper: var(--color-paper);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-ink-mute: var(--color-ink-soft);
+  --color-line: var(--color-line);
+}
+
+/* ===== Paletas por nicho (data-niche) ===== */
+[data-niche="limpeza"] {
+  --color-primary: #0d9488;
+  --color-secondary: #1c1917;
+  --color-bg: #f5f9f8;
+  --color-line: #e0ecea;
+}
+[data-niche="beleza"] {
+  --color-primary: #db2777;
+  --color-secondary: #4c0519;
+  --color-bg: #fdf5f8;
+  --color-line: #f6e1ea;
+}
+[data-niche="unhas"] {
+  --color-primary: #c026d3;
+  --color-secondary: #3b0764;
+  --color-bg: #fbf5fd;
+  --color-line: #f4e2f8;
+}
+[data-niche="saude"] {
+  --color-primary: #2563eb;
+  --color-secondary: #172554;
+  --color-bg: #f3f7fe;
+  --color-line: #dde6f7;
+}
+[data-niche="clinica"] {
+  --color-primary: #0891b2;
+  --color-secondary: #083344;
+  --color-bg: #f1f9fb;
+  --color-line: #d8eef3;
+}
+[data-niche="personal"] {
+  --color-primary: #ea580c;
+  --color-secondary: #431407;
+  --color-bg: #fef6f0;
+  --color-line: #f6e3d6;
+}
+[data-niche="automotivo"] {
+  --color-primary: #dc2626;
+  --color-secondary: #1c1917;
+  --color-bg: #fbf5f5;
+  --color-line: #f3e0e0;
+}
+[data-niche="veterinario"] {
+  --color-primary: #059669;
+  --color-secondary: #022c22;
+  --color-bg: #f2faf7;
+  --color-line: #dcefec;
+}
+[data-niche="artes"] {
+  --color-primary: #7c3aed;
+  --color-secondary: #1e1b4b;
+  --color-bg: #f7f3fe;
+  --color-line: #e8e0f7;
+}
+[data-niche="gastronomia"] {
+  --color-primary: #d97706;
+  --color-secondary: #451a03;
+  --color-bg: #fdf7f0;
+  --color-line: #f4e5d4;
+}
+[data-niche="fotografia"] {
+  --color-primary: #4f46e5;
+  --color-secondary: #1e1b4b;
+  --color-bg: #f5f5fe;
+  --color-line: #e2e0f6;
+}
+[data-niche="consultoria"] {
+  --color-primary: #0f766e;
+  --color-secondary: #134e4a;
+  --color-bg: #f1f8f7;
+  --color-line: #d9ecea;
 }
 
 body {
@@ -33,14 +163,14 @@ h1, h2, h3, h4 {
   margin-right: auto;
   padding-left: 1.5rem;
   padding-right: 1.5rem;
-  max-width: 1200px;
+  max-width: var(--container-max);
 }
 
 .card {
-  border-radius: 1rem;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--color-line);
   background-color: var(--color-paper);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
 }
 
 .bg-ivory {
@@ -67,29 +197,31 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-pill);
   background-color: var(--color-primary);
   padding: 0.75rem 1.5rem;
   font-weight: 600;
-  color: white;
-  transition: all 0.15s ease;
+  color: var(--color-primary-ink);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-fast);
   cursor: pointer;
 }
 
 .btn-primary:hover {
   filter: brightness(1.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-pill);
   padding: 0.5rem 1rem;
   font-weight: 500;
   font-size: 0.875rem;
   color: var(--color-ink-soft);
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
   cursor: pointer;
   background: transparent;
   border: none;
@@ -104,12 +236,12 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-pill);
   padding: 0.5rem 1rem;
   font-weight: 500;
   font-size: 0.875rem;
   color: #dc2626;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
   cursor: pointer;
   background: transparent;
   border: 1px solid transparent;
@@ -124,14 +256,14 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--color-line);
   background-color: transparent;
   padding: 0.5rem 1rem;
   font-weight: 500;
   font-size: 0.875rem;
   color: var(--color-ink-soft);
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
   cursor: pointer;
 }
 
@@ -144,11 +276,11 @@ h1, h2, h3, h4 {
 .btn-sm {
   padding: 0.375rem 0.75rem;
   font-size: 0.8125rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translateY(var(--space-md)); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -158,7 +290,7 @@ h1, h2, h3, h4 {
 }
 
 @keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-20px); }
+  from { opacity: 0; transform: translateX(var(--space-lg)); }
   to { opacity: 1; transform: translateX(0); }
 }
 
@@ -197,3 +329,28 @@ h1, h2, h3, h4 {
 .delay-300 { animation-delay: 0.3s; }
 .delay-400 { animation-delay: 0.4s; }
 .delay-500 { animation-delay: 0.5s; }
+
+@keyframes ctaGlow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-primary); }
+  50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--color-primary) 30%, transparent); }
+}
+
+.cta-glow {
+  animation: ctaGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes rippleEffect {
+  to {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.ripple-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
+}

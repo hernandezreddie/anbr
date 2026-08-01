@@ -39,5 +39,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
+  if (status === "concluido") {
+    try {
+      const { enviarConviteAvaliacao } = await import("@/lib/notificacoes");
+      await enviarConviteAvaliacao(id);
+    } catch (err) {
+      console.warn("Convite de avaliação não enviado:", err);
+    }
+  }
+
   return Response.json({ success: true });
 }

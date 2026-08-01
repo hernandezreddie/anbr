@@ -32,6 +32,12 @@ export type FrequenciaPadrao = {
   ordem: number;
 };
 
+export type MensagemVariante = {
+  nome: string;
+  confirmacao: string;
+  lembrete: string;
+};
+
 export type AdicionalPadrao = {
   nome: string;
   preco: number;
@@ -50,6 +56,8 @@ export type CategoriaPadrao = {
   usa_comodos: boolean;
   msg_confirmacao: string;
   msg_lembrete: string;
+  /** Estilos alternativos de mensagens WhatsApp — o profissional escolhe no painel */
+  msg_variantes: MensagemVariante[];
 };
 
 export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
@@ -80,6 +88,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     ],
     msg_confirmacao: "Olá! Recebemos seu agendamento de {servico} no dia {data} às {hora}. Estou confirmado(a) e irei preparar tudo com capricho. Qualquer dúvida, estou à disposição!",
     msg_lembrete: "Olá! Lembrando que amanhã temos {servico} às {hora}. Confirmado? Qualquer imprevisto, me avise!",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Seu {servico} está confirmado para {data} às {hora}. Até lá!",
+        lembrete: "Oi! Amanhã às {hora} tem seu {servico}. Confirmado? Me avise se precisar mudar.",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Que bom ter você comigo. Seu {servico} fica confirmado para {data} às {hora}. Vou deixar tudo impecável! Qualquer dúvida, é só chamar.",
+        lembrete: "Oi! Amanhã às {hora} cuido do seu {servico}. Fica confirmado? Qualquer imprevisto, me avisa que a gente ajusta.",
+      },
+    ],
   },
   {
     id: "beleza",
@@ -109,6 +127,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     ],
     msg_confirmacao: "Olá! Seu agendamento de {servico} no dia {data} às {hora} está confirmado. Te espero no salão!",
     msg_lembrete: "Oi! Amanhã tem {servico} às {hora} combinado. Confirmado? Me avise se precisar remarcar.",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Seu {servico} está confirmado para {data} às {hora}. Te espero!",
+        lembrete: "Oi! Amanhã às {hora} tem seu {servico}. Confirmado? Me avise se precisar remarcar.",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Seu horário de {servico} está garantido para {data} às {hora}. Já estou me preparando pra te receber com todo carinho!",
+        lembrete: "Oi! Amanhã às {hora} tem o seu momento de {servico}. Tudo confirmado? Me avisa se precisar de algo.",
+      },
+    ],
   },
   {
     id: "unhas",
@@ -139,6 +167,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     ],
     msg_confirmacao: "Olá! Seu horário de {servico} no dia {data} às {hora} está confirmado. Te espero para deixar suas unhas impecáveis!",
     msg_lembrete: "Oi! Lembrando do seu horário de {servico} amanhã às {hora}. Confirmado? Me avise se precisar remarcar.",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Seu {servico} está confirmado para {data} às {hora}. Te espero!",
+        lembrete: "Oi! Amanhã às {hora} tem seu {servico}. Confirmado? Me avise.",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Suas unhas estão garantidas! {servico} no dia {data} às {hora}. Vou caprichar em cada detalhe pra você sair apaixonada pelo resultado!",
+        lembrete: "Oi! Amanhã às {hora} é o nosso momento de {servico}. Tudo certo? Me avisa se precisar ajustar.",
+      },
+    ],
   },
   {
     id: "saude",
@@ -166,6 +204,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     ],
     msg_confirmacao: "Olá! Seu horário de {servico} no dia {data} às {hora} foi confirmado. Prepare-se para relaxar!",
     msg_lembrete: "Oi! Passando para lembrar da sua sessão de {servico} amanhã às {hora}. Confirmado?",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Sua sessão de {servico} está confirmada para {data} às {hora}. Até lá!",
+        lembrete: "Oi! Amanhã às {hora} tem sua sessão de {servico}. Confirmado?",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Sua sessão de {servico} está reservada para {data} às {hora}. Já preparei tudo pra você relaxar de verdade. Qualquer coisa, me chame!",
+        lembrete: "Oi! Amanhã às {hora} vamos cuidar de você com {servico}. Tudo certo? Me avisa se precisar remarcar.",
+      },
+    ],
   },
   {
     id: "clinica",
@@ -189,6 +237,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     adicionais: [],
     msg_confirmacao: "Olá! Sua consulta de {servico} no dia {data} às {hora} foi confirmada. Traga seus documentos e chegue 10 minutos antes.",
     msg_lembrete: "Olá! Lembrando da sua consulta de {servico} amanhã às {hora}. Confirmado? Qualquer imprevisto, nos avise.",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Sua consulta de {servico} está confirmada para {data} às {hora}. Chegue 10 minutos antes.",
+        lembrete: "Oi! Amanhã às {hora} tem sua consulta de {servico}. Confirmado?",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Sua consulta de {servico} está garantida para {data} às {hora}. Estaremos te esperando com atenção e cuidado. Até lá!",
+        lembrete: "Olá! Amanhã às {hora} tem sua consulta de {servico}. Fica confirmado? Se precisar remarcar, é só avisar.",
+      },
+    ],
   },
   {
     id: "personal",
@@ -214,6 +272,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     ],
     msg_confirmacao: "Olá! Sua sessão de {servico} no dia {data} às {hora} está agendada. Vamos treinar!",
     msg_lembrete: "E aí! Lembrando do treino de {servico} amanhã às {hora}. Confirmado? Bora!",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Seu treino de {servico} está confirmado para {data} às {hora}. Bora!",
+        lembrete: "Oi! Amanhã às {hora} tem treino de {servico}. Confirmado? Bora!",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Treino de {servico} confirmado para {data} às {hora}. Vou preparar uma sessão que vai te fazer sentir a evolução. Te espero!",
+        lembrete: "E aí! Amanhã às {hora} tem {servico} no nosso cronograma. Confirma pra gente? Seu futuro eu agradece!",
+      },
+    ],
   },
   {
     id: "automotivo",
@@ -243,6 +311,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     ],
     msg_confirmacao: "Olá! Seu agendamento de {servico} no dia {data} às {hora} está confirmado. Deixe seu carro no ponto com a gente!",
     msg_lembrete: "Oi! Amanhã temos {servico} às {hora} marcado. Confirmado? Qualquer dúvida, me chame.",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Seu {servico} está confirmado para {data} às {hora}. Te esperamos!",
+        lembrete: "Oi! Amanhã às {hora} tem seu {servico}. Confirmado?",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Seu {servico} está reservado para {data} às {hora}. Vamos deixar seu carro impecável! Qualquer dúvida, é só chamar.",
+        lembrete: "Oi! Amanhã às {hora} cuidamos do seu carro com {servico}. Tudo certo? Me avisa se precisar alterar.",
+      },
+    ],
   },
   {
     id: "veterinario",
@@ -271,6 +349,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     ],
     msg_confirmacao: "Olá! Seu agendamento de {servico} no dia {data} às {hora} está confirmado. Seu pet está em boas mãos!",
     msg_lembrete: "Oi! Lembrando que amanhã temos {servico} às {hora} para o seu pet. Confirmado?",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! O {servico} do seu pet está confirmado para {data} às {hora}. Te esperamos!",
+        lembrete: "Oi! Amanhã às {hora} tem {servico} do seu pet. Confirmado?",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! O {servico} do seu pet está garantido para {data} às {hora}. Vamos tratar ele com muito carinho! Qualquer dúvida, me chame.",
+        lembrete: "Oi! Amanhã às {hora} cuidamos do seu pet com {servico}. Tudo confirmado? Qualquer imprevisto, me avisa.",
+      },
+    ],
   },
   {
     id: "artes",
@@ -290,6 +378,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     adicionais: [],
     msg_confirmacao: "Olá! Seu agendamento de {servico} no dia {data} às {hora} está confirmado. Te espero no estúdio!",
     msg_lembrete: "Oi! Amanhã temos {servico} às {hora}. Confirmado? Me avise se precisar alterar.",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Seu {servico} está confirmado para {data} às {hora}. Te espero!",
+        lembrete: "Oi! Amanhã às {hora} tem seu {servico}. Confirmado?",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Seu {servico} está reservado para {data} às {hora}. Já estou ansioso(a) pra criar essa arte com você!",
+        lembrete: "Oi! Amanhã às {hora} vamos dar vida ao seu {servico}. Tudo certo? Me avisa se precisar ajustar.",
+      },
+    ],
   },
   {
     id: "gastronomia",
@@ -310,6 +408,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     adicionais: [],
     msg_confirmacao: "Olá! Seu evento de {servico} no dia {data} às {hora} está confirmado. Vou preparar tudo com muito carinho!",
     msg_lembrete: "Olá! Lembrando do seu {servico} amanhã às {hora}. Já estou organizando tudo! Confirmado?",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Seu {servico} está confirmado para {data} às {hora}. Tudo certo!",
+        lembrete: "Oi! Amanhã às {hora} tem seu {servico}. Confirmado?",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Seu {servico} está garantido para {data} às {hora}. Já estou selecionando os melhores ingredientes pra tornar esse momento especial!",
+        lembrete: "Olá! Amanhã às {hora} preparamos seu {servico} com todo capricho. Fica confirmado? Me avisa se precisar de algo.",
+      },
+    ],
   },
   {
     id: "fotografia",
@@ -333,6 +441,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     ],
     msg_confirmacao: "Olá! Seu ensaio de {servico} no dia {data} às {hora} está confirmado. Vamos criar fotos incríveis!",
     msg_lembrete: "Oi! Amanhã temos {servico} às {hora}. Confirmado? Qualquer dúvida, me chame!",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Seu {servico} está confirmado para {data} às {hora}. Vamos lá!",
+        lembrete: "Oi! Amanhã às {hora} tem seu {servico}. Confirmado?",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Seu {servico} está reservado para {data} às {hora}. Já estou planejando cada clique pra eternizar esse momento com beleza e emoção!",
+        lembrete: "Oi! Amanhã às {hora} eternizamos seu {servico}. Tudo certo? Qualquer dúvida, me chama.",
+      },
+    ],
   },
   {
     id: "consultoria",
@@ -356,6 +474,16 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     ],
     msg_confirmacao: "Olá! Sua sessão de {servico} no dia {data} às {hora} está agendada. Te espero!",
     msg_lembrete: "Oi! Lembrando da nossa sessão de {servico} amanhã às {hora}. Confirmado?",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Sua sessão de {servico} está confirmada para {data} às {hora}. Até lá!",
+        lembrete: "Oi! Amanhã às {hora} tem nossa sessão de {servico}. Confirmado?",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Sua sessão de {servico} está reservada para {data} às {hora}. Vou preparar cada momento pra você sair com aquele progresso!",
+        lembrete: "Oi! Amanhã às {hora} temos nossa sessão de {servico}. Tudo certo? Me avisa se precisar remarcar.",
+      },
+    ],
   },
   {
     id: "outro",
@@ -370,11 +498,22 @@ export const CATEGORIAS_PADRAO: CategoriaPadrao[] = [
     adicionais: [],
     msg_confirmacao: "Olá! Recebemos seu agendamento de {servico} no dia {data} às {hora}. Confirmado! Qualquer dúvida, estou à disposição.",
     msg_lembrete: "Olá! Lembrando que amanhã temos {servico} às {hora}. Confirmado? Qualquer imprevisto, me avise!",
+    msg_variantes: [
+      {
+        nome: "Direto", confirmacao: "Oi! Seu {servico} está confirmado para {data} às {hora}. Até lá!",
+        lembrete: "Oi! Amanhã às {hora} tem seu {servico}. Confirmado?",
+      },
+      {
+        nome: "Carinhoso", confirmacao: "Olá! Seu {servico} está garantido para {data} às {hora}. Vou fazer o possível pra te atender com todo cuidado!",
+        lembrete: "Oi! Amanhã às {hora} cuidamos do seu {servico}. Tudo certo? Me avisa se precisar de algo.",
+      },
+    ],
   },
 ];
 
-export function getCategoriaPadrao(id: CategoriaId): CategoriaPadrao | undefined {
-  return CATEGORIAS_PADRAO.find((c) => c.id === id);
+export function getCategoriaPadrao(id: string | null | undefined): CategoriaPadrao | undefined {
+  if (!id) return undefined;
+  return CATEGORIAS_PADRAO.find((c) => c.id === (id as CategoriaId));
 }
 
 export function getServicosPadrao(id: CategoriaId): ServicoPadrao[] {
@@ -395,4 +534,21 @@ export function getUsaComodos(id: CategoriaId): boolean {
 
 export function getSloganPadrao(id: CategoriaId): string {
   return getCategoriaPadrao(id)?.slogan || "Profissional de confiança";
+}
+
+export type MensagemEscolhida = {
+  nome: string;
+  confirmacao: string;
+  lembrete: string;
+};
+
+export function getMensagensPadrao(id: string | null | undefined, variante = 0): MensagemEscolhida {
+  const cat = getCategoriaPadrao(id ?? "outro");
+  if (!cat) return { nome: "Equilibrado", confirmacao: "", lembrete: "" };
+  const v = cat.msg_variantes?.[variante];
+  return {
+    nome: v?.nome || "Equilibrado",
+    confirmacao: v?.confirmacao ?? cat.msg_confirmacao,
+    lembrete: v?.lembrete ?? cat.msg_lembrete,
+  };
 }

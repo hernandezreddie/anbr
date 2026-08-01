@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ProfissionalConfig, Servico, Adicional, Frequencia } from "@/types";
 import { estimar } from "@/lib/precos";
 import { mensagemReserva, linkWhatsApp } from "@/lib/whatsapp";
-import { Calendar, Clock, Check, ChevronRight, Sparkles, Star, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { contrastante, accento } from "@/lib/cores";
+import { Calendar, Clock, Check, ChevronRight, Sparkles, Star, ArrowLeft, CheckCircle2, X, Tag } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 const round05 = (n: number) => Math.round(n * 2) / 2;
 
@@ -171,11 +174,23 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const [hora, setHora] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [erroMsg, setErroMsg] = useState("");
   const [ocupados, setOcupados] = useState<{ inicio: string; minutos: number }[]>([]);
+  const [limiteDia, setLimiteDia] = useState(0);
+  const [totalDia, setTotalDia] = useState(0);
 
   const servico = config.servicos.find((s) => s.id === servicoId);
   const frequencia = config.frequencias.find((f) => f.slug === freqId) || null;
   const isPrecoFixo = servico?.tipo_preco === "fixo";
+
+  const promoAtiva = (config.promocoes ?? []).find(
+    (p) =>
+      p.ativo &&
+      (!p.servico_id || p.servico_id === servicoId) &&
+      (!data ||
+        !p.dias_semana?.length ||
+        p.dias_semana.includes(String(new Date(data + "T12:00:00").getDay())))
+  );
 
   const horasBase = servico && !isPrecoFixo
     ? round05(servico.horas_base + (usaComodos ? quartos * 0.75 + banheiros * 0.75 : 0))
@@ -192,6 +207,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
         adicionais: config.adicionais,
         adicionaisSelecionados: adicionaisSel,
         frequencia,
+        promocao: promoAtiva ? { tipo: promoAtiva.tipo, valor: promoAtiva.valor } : null,
       })
     : null;
 
@@ -234,7 +250,10 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
     fetch(`/api/agendamentos?slug=${config.profissional.slug}&data=${data}`)
       .then((r) => r.json())
       .then((j) => {
-        if (ativo) setOcupados(Array.isArray(j?.ocupados) ? j.ocupados : []);
+        if (!ativo) return;
+        setOcupados(Array.isArray(j?.ocupados) ? j.ocupados : []);
+        setLimiteDia(Number(j?.max_agendamentos_dia) || 0);
+        setTotalDia(Number(j?.total_dia) || 0);
       })
       .catch(() => {});
     return () => {
@@ -277,7 +296,20 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
           cliente_endereco: endereco,
         }),
       });
-      if (!res.ok) throw new Error("Falha ao salvar agendamento");
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        if (res.status === 409 && j?.limite) {
+          setErroMsg(j.error || "Limite de agendamentos atingido nesse dia.");
+          setSubmitting(false);
+          return;
+        }
+        if (res.status === 409 && j?.conflito) {
+          setErroMsg(j.error || "Esse horário acabou de ser reservado. Escolha outro.");
+          setSubmitting(false);
+          return;
+        }
+        throw new Error("Falha ao salvar agendamento");
+      }
       setEnviado(true);
     } catch (err) {
       console.error("Erro ao salvar:", err);
@@ -315,7 +347,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const step5Label = isPrecoFixo ? "5" : "6";
 
   return (
-    <div style={{ fontFamily: bodyFont }}>
+    <div data-niche={categoria} style={{ fontFamily: bodyFont }}>
       {/* Header */}
       <div
         className="relative overflow-hidden pb-16 pt-12"
@@ -366,6 +398,44 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
       </div>
 
       <div className="container-x -mt-8 pb-16">
+        {/* Step Progress Indicator */}
+        {!enviado && (
+          <div className="mb-8 flex items-center justify-center gap-2 overflow-x-auto py-3">
+            {[
+              { label: "Serviço", key: "servico" },
+              ...(!isPrecoFixo && usaComodos ? [{ label: "Cômodos", key: "comodos" }] : []),
+              ...(adicionaisFiltrados.length > 0 ? [{ label: "Extras", key: "extras" }] : []),
+              { label: "Frequência", key: "frequencia" },
+              { label: "Data/Hora", key: "datetime" },
+              { label: "Dados", key: "dados" },
+            ].map((step, i, arr) => {
+              const stepKeys = ["servico", "comodos", "extras", "frequencia", "datetime", "dados"];
+              const currentIdx = stepKeys.indexOf(step.key);
+              const isActive = currentIdx >= 0;
+              const isCompleted = currentIdx > 0;
+              return (
+                <Fragment key={step.key}>
+                  {i > 0 && (
+                    <div className={`h-px w-6 sm:w-10 ${isCompleted ? "" : "bg-neutral-200"}`} style={{ backgroundColor: isCompleted ? primary : undefined }} />
+                  )}
+                  <div className="flex flex-col items-center gap-1">
+                    <div
+                      className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${
+                        isActive ? "text-white" : "bg-neutral-100 text-neutral-400"
+                      }`}
+                      style={isActive ? { backgroundColor: isCompleted ? primary : undefined } : {}}
+                    >
+                      {isCompleted ? <Check size={12} /> : i + 1}
+                    </div>
+                    <span className={`text-[10px] font-medium whitespace-nowrap ${isActive ? "text-ink" : "text-neutral-400"}`}>
+                      {step.label}
+                    </span>
+                  </div>
+                </Fragment>
+              );
+            })}
+          </div>
+        )}
         {enviado ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -395,8 +465,8 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                   href={linkWhatsApp(`Olá ${config.profissional.primeiro_nome}! Confirmando meu agendamento que enviei pelo site.`, config.profissional.whatsapp)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-semibold text-white transition-transform hover:scale-[1.01]"
-                  style={{ backgroundColor: primary }}
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-semibold transition-transform hover:scale-[1.01]"
+                  style={{ backgroundColor: primary, color: contrastante(primary) }}
                 >
                   Abrir WhatsApp
                 </a>
@@ -418,6 +488,16 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
           className="mx-auto max-w-6xl"
         >
           <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+            {erroMsg && (
+              <div className="lg:col-span-2">
+                <div className="flex items-start justify-between gap-3 rounded-2xl border-2 border-amber-200 bg-amber-50 px-4 py-3.5 text-sm text-amber-800">
+                  <p className="leading-relaxed">{erroMsg}</p>
+                  <button onClick={() => setErroMsg("")} className="shrink-0 text-amber-500 hover:text-amber-700" aria-label="Fechar">
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
             {/* Left Column - Form */}
             <div className="space-y-10">
               {/* Step 1: Service */}
@@ -541,6 +621,11 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                         Sem horários livres neste dia — escolha outra data.
                       </p>
                     )}
+                    {data && limiteDia > 0 && totalDia >= limiteDia && (
+                      <p className="mt-2 text-xs font-medium" style={{ color: "#d97706" }}>
+                        Este dia já atingiu o limite de {limiteDia} agendamento(s).
+                      </p>
+                    )}
                   </div>
                 </div>
               </motion.section>
@@ -618,11 +703,22 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                           R$ {orcamento.bruto.toFixed(2).replace(".", ",")}
                         </span>
                       </div>
-                      {orcamento.desconto > 0 && (
+                      {orcamento.descontoFrequencia > 0 && (
                         <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                           <span className="text-sm opacity-60">Desconto fidelidade</span>
                           <span className="text-sm font-medium text-teal-600">
-                            &minus;R$ {orcamento.desconto.toFixed(2).replace(".", ",")}
+                            &minus;R$ {orcamento.descontoFrequencia.toFixed(2).replace(".", ",")}
+                          </span>
+                        </div>
+                      )}
+                      {orcamento.descontoPromo > 0 && (
+                        <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                          <span className="flex items-center gap-1.5 text-sm opacity-60">
+                            <Tag className="h-3.5 w-3.5" style={{ color: primary }} />
+                            Oferta: {promoAtiva?.titulo ?? "Promoção"}
+                          </span>
+                          <span className="text-sm font-medium text-teal-600">
+                            &minus;R$ {orcamento.descontoPromo.toFixed(2).replace(".", ",")}
                           </span>
                         </div>
                       )}
@@ -649,19 +745,26 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                     >
                       <div className="mb-4 flex items-center justify-between">
                         <span className="text-base font-semibold">Total</span>
-                        <span
-                          className="text-2xl font-bold"
-                          style={{ color: primary }}
-                        >
-                          R$ {orcamento.total.toFixed(2).replace(".", ",")}
-                        </span>
+                        <div className="flex items-baseline gap-2">
+                          {orcamento.descontoPromo > 0 && (
+                            <span className="text-sm text-neutral-400 line-through">
+                              R$ {(orcamento.bruto - orcamento.descontoFrequencia)
+                                .toFixed(2).replace(".", ",")}
+                            </span>
+                          )}
+                          <span
+                            className="text-2xl font-bold"
+                            style={{ color: accento(primary) }}
+                          >
+                            R$ {orcamento.total.toFixed(2).replace(".", ",")}
+                          </span>
+                        </div>
                       </div>
-                      <motion.button
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleSubmit}
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        className="w-full"
                         disabled={!nome || !whatsapp || !data || !hora || submitting}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
                         style={{ backgroundColor: primary }}
                       >
                         {submitting ? (
@@ -672,7 +775,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                             <ChevronRight className="h-5 w-5" />
                           </>
                         )}
-                      </motion.button>
+                      </Button>
                     </div>
                   </>
                 ) : (

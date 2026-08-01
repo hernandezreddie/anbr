@@ -1,6 +1,7 @@
 import { getProfissionalFullConfig } from "@/lib/db/profissionais";
 import { fundoStyle, type FundoEstilo } from "@/lib/backgrounds";
 import { TEMPLATES } from "@/components/templates";
+import { contrastante, accento } from "@/lib/cores";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -43,6 +44,7 @@ export default async function SlugLayout({
   const bodyFont = config.configuracao.fonte_corpo || template.fonts.body;
 
   const fundo = fundoStyle((config.configuracao.fundo_estilo || "none") as FundoEstilo, config.configuracao.cor_primaria || c.primary);
+  const primary = config.configuracao.cor_primaria || c.primary;
 
   const fontsToLoad = [headingFont, bodyFont].filter((f) => googleFonts.includes(f));
   const uniqueFonts = [...new Set(fontsToLoad)];
@@ -56,7 +58,9 @@ export default async function SlugLayout({
         className="min-h-screen"
         style={{
           ...fundo,
-          "--color-primary": config.configuracao.cor_primaria || c.primary,
+          "--color-primary": primary,
+          "--color-primary-ink": contrastante(primary),
+          "--color-primary-accent": accento(primary),
           "--color-secondary": config.configuracao.cor_secundaria || c.secondary,
           "--color-bg": c.bg,
           "--color-paper": c.paper,

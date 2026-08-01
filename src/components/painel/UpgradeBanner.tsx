@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 export function UpgradeBanner({ slug }: { slug: string }) {
   const [estado, setEstado] = useState<{
@@ -27,7 +29,7 @@ export function UpgradeBanner({ slug }: { slug: string }) {
   const expirando = estado.ativo && estado.dias_restantes !== null && estado.dias_restantes <= 7;
 
   return (
-    <div className={`mb-5 flex flex-wrap items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm ${
+    <div className={`mb-5 flex flex-wrap items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm shadow-sm ${
       expirando
         ? "border-amber-200 bg-amber-50 text-amber-800"
         : "border-teal-200 bg-teal-50 text-teal-800"
@@ -38,6 +40,9 @@ export function UpgradeBanner({ slug }: { slug: string }) {
           ? `Seu plano ${estado.plano === "ia_premium" ? "IA Premium" : "Profissional"} expira em ${estado.dias_restantes} dia(s). Renove para não perder os recursos.`
           : "Seu plano grátis tem limites. Faça upgrade para agendamentos ilimitados, Google Calendar, Instagram DM e AI Agent."}
       </span>
+      <Badge variant={expirando ? "error" : "primary"}>
+        {expirando ? "Expirando" : "Upgrade"}
+      </Badge>
       <Link
         href={`/${slug}/painel/plano`}
         className={`rounded-xl px-4 py-2 text-xs font-semibold text-white transition-all ${

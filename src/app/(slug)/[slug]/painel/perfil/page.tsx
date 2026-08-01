@@ -6,6 +6,9 @@ import { usePathname } from "next/navigation";
 import { Plus, Trash2, Save } from "lucide-react";
 import { motion } from "framer-motion";
 import { FUNDOS, fundoStyle, type FundoEstilo } from "@/lib/backgrounds";
+import { getCopyPadrao } from "@/lib/copys-padrao";
+import { getMensagensPadrao, getCategoriaPadrao } from "@/lib/servicos-padrao";
+import { Copy } from "lucide-react";
 import { Dica } from "@/components/painel/Dica";
 
 type Servico = {
@@ -50,6 +53,12 @@ type Configuracao = {
   foto_fundo: string;
   slogan: string;
   fundo_estilo: string;
+  max_agendamentos_dia: string;
+  copy_variante?: number;
+  msg_variante?: number;
+  instagram?: string;
+  facebook?: string;
+  google_maps?: string;
 };
 
 type Profissional = {
@@ -61,6 +70,8 @@ type Profissional = {
   pix_chave: string;
   pix_nome: string;
   pix_cidade: string;
+  categoria?: string | null;
+  link_avaliacao?: string | null;
 };
 
 const fontes = [
@@ -137,6 +148,7 @@ export default function PerfilPage() {
       pix_chave: profissional.pix_chave,
       pix_nome: profissional.pix_nome,
       pix_cidade: profissional.pix_cidade,
+      link_avaliacao: profissional.link_avaliacao || null,
     }).eq("id", profissional.id);
 
     const configPromise = fetch("/api/config/atualizar", {
@@ -149,6 +161,14 @@ export default function PerfilPage() {
         fonte_titulo: config.fonte_titulo,
         fonte_corpo: config.fonte_corpo,
         fundo_estilo: config.fundo_estilo || "none",
+        max_agendamentos_dia: config.max_agendamentos_dia
+          ? Number(config.max_agendamentos_dia)
+          : null,
+        copy_variante: config.copy_variante ?? 0,
+        msg_variante: config.msg_variante ?? 0,
+        instagram: config.instagram ?? "",
+        facebook: config.facebook ?? "",
+        google_maps: config.google_maps ?? "",
       }),
     });
 
@@ -184,7 +204,7 @@ export default function PerfilPage() {
     setProfissional((prev) => prev ? { ...prev, [field]: value } : null);
   }
 
-  function updateConfigField(field: keyof Configuracao, value: string) {
+  function updateConfigField(field: keyof Configuracao, value: any) {
     setConfig((prev) => prev ? { ...prev, [field]: value } : null);
   }
 
@@ -409,10 +429,20 @@ export default function PerfilPage() {
               <input value={profissional?.pix_cidade || ""} onChange={(e) => updateProfField("pix_cidade", e.target.value)} className={inp} />
             </div>
           </div>
+        <div className="mt-4 border-t border-neutral-100 pt-4">
+          <p className="mb-1 text-sm font-semibold text-neutral-500">Link de avaliação (opcional)</p>
+          <p className="mb-3 text-xs text-neutral-400">
+            Link direto da sua avaliação no Google. Se preenchido, o convite enviado após o serviço aponta para ele (tem prioridade sobre o Google Maps).
+          </p>
+          <input
+            value={profissional?.link_avaliacao || ""}
+            onChange={(e) => updateProfField("link_avaliacao", e.target.value)}
+            className={inp}
+            placeholder="https://search.google.com/local/writereview?placeid=..."
+          />
+        </div>
         </div>
       </CardSection>
-
-      {/* Logo */}
       <CardSection title="Logo">
         <div className="flex items-center gap-6">
           {config?.logo_url ? (
@@ -573,6 +603,148 @@ export default function PerfilPage() {
               className={inp}>
               {fontes.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
+          </div>
+        </div>
+      </CardSection>
+
+      {/* Texto do site — copy pronta por nicho */}
+      <CardSection title="Texto do site">
+        <p className="-mt-3 mb-4 text-sm text-neutral-500">
+          Textos prontos escritos para o seu tipo de negócio — título, subtítulo e chamadas da sua página.
+          Escolha o estilo e toque em <strong>Salvar alterações</strong>.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[0, 1, 2].map((i) => {
+            const copy = getCopyPadrao(profissional?.categoria, i);
+            const base = getCopyPadrao(profissional?.categoria);
+            const meta = i === 0
+              ? { nome: "Equilibrado", descricao: "Texto padrão: claro e acolhedor" }
+              : { nome: base.variantes?.[i]?.nome || `Opção ${i}`, descricao: base.variantes?.[i]?.descricao || "" };
+            const selected = (config?.copy_variante ?? 0) === i;
+            return (
+              <motion.button
+                key={i}
+                type="button"
+                whileTap={{ scale: 0.97 }}
+                onClick={() => updateConfigField("copy_variante", String(i))}
+                className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                  selected ? "border-teal-500 bg-teal-50/50 shadow-sm" : "border-neutral-200 bg-white hover:border-neutral-300"
+                }`}
+              >
+                {selected && (
+                  <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-teal-600 text-white">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+                  </span>
+                )}
+                <p className="pr-6 text-sm font-semibold text-neutral-900">{meta.nome}</p>
+                <p className="text-xs text-neutral-500">{meta.descricao}</p>
+                <p className="mt-3 font-serif text-[15px] font-semibold leading-snug text-neutral-900">
+                  {copy.hero_titulo.join(" ")}
+                </p>
+                <p className="mt-1 line-clamp-2 text-xs text-neutral-500">{copy.hero_sub}</p>
+              </motion.button>
+            );
+          })}
+        </div>
+      </CardSection>
+
+      {/* Mensagens do WhatsApp */}
+      <CardSection title="Mensagens do WhatsApp">
+        <p className="-mt-3 mb-4 text-sm text-neutral-500">
+          Modelos prontos para confirmar agendamentos e mandar lembretes aos seus clientes.
+          Escolha o estilo, toque em <strong>Salvar alterações</strong> e copie o texto na hora de conversar.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[0, 1, 2].map((i) => {
+            const msg = getMensagensPadrao(profissional?.categoria, i);
+            const selected = (config?.msg_variante ?? 0) === i;
+            return (
+              <div key={i} className={`relative rounded-xl border-2 p-4 transition-all ${selected ? "border-teal-500 bg-teal-50/50 shadow-sm" : "border-neutral-200 bg-white"}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-neutral-900">{msg.nome}</p>
+                  <button
+                    onClick={() => { navigator.clipboard?.writeText(msg.confirmacao); flash(`Texto "${msg.nome}" copiado!`); }}
+                    className="rounded-lg border border-neutral-200 px-2 py-1 text-[11px] text-neutral-500 hover:bg-neutral-50"
+                    title="Copiar mensagem de confirmação"
+                  >
+                    <Copy size={12} className="inline" /> Copiar
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateConfigField("msg_variante", String(i))}
+                  className="mt-2 block w-full text-left"
+                >
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-400">Confirmação</p>
+                  <p className="mt-0.5 line-clamp-3 text-xs text-neutral-600">{msg.confirmacao}</p>
+                  <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Lembrete</p>
+                  <p className="mt-0.5 line-clamp-3 text-xs text-neutral-600">{msg.lembrete}</p>
+                </button>
+                {selected && (
+                  <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-teal-600 text-white">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </CardSection>
+
+      {/* Suas redes */}
+      <CardSection title="Suas redes">
+        <p className="-mt-3 mb-4 text-sm text-neutral-500">
+          Cole os links das suas redes e do Google Maps. Eles aparecem no rodapé do seu site —
+          junto do WhatsApp, você fica completo digitalmente.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">Instagram</label>
+            <input
+              value={config?.instagram ?? ""}
+              onChange={(e) => updateConfigField("instagram", e.target.value)}
+              placeholder="https://instagram.com/seuperfil"
+              className={inp}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">Facebook</label>
+            <input
+              value={config?.facebook ?? ""}
+              onChange={(e) => updateConfigField("facebook", e.target.value)}
+              placeholder="https://facebook.com/seupagina"
+              className={inp}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-neutral-500">Google Maps</label>
+            <input
+              value={config?.google_maps ?? ""}
+              onChange={(e) => updateConfigField("google_maps", e.target.value)}
+              placeholder="Link da sua ficha no Google Maps"
+              className={inp}
+            />
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-neutral-400">
+          Para o Maps: abra sua empresa no Google Maps, toque em Compartilhar e copie o link.
+        </p>
+      </CardSection>
+
+      {/* Limites */}
+      <CardSection title="Limites">
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-neutral-500">
+            Limite de agendamentos por dia
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <input type="number" min="0" placeholder="Sem limite"
+              value={config?.max_agendamentos_dia ?? ""}
+              onChange={(e) => updateConfigField("max_agendamentos_dia", e.target.value)}
+              className="w-32 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-teal-600" />
+            <span className="text-xs text-neutral-400">
+              Deixe vazio para aceitar quantos quiser. O site bloqueia novos pedidos quando atingir o limite.
+            </span>
           </div>
         </div>
       </CardSection>
