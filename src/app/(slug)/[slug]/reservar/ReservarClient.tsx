@@ -352,6 +352,26 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const step4Label = isPrecoFixo ? "4" : "5";
   const step5Label = isPrecoFixo ? "5" : "6";
 
+  const steps = [
+    { label: "Serviço", key: "servico" },
+    ...(!isPrecoFixo && usaComodos ? [{ label: "Cômodos", key: "comodos" }] : []),
+    ...(adicionaisFiltrados.length > 0 ? [{ label: "Extras", key: "extras" }] : []),
+    { label: "Frequência", key: "frequencia" },
+    { label: "Data/Hora", key: "datetime" },
+    { label: "Dados", key: "dados" },
+  ];
+
+  const stepDone: Record<string, boolean> = {
+    servico: !!servicoId,
+    comodos: quartos > 0 || banheiros > 0,
+    extras: adicionaisSel.length > 0,
+    frequencia: !!freqId,
+    datetime: !!(data && hora),
+    dados: !!(nome && whatsapp),
+  };
+  if (stepDone.frequencia || stepDone.datetime || stepDone.dados) stepDone.extras = true;
+  const currentIdx = steps.findIndex((s) => !stepDone[s.key]);
+
   return (
     <div data-niche={categoria} style={{ fontFamily: bodyFont }}>
       {/* Header */}
@@ -407,33 +427,31 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
         {/* Step Progress Indicator */}
         {!enviado && (
           <div className="mb-8 flex items-center justify-center gap-2 overflow-x-auto py-3">
-            {[
-              { label: "Serviço", key: "servico" },
-              ...(!isPrecoFixo && usaComodos ? [{ label: "Cômodos", key: "comodos" }] : []),
-              ...(adicionaisFiltrados.length > 0 ? [{ label: "Extras", key: "extras" }] : []),
-              { label: "Frequência", key: "frequencia" },
-              { label: "Data/Hora", key: "datetime" },
-              { label: "Dados", key: "dados" },
-            ].map((step, i, arr) => {
-              const stepKeys = ["servico", "comodos", "extras", "frequencia", "datetime", "dados"];
-              const currentIdx = stepKeys.indexOf(step.key);
-              const isActive = currentIdx >= 0;
-              const isCompleted = currentIdx > 0;
+            {steps.map((step, i) => {
+              const completed = i < currentIdx;
+              const current = i === currentIdx;
               return (
                 <Fragment key={step.key}>
                   {i > 0 && (
-                    <div className={`h-px w-6 sm:w-10 ${isCompleted ? "" : "bg-neutral-200"}`} style={{ backgroundColor: isCompleted ? primary : undefined }} />
+                    <div
+                      className="h-px w-6 sm:w-10"
+                      style={{ backgroundColor: completed ? primary : "#e5e5e5" }}
+                    />
                   )}
                   <div className="flex flex-col items-center gap-1">
                     <div
                       className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${
-                        isActive ? "text-white" : "bg-neutral-100 text-neutral-400"
+                        current ? "text-white shadow-sm" : completed ? "text-white" : "bg-neutral-100 text-neutral-400"
                       }`}
-                      style={isActive ? { backgroundColor: isCompleted ? primary : undefined } : {}}
+                      style={completed || current ? { backgroundColor: primary } : undefined}
                     >
-                      {isCompleted ? <Check size={12} /> : i + 1}
+                      {completed ? <Check size={12} /> : i + 1}
                     </div>
-                    <span className={`text-[10px] font-medium whitespace-nowrap ${isActive ? "text-ink" : "text-neutral-400"}`}>
+                    <span
+                      className={`text-[10px] font-medium whitespace-nowrap ${
+                        completed || current ? "text-ink" : "text-neutral-400"
+                      }`}
+                    >
                       {step.label}
                     </span>
                   </div>

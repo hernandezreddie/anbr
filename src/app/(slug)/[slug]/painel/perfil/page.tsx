@@ -123,11 +123,20 @@ export default function PerfilPage() {
       supabase.from("frequencias").select("*").order("ordem"),
       supabase.from("configuracoes").select("*").single(),
     ]);
+    if (profRes.error) console.error("Erro ao carregar profissional:", profRes.error);
+    if (configRes.error) console.error("Erro ao carregar configurações:", configRes.error);
     if (profRes.data) setProfissional(profRes.data as Profissional);
     if (servicosRes.data) setServicos(servicosRes.data as Servico[]);
     if (adicionaisRes.data) setAdicionais(adicionaisRes.data as Adicional[]);
     if (frequenciasRes.data) setFrequencias(frequenciasRes.data as Frequencia[]);
-    if (configRes.data) setConfig(configRes.data as Configuracao);
+    if (configRes.data) {
+      const cfg = configRes.data as Configuracao;
+      setConfig({
+        ...cfg,
+        copy_variante: Number(cfg.copy_variante) || 0,
+        msg_variante: Number(cfg.msg_variante) || 0,
+      });
+    }
   };
 
   useEffect(() => { carregar(); }, []);
@@ -135,7 +144,10 @@ export default function PerfilPage() {
   const hasChanges = profissional || config;
 
   async function salvarTudo() {
-    if (!profissional || !config) return;
+    if (!profissional) {
+      flash("Não foi possível carregar seus dados. Recarregue a página.");
+      return;
+    }
     setSaving(true);
 
     const TIMEOUT = 10000; // 10s
@@ -155,20 +167,20 @@ export default function PerfilPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        profissional_id: config.profissional_id,
-        cor_primaria: config.cor_primaria,
-        cor_secundaria: config.cor_secundaria,
-        fonte_titulo: config.fonte_titulo,
-        fonte_corpo: config.fonte_corpo,
-        fundo_estilo: config.fundo_estilo || "none",
-        max_agendamentos_dia: config.max_agendamentos_dia
+        profissional_id: config?.profissional_id || profissional.id,
+        cor_primaria: config?.cor_primaria,
+        cor_secundaria: config?.cor_secundaria,
+        fonte_titulo: config?.fonte_titulo,
+        fonte_corpo: config?.fonte_corpo,
+        fundo_estilo: config?.fundo_estilo || "none",
+        max_agendamentos_dia: config?.max_agendamentos_dia
           ? Number(config.max_agendamentos_dia)
           : null,
-        copy_variante: config.copy_variante ?? 0,
-        msg_variante: config.msg_variante ?? 0,
-        instagram: config.instagram ?? "",
-        facebook: config.facebook ?? "",
-        google_maps: config.google_maps ?? "",
+        copy_variante: Number(config?.copy_variante) || 0,
+        msg_variante: Number(config?.msg_variante) || 0,
+        instagram: config?.instagram ?? "",
+        facebook: config?.facebook ?? "",
+        google_maps: config?.google_maps ?? "",
       }),
     });
 
@@ -626,7 +638,7 @@ export default function PerfilPage() {
                 key={i}
                 type="button"
                 whileTap={{ scale: 0.97 }}
-                onClick={() => updateConfigField("copy_variante", String(i))}
+                onClick={() => updateConfigField("copy_variante", i)}
                 className={`relative rounded-xl border-2 p-4 text-left transition-all ${
                   selected ? "border-teal-500 bg-teal-50/50 shadow-sm" : "border-neutral-200 bg-white hover:border-neutral-300"
                 }`}
@@ -672,7 +684,7 @@ export default function PerfilPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => updateConfigField("msg_variante", String(i))}
+                  onClick={() => updateConfigField("msg_variante", i)}
                   className="mt-2 block w-full text-left"
                 >
                   <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-400">Confirmação</p>
