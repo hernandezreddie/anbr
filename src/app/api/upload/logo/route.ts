@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verificarAcessoProfissional } from "@/lib/auth-roles";
 import { NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -11,6 +12,11 @@ export async function POST(request: NextRequest) {
 
   if (!file || !profissionalId) {
     return Response.json({ error: "Arquivo e profissional_id obrigatórios" }, { status: 400 });
+  }
+
+  const acesso = await verificarAcessoProfissional(profissionalId);
+  if (!acesso.permitido) {
+    return Response.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   if (!file.type.startsWith("image/")) {

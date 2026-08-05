@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { exigirPlano, PLANOS_COM_AGENTE, checarCotaAgente } from "@/lib/planos";
 import { verificarAcessoProfissional } from "@/lib/auth-roles";
+import { rateLimitar } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,6 +16,17 @@ export async function POST(req: NextRequest) {
 
     if (!profissional_id || !mensagem) {
       return NextResponse.json({ error: "profissional_id e mensagem são obrigatórios" }, { status: 400 });
+    }
+
+    const chaveLimite = conversation_id
+      ? `agente:${conversation_id}`
+      : `agente:${profissional_id}`;
+    const limit = rateLimitar(chaveLimite, 10, 60_000);
+    if (!limit.permitido) {
+      return NextResponse.json(
+        { error: `Muitas mensagens. Aguarde ${limit.emBreve}s.` },
+        { status: 429 }
+      );
     }
 
     const acesso = await verificarAcessoProfissional(profissional_id);

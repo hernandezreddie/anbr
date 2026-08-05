@@ -40,6 +40,8 @@ CREDENTIAL_VAULT.md
 
 # local logs & temp scripts
 .server.log
+*.log
+!*.log.example
 replace.js
 replace.ps1
 replace.py

@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createInstance, deleteInstance, getConnectionState, setWebhook } from "@/lib/whatsapp/evolution"
+import { verificarAcessoProfissional } from "@/lib/auth-roles"
+
+async function checarAcesso(profissional_id: string): Promise<NextResponse | null> {
+  const acesso = await verificarAcessoProfissional(profissional_id)
+  if (!acesso.permitido) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+  }
+  return null
+}
 
 export async function GET(req: NextRequest) {
   const profissional_id = req.nextUrl.searchParams.get("profissional_id")
   if (!profissional_id) return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 })
+
+  const negado = await checarAcesso(profissional_id)
+  if (negado) return negado
 
   const supabase = createAdminClient()
   const { data } = await supabase
@@ -32,13 +44,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 })
   }
 
+  const negado = await checarAcesso(profissional_id)
+  if (negado) return negado
+
   try {
-    await createInstance(profissional_id, instance_name, evolution_api_url, evolution_api_key)
+    const webhookSecret = await createInstance(profissional_id, instance_name, evolution_api_url, evolution_api_key)
 
     // Set webhook
     const webhookUrl = `${process.env.NEXT_PUBLIC_DOMAIN}/api/whatsapp/webhook?profissional_id=${profissional_id}`
     try {
-      await setWebhook(profissional_id, webhookUrl)
+      await setWebhook(profissional_id, webhookUrl, webhookSecret)
     } catch {}
 
     return NextResponse.json({ success: true })
@@ -52,6 +67,9 @@ export async function DELETE(req: NextRequest) {
   const { profissional_id } = body
 
   if (!profissional_id) return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 })
+
+  const negado = await checarAcesso(profissional_id)
+  if (negado) return negado
 
   try {
     await deleteInstance(profissional_id)

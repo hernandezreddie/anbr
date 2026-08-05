@@ -19,7 +19,6 @@ import {
   CreditCard,
   ExternalLink,
   LogOut,
-  X,
   Sparkles,
   BadgePercent,
   Star,
@@ -69,14 +68,14 @@ export function SidebarClient({ slug }: { slug: string }) {
   return (
     <>
       {/* TOP BAR — brand on every size */}
-      <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/90 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-[var(--color-line)] bg-[var(--color-paper)]/90 backdrop-blur-md">
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
           <Link href={base} className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg">
               <Logo className="h-7 w-7" />
             </span>
-            <span className="text-sm font-bold text-neutral-900">
-              AN<span className="text-neutral-400">.</span>BR
+            <span className="text-sm font-bold text-[var(--color-ink)]">
+              AN<span className="text-[var(--color-ink-soft)]">.</span>BR
             </span>
           </Link>
           <motion.a
@@ -85,7 +84,7 @@ export function SidebarClient({ slug }: { slug: string }) {
             rel="noopener noreferrer"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.96 }}
-            className="hidden items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-xs font-medium text-neutral-600 shadow-sm transition-all duration-150 hover:border-teal-500 hover:text-teal-700 hover:shadow-md sm:flex"
+            className="hidden items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-1.5 text-xs font-medium text-[var(--color-ink-soft)] shadow-sm transition-all duration-150 hover:border-teal-500 hover:text-teal-700 hover:shadow-md sm:flex"
             style={{ color: accent }}
           >
             <ExternalLink size={14} />
@@ -96,7 +95,7 @@ export function SidebarClient({ slug }: { slug: string }) {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.92 }}
             animate={maisAberto ? { rotate: 90 } : { rotate: 0 }}
-            className="flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-neutral-600 shadow-sm transition-all duration-150 hover:border-teal-500 hover:text-teal-700 hover:shadow-md sm:hidden"
+            className="flex items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3.5 py-1.5 text-xs font-semibold text-[var(--color-ink-soft)] shadow-sm transition-all duration-150 hover:border-teal-500 hover:text-teal-700 hover:shadow-md sm:hidden"
             style={{ color: maisAberto ? accent : undefined, borderColor: maisAberto ? accent : undefined }}
           >
             <MoreHorizontal size={16} />
@@ -106,7 +105,7 @@ export function SidebarClient({ slug }: { slug: string }) {
       </header>
 
       {/* MAIN BOTTOM NAV — 4 core tabs + Mais */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--color-line)] bg-[var(--color-paper)] pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-around">
           {principais.map((link) => {
             const url = base + link.href;
@@ -117,7 +116,7 @@ export function SidebarClient({ slug }: { slug: string }) {
                 key={link.href}
                 href={url}
                 className={`flex flex-col items-center gap-0.5 px-2 py-2 text-[10px] font-medium transition-all sm:text-[11px] ${
-                  active ? "" : "text-neutral-400 hover:text-neutral-600"
+                  active ? "" : "text-[var(--color-ink-mute)] hover:text-[var(--color-ink-soft)]"
                 }`}
                 style={active ? { color: accent } : {}}
               >
@@ -137,7 +136,7 @@ export function SidebarClient({ slug }: { slug: string }) {
             <button
               onClick={() => setMaisAberto((v) => !v)}
               className={`flex flex-col items-center gap-0.5 px-2 py-2 text-[10px] font-medium transition-all sm:text-[11px] ${
-                extras.some((e) => isActive(e.href)) ? "" : "text-neutral-400 hover:text-neutral-600"
+                extras.some((e) => isActive(e.href)) ? "" : "text-[var(--color-ink-mute)] hover:text-[var(--color-ink-soft)]"
               }`}
               style={extras.some((e) => isActive(e.href)) ? { color: accent } : {}}
             >
@@ -163,7 +162,7 @@ export function SidebarClient({ slug }: { slug: string }) {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 12, scale: 0.96 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute bottom-full right-0 z-50 mb-3 w-64 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl"
+                    className="absolute bottom-full right-0 z-50 mb-3 w-64 overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper)] shadow-xl"
                   >
                     <div className="p-2">
                       {extras.map((link) => {
@@ -178,7 +177,7 @@ export function SidebarClient({ slug }: { slug: string }) {
                             className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
                               active
                                 ? ""
-                                : "text-neutral-600 hover:bg-neutral-50"
+                                : "text-[var(--color-ink-soft)] hover:bg-[var(--color-ink)]/5"
                             }`}
                             style={active ? { color: accent, backgroundColor: `${primary}12` } : {}}
                           >
@@ -188,13 +187,13 @@ export function SidebarClient({ slug }: { slug: string }) {
                         );
                       })}
                     </div>
-                    <div className="border-t border-neutral-100 p-2">
+                    <div className="border-t border-[var(--color-line)] p-2">
                       <Link
                         href={`/${slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => setMaisAberto(false)}
-                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-neutral-600 transition-all hover:bg-neutral-50 sm:hidden"
+                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-[var(--color-ink-soft)] transition-all hover:bg-[var(--color-ink)]/5 sm:hidden"
                       >
                         <ExternalLink size={18} />
                         Ver página pública

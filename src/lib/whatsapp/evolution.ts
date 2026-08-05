@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin"
+import * as metaCloud from "@/lib/whatsapp/meta"
 
 interface EvolutionInstance {
   id: string
@@ -8,6 +9,7 @@ interface EvolutionInstance {
   evolution_api_url: string
   evolution_api_key: string
   connection_status: string
+  provider?: string
 }
 
 async function getInstance(profissional_id: string): Promise<EvolutionInstance> {
@@ -20,6 +22,17 @@ async function getInstance(profissional_id: string): Promise<EvolutionInstance> 
 
   if (error || !data) throw new Error("WhatsApp não configurado")
   return data
+}
+
+export async function getProvider(profissional_id: string): Promise<string | null> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from("whatsapp_instances")
+    .select("provider")
+    .eq("profissional_id", profissional_id)
+    .single()
+  if (error || !data) return null
+  return data.provider || "evolution"
 }
 
 function apiCall(instance: EvolutionInstance, method: string, path: string, body?: any) {
@@ -38,18 +51,63 @@ export async function sendText(
   to: string,
   text: string
 ) {
-  const instance = await getInstance(profissional_id)
-  const res = await apiCall(instance, "POST", `message/sendText/${instance.instance_name}`, {
-    number: to,
-    options: { delay: 1000 },
-    textMessage: { text },
-  })
-  return res.json()
+  let instance: EvolutionInstance
+  try {
+    instance = await getInstance(profissional_id)
+  } catch (err) {
+    // Sem instância Evolution: tenta fallback para Meta Cloud, se houver.
+    const meta = await tryFallbackMetaCloud(profissional_id, to, text)
+    if (meta) return meta
+    throw err
+  }
+
+  if (instance.provider === "meta_cloud") {
+    return metaCloud.sendText(instance as any, to, text)
+  }
+
+  try {
+    const res = await apiCall(instance, "POST", `message/sendText/${instance.instance_name}`, {
+      number: to,
+      options: { delay: 1000 },
+      textMessage: { text },
+    })
+    if (!res.ok) {
+      const errText = await res.text()
+      throw new Error(`Evolution retornou ${res.status}: ${errText}`)
+    }
+    return res.json()
+  } catch (err) {
+    console.warn(`[evolution] falha no envio via Evolution, tentando fallback Meta Cloud: ${String(err)}`)
+    const meta = await tryFallbackMetaCloud(profissional_id, to, text)
+    if (meta) return meta
+    throw err
+  }
+}
+
+async function tryFallbackMetaCloud(
+  profissional_id: string,
+  to: string,
+  text: string
+): Promise<any | null> {
+  try {
+    const supabase = createAdminClient()
+    const { data } = await supabase
+      .from("whatsapp_instances")
+      .select("*")
+      .eq("profissional_id", profissional_id)
+      .eq("provider", "meta_cloud")
+      .single()
+    if (!data) return null
+    return await metaCloud.sendText(data as any, to, text)
+  } catch {
+    return null
+  }
 }
 
 export async function setWebhook(
   profissional_id: string,
-  webhookUrl: string
+  webhookUrl: string,
+  secret?: string
 ) {
   const instance = await getInstance(profissional_id)
   const res = await apiCall(instance, "POST", `webhook/set/${instance.instance_name}`, {
@@ -57,6 +115,7 @@ export async function setWebhook(
       url: webhookUrl,
       enabled: true,
       events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE", "QRCODE_UPDATED"],
+      headers: secret ? { "x-webhook-secret": secret } : {},
     },
   })
   return res.json()
@@ -103,6 +162,7 @@ export async function createInstance(
   }
 
   // Save to database
+  const webhookSecret = crypto.randomUUID()
   const { error } = await supabase.from("whatsapp_instances").upsert(
     {
       profissional_id,
@@ -111,18 +171,24 @@ export async function createInstance(
       evolution_api_url: evolutionApiUrl,
       evolution_api_key: evolutionApiKey,
       connection_status: "creating",
+      webhook_secret: webhookSecret,
     },
     { onConflict: "profissional_id" }
   )
 
   if (error) throw error
+  return webhookSecret
 }
 
 export async function deleteInstance(profissional_id: string) {
   const instance = await getInstance(profissional_id)
 
-  // Delete from Evolution API
-  await apiCall(instance, "DELETE", `instance/delete/${instance.instance_name}`)
+  // Delete from Evolution API only if it was created there
+  if (instance.provider !== "meta_cloud") {
+    try {
+      await apiCall(instance, "DELETE", `instance/delete/${instance.instance_name}`)
+    } catch {}
+  }
 
   // Delete from database
   const supabase = createAdminClient()
@@ -136,13 +202,15 @@ export async function getOrCreateConversation(
 ): Promise<string> {
   const supabase = createAdminClient()
 
+  const jid = normalizeJid(remoteJid)
+
   // Check existing conversation
   const { data: existing } = await supabase
     .from("agent_conversations")
     .select("id")
     .eq("profissional_id", profissional_id)
     .eq("channel", "whatsapp")
-    .eq("customer_id", remoteJid)
+    .eq("customer_id", jid)
     .eq("status", "active")
     .single()
 
@@ -155,8 +223,8 @@ export async function getOrCreateConversation(
       profissional_id,
       channel: "whatsapp",
       customer_name: customerName,
-      customer_phone: remoteJid,
-      customer_id: remoteJid,
+      customer_phone: jid,
+      customer_id: jid,
     })
     .select("id")
     .single()
@@ -173,13 +241,15 @@ export async function processIncomingMessage(
 ) {
   const supabase = createAdminClient()
 
-  const conversationId = await getOrCreateConversation(profissional_id, remoteJid, customerName)
+  // Normalize jid: "5511999999999@s.whatsapp.net" -> "5511999999999"
+  const rawJid = remoteJid.split("@")[0].replace(/\D/g, "")
+  const conversationId = await getOrCreateConversation(profissional_id, rawJid, customerName)
 
   // Save incoming message
   await supabase.from("whatsapp_messages").insert({
     profissional_id,
     conversation_id: conversationId,
-    remote_jid: remoteJid,
+    remote_jid: rawJid,
     message_id: messageId,
     from_me: false,
     type: "text",
@@ -209,4 +279,8 @@ export async function processIncomingMessage(
   })
 
   return conversationId
+}
+
+export function normalizeJid(remoteJid: string): string {
+  return remoteJid.split("@")[0].replace(/\D/g, "")
 }

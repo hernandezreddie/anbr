@@ -1,10 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createCustomHostname, verifyHostname, deleteCustomHostname } from "@/lib/cloudflare/saas"
+import { verificarAcessoProfissional } from "@/lib/auth-roles"
+import { exigirPlano, PLANOS_COM_DOMINIO } from "@/lib/planos"
+
+async function checarAcesso(profissional_id: string): Promise<NextResponse | null> {
+  const acesso = await verificarAcessoProfissional(profissional_id)
+  if (!acesso.permitido) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+  }
+  const plano = await exigirPlano(profissional_id, PLANOS_COM_DOMINIO, "domínio próprio")
+  if (plano) {
+    return NextResponse.json({ error: plano.error }, { status: plano.status })
+  }
+  return null
+}
 
 export async function GET(req: NextRequest) {
   const profissional_id = req.nextUrl.searchParams.get("profissional_id")
   if (!profissional_id) return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 })
+
+  const negado = await checarAcesso(profissional_id)
+  if (negado) return negado
 
   const supabase = createAdminClient()
   const { data } = await supabase
@@ -25,6 +42,9 @@ export async function POST(req: NextRequest) {
   if (!profissional_id || !domain) {
     return NextResponse.json({ error: "profissional_id e domain são obrigatórios" }, { status: 400 })
   }
+
+  const negado = await checarAcesso(profissional_id)
+  if (negado) return negado
 
   const supabase = createAdminClient()
 
@@ -66,6 +86,9 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 })
   }
 
+  const negado = await checarAcesso(profissional_id)
+  if (negado) return negado
+
   const supabase = createAdminClient()
   const { data: domain } = await supabase
     .from("custom_domains")
@@ -98,6 +121,9 @@ export async function DELETE(req: NextRequest) {
   if (!profissional_id) {
     return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 })
   }
+
+  const negado = await checarAcesso(profissional_id)
+  if (negado) return negado
 
   const supabase = createAdminClient()
   const { data: domain } = await supabase

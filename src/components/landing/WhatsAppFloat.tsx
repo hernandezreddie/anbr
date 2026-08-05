@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { linkWhatsApp } from "@/lib/whatsapp";
-import { getCopyPadrao, preencherCopy } from "@/lib/copys-padrao";
+import { getCopyEfetivo, preencherCopy } from "@/lib/copys-padrao";
 import { Badge } from "@/components/ui/Badge";
 import type { ProfissionalConfig } from "@/types";
 
@@ -14,7 +14,11 @@ export function WhatsAppFloat({ config }: { config: ProfissionalConfig }) {
   const [visible, setVisible] = useState(true);
   const [lastScroll, setLastScroll] = useState(0);
 
-  const copy = getCopyPadrao(profissional.categoria, (configuracao as any).copy_variante);
+  const copy = getCopyEfetivo(
+    profissional.categoria,
+    (configuracao as any).copy_variante,
+    (configuracao as any).textos_personalizados
+  );
   const msg = preencherCopy(copy.whatsapp_msg, { nome: profissional.primeiro_nome });
 
   useEffect(() => {

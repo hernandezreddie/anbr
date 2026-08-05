@@ -11,6 +11,7 @@ const inter = Inter({
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -18,22 +19,24 @@ export const metadata: Metadata = {
     default: "AN.BR | Sistema de Agendamento Online para Profissionais",
     template: "%s | AN.BR",
   },
-  description: "Crie seu sistema de agendamento online grátis em 5 minutos. Página profissional, WhatsApp, Pix e Google Calendar. Sem programação, sem mensalidade.",
-  keywords: ["sistema de agendamento", "agendamento online", "agenda online grátis", "sistema para profissionais", "agendamento whatsapp", "marcar horário online", "sistema para barbearia", "sistema para salão", "agenda digital", "booking Brasil"],
+  description: "Crie seu sistema de agendamento online grátis em 5 minutos. Página profissional, agenda 24h, lembretes no WhatsApp, pagamento via Pix e IA que atende seus clientes. Sem programação.",
+  keywords: ["sistema de agendamento", "agendamento online", "agenda online grátis", "sistema para profissionais", "agendamento whatsapp", "marcar horário online", "sistema para barbearia", "sistema para salão", "agenda digital", "booking Brasil", "agendamento com IA", "agenda automática", "site para profissional", "página de agendamento"],
   authors: [{ name: "AN.BR" }],
   metadataBase: new URL("https://autonexabrasil.com.br"),
   openGraph: {
     type: "website",
     locale: "pt_BR",
     siteName: "AN.BR",
-    title: "AN.BR | Sistema de Agendamento Online para Profissionais",
-    description: "Crie seu sistema de agendamento online grátis em 5 minutos. Página profissional, WhatsApp, Pix e Google Calendar.",
+    title: "AN.BR — Seu Negócio Online em 5 Minutos | Agendamento com IA",
+    description: "Site profissional, agendamento 24h, Pix e lembretes no WhatsApp. Conecte o AI Agent às suas redes e ele atende por você. Grátis para começar.",
     url: "https://autonexabrasil.com.br",
+    images: [{ url: "https://autonexabrasil.com.br/og-image.svg", width: 1200, height: 630, alt: "AN.BR — Sistema de Agendamento Online" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AN.BR | Agendamento Online",
-    description: "Crie seu sistema de agendamento online grátis em 5 minutos.",
+    title: "AN.BR — Agendamento Online com IA",
+    description: "Seu sistema de agendamento pronto em 5 minutos. Grátis para começar.",
+    images: ["https://autonexabrasil.com.br/og-image.svg"],
   },
   robots: {
     index: true,

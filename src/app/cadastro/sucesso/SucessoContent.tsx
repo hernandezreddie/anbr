@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Check, ArrowRight, ExternalLink, Copy, MessageCircle, Eye, EyeOff,
@@ -257,10 +258,10 @@ function SucessoInterno() {
         </div>
 
         <div className="mt-8 flex flex-col items-center gap-3">
-          <a href="/"
+          <Link href="/"
             className="text-sm text-ink-soft underline-offset-2 transition-colors hover:text-ink hover:underline">
             Voltar para página inicial
-          </a>
+          </Link>
         </div>
 
       </div>

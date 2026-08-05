@@ -63,11 +63,6 @@ export default function ClientesPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const flash = (m: string) => {
-    setAviso(m);
-    setTimeout(() => setAviso(""), 2500);
-  };
-
   const filtrados = items.filter((c) =>
     c.nome.toLowerCase().includes(q.toLowerCase())
   );

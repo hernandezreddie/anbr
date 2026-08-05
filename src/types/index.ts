@@ -31,6 +31,10 @@ export interface ConfiguracaoVisual {
   instagram?: string | null
   facebook?: string | null
   google_maps?: string | null
+  copy_variante?: number
+  msg_variante?: number
+  max_agendamentos_dia?: number | null
+  textos_personalizados?: Record<string, any> | null
 }
 
 export type TipoPreco = "por_hora" | "fixo";

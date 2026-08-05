@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
+import Link from "next/link";
 import { AgentConfigClient } from "./AgentConfigClient";
 import { isAdminPlataforma } from "@/lib/auth-roles";
 
@@ -44,7 +45,7 @@ export default async function AgentPage({
       <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <a href="/admin" className="btn-ghost btn-sm">&larr; Admin</a>
+            <Link href="/admin" className="btn-ghost btn-sm">&larr; Admin</Link>
             <span className="text-gray-300">/</span>
             <span className="font-serif text-lg font-semibold">AI Agent · {profissional.nome}</span>
           </div>

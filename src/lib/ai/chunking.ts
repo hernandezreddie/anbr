@@ -9,7 +9,7 @@ export function chunkText(text: string): string[] {
   let start = 0;
 
   while (start < normalized.length) {
-    let end = start + CHUNK_SIZE;
+    const end = start + CHUNK_SIZE;
 
     if (end >= normalized.length) {
       chunks.push(normalized.slice(start).trim());

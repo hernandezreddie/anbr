@@ -8,6 +8,7 @@ import {
   Check, X, Sparkles, HelpCircle, ArrowRight, ChevronRight, Bell, Globe, Palette,
   Calendar, BarChart3, MessageCircle, Bot, Shield, Zap,
 } from "lucide-react";
+import Link from "next/link";
 
 type Frequencia = "mensal" | "anual";
 
@@ -237,7 +238,7 @@ function CardPlano({ plano, frequencia, indice }: { plano: Plano; frequencia: Fr
         )}
       </div>
 
-      <a
+      <Link
         href="/cadastro"
         className={`mb-6 inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all ${
           plano.destaque
@@ -247,7 +248,7 @@ function CardPlano({ plano, frequencia, indice }: { plano: Plano; frequencia: Fr
       >
         {plano.precoMensal === 0 ? "Criar grátis" : "Teste grátis por 7 dias"}
         <ArrowRight size={16} />
-      </a>
+      </Link>
 
       <p className="mb-4 text-xs text-ink-soft border-t border-[var(--color-line)] pt-4">
         <span className="font-medium text-ink">Ideal para:</span> {plano.idealPara}
@@ -439,10 +440,10 @@ export default function PrecosPage() {
             <p className="mx-auto mt-4 max-w-xl text-lg text-ink-soft">
               Sem cartão de crédito. Sem compromisso. Cancele quando quiser.
             </p>
-            <a href="/cadastro" className="btn-primary mx-auto mt-8 inline-flex gap-2 px-8 py-4 text-lg shadow-lg shadow-[var(--color-primary)]/20">
+            <Link href="/cadastro" className="btn-primary mx-auto mt-8 inline-flex gap-2 px-8 py-4 text-lg shadow-lg shadow-[var(--color-primary)]/20">
               Criar meu sistema grátis
               <ArrowRight size={20} />
-            </a>
+            </Link>
           </FadeIn>
         </div>
       </Secao>
@@ -491,9 +492,9 @@ export default function PrecosPage() {
               <span className="font-serif text-base font-semibold">AN.BR</span>
             </div>
             <div className="flex items-center gap-6">
-              <a href="/blog" className="text-sm text-ink-soft transition-colors hover:text-ink">Blog</a>
-              <a href="/privacidade" className="text-sm text-ink-soft transition-colors hover:text-ink">Privacidade</a>
-              <a href="/termos" className="text-sm text-ink-soft transition-colors hover:text-ink">Termos</a>
+              <Link href="/blog" className="text-sm text-ink-soft transition-colors hover:text-ink">Blog</Link>
+              <Link href="/privacidade" className="text-sm text-ink-soft transition-colors hover:text-ink">Privacidade</Link>
+              <Link href="/termos" className="text-sm text-ink-soft transition-colors hover:text-ink">Termos</Link>
             </div>
             <p className="text-sm text-ink-soft">
               &copy; {new Date().getFullYear()} AN.BR. Todos os direitos reservados.

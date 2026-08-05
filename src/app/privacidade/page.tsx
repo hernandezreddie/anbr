@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SiteNav } from "@/components/site/SiteNav";
 import { Logo } from "@/components/Logo";
 
@@ -205,15 +206,15 @@ export default function PrivacidadePage() {
               <span className="font-serif text-base font-semibold">AN.BR</span>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-ink-soft">
-              <a href="/termos" className="underline underline-offset-2 hover:text-ink transition-colors">
+              <Link href="/termos" className="underline underline-offset-2 hover:text-ink transition-colors">
                 Termos de Uso
-              </a>
-              <a href="/privacidade" className="underline underline-offset-2 hover:text-ink transition-colors">
+              </Link>
+              <Link href="/privacidade" className="underline underline-offset-2 hover:text-ink transition-colors">
                 Privacidade
-              </a>
-              <a href="/precos" className="underline underline-offset-2 hover:text-ink transition-colors">
+              </Link>
+              <Link href="/precos" className="underline underline-offset-2 hover:text-ink transition-colors">
                 Preços
-              </a>
+              </Link>
             </div>
             <p className="text-sm text-ink-soft">
               &copy; {new Date().getFullYear()} AN.BR. Todos os direitos reservados.

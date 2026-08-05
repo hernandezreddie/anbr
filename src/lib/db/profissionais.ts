@@ -56,6 +56,7 @@ export const getProfissionalFullConfig = cache(async (slug: string) => {
       foto_fundo: "",
       slogan: profissional.slogan,
       fundo_estilo: "none",
+      textos_personalizados: null,
     },
     servicos: (servicos.data || []) as any[],
     adicionais: (adicionais.data || []) as any[],

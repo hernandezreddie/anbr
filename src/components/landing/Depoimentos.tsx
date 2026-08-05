@@ -1,7 +1,7 @@
 "use client";
 
 import { Star } from "lucide-react";
-import { getCopyPadrao, preencherCopy, rotacionarDepoimentos } from "@/lib/copys-padrao";
+import { getCopyEfetivo, preencherCopy, rotacionarDepoimentos } from "@/lib/copys-padrao";
 import type { ProfissionalConfig } from "@/types";
 
 export type AvaliacaoPublica = {
@@ -21,7 +21,11 @@ export function Depoimentos({
   const { profissional, configuracao } = config;
   const primary = configuracao.cor_primaria;
 
-  const copy = getCopyPadrao(profissional.categoria, (configuracao as any).copy_variante);
+  const copy = getCopyEfetivo(
+    profissional.categoria,
+    (configuracao as any).copy_variante,
+    (configuracao as any).textos_personalizados
+  );
   const preencher = (texto: string) =>
     preencherCopy(texto, {
       nome: profissional.primeiro_nome,

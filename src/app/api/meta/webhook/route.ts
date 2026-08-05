@@ -1,31 +1,40 @@
 import { NextRequest, NextResponse } from "next/server"
-import { handleWebhookEvent } from "@/lib/meta/graph"
+import { handleWebhookEvent, getWebhookVerifyToken } from "@/lib/meta/graph"
+import { validarAssinaturaMeta } from "@/lib/webhook-firma"
 
 // Meta webhook verification (GET)
 export async function GET(req: NextRequest) {
   const mode = req.nextUrl.searchParams.get("hub.mode")
   const token = req.nextUrl.searchParams.get("hub.verify_token")
   const challenge = req.nextUrl.searchParams.get("hub.challenge")
-  const profissional_id = req.nextUrl.searchParams.get("profissional_id")
 
-  if (mode === "subscribe" && token === profissional_id && challenge) {
+  const expected = getWebhookVerifyToken()
+  if (mode === "subscribe" && token && expected && token === expected && challenge) {
     return new NextResponse(challenge, { status: 200 })
   }
 
   return NextResponse.json({ error: "Verificação falhou" }, { status: 403 })
 }
 
-// Meta webhook events (POST)
+// Meta webhook events (POST) — única callback URL para N tenants
 export async function POST(req: NextRequest) {
-  const profissional_id = req.nextUrl.searchParams.get("profissional_id")
-  if (!profissional_id) return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 })
+  const rawBody = await req.text()
+  const valido = validarAssinaturaMeta(req, rawBody, process.env.META_APP_SECRET)
+  if (valido === false) {
+    return NextResponse.json({ error: "Assinatura inválida" }, { status: 401 })
+  }
 
-  const body = await req.json()
+  let body: unknown
+  try {
+    body = JSON.parse(rawBody)
+  } catch {
+    return NextResponse.json({ error: "JSON inválido" }, { status: 400 })
+  }
 
   // Meta sends a challenge on first POST too, but usually it's GET
-  // Handle the actual event
+  // Handle the actual event (tenant é resolvido internamente)
   try {
-    await handleWebhookEvent(profissional_id, body)
+    await handleWebhookEvent(body)
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

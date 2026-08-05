@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { isAdminPlataforma } from "@/lib/auth-roles";
 import { PLANOS } from "@/lib/planos";
 import { TenantDetailClient } from "./TenantDetailClient";
@@ -59,7 +60,7 @@ export default async function TenantDetailPage({
       <header className="sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <a href="/admin" className="btn-ghost btn-sm">← Voltar</a>
+            <Link href="/admin" className="btn-ghost btn-sm">← Voltar</Link>
             <span className="font-serif text-lg font-semibold">AN.BR · Admin</span>
           </div>
           <form action="/auth/signout" method="post">
@@ -88,10 +89,10 @@ export default async function TenantDetailPage({
           <div className="flex gap-2">
             <a href={`/${profRes.data.slug}`} target="_blank" className="btn-primary btn-sm">Booking</a>
             <a href={`/${profRes.data.slug}/painel`} target="_blank" className="btn-outline btn-sm">Painel</a>
-            <a href={`/admin/agent/${profRes.data.slug}`} className="rounded-lg bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors inline-flex items-center gap-1">
+            <Link href={`/admin/agent/${profRes.data.slug}`} className="rounded-lg bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors inline-flex items-center gap-1">
               AI Agent
-            </a>
-            <a href={`/admin/domains/${profRes.data.slug}`} className="btn-ghost btn-sm">Domínio</a>
+            </Link>
+            <Link href={`/admin/domains/${profRes.data.slug}`} className="btn-ghost btn-sm">Domínio</Link>
           </div>
         </div>
 

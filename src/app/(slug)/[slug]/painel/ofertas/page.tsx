@@ -219,7 +219,7 @@ export default function OfertasPage() {
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 py-16">
           <BadgePercent size={32} className="text-neutral-300" />
           <p className="mt-3 text-sm text-neutral-400">
-            Nenhuma oferta ainda. Toque em "Nova oferta" para criar a primeira.
+            Nenhuma oferta ainda. Toque em &quot;Nova oferta&quot; para criar a primeira.
           </p>
         </div>
       ) : (

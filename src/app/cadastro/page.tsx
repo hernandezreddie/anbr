@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, Check, ChevronRight, User, Globe, Eye, EyeOff,
@@ -144,10 +145,10 @@ export default function CadastroPage() {
       {/* Mini header */}
       <header className="border-b border-[var(--color-line)]/50 bg-white/80 backdrop-blur-md">
         <div className="container-x flex h-14 items-center">
-          <a href="/" className="flex items-center gap-2 text-sm font-semibold text-ink-soft hover:text-ink transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-ink-soft hover:text-ink transition-colors">
             <ArrowLeft size={16} />
             Voltar
-          </a>
+          </Link>
           <div className="ml-auto flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-md"><Logo className="h-6 w-6" /></span>
             <span className="font-serif text-sm font-semibold">AN.BR</span>
@@ -552,9 +553,9 @@ export default function CadastroPage() {
                     />
                     <span className="text-sm leading-relaxed text-ink-soft">
                       Li e aceito os{" "}
-                      <a href="/termos" target="_blank" rel="noopener noreferrer" className="font-medium text-[var(--color-primary)] underline underline-offset-2">Termos de Uso</a>{" "}
+                      <Link href="/termos" target="_blank" rel="noopener noreferrer" className="font-medium text-[var(--color-primary)] underline underline-offset-2">Termos de Uso</Link>{" "}
                       e a{" "}
-                      <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="font-medium text-[var(--color-primary)] underline underline-offset-2">Política de Privacidade</a>{" "}
+                      <Link href="/privacidade" target="_blank" rel="noopener noreferrer" className="font-medium text-[var(--color-primary)] underline underline-offset-2">Política de Privacidade</Link>{" "}
                       e autorizo o tratamento dos meus dados pessoais conforme a LGPD (Lei 13.709/2018).
                     </span>
                   </label>

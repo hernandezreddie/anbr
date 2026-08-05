@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/agendamentos/lembretes",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/planos/vencidos",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

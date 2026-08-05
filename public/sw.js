@@ -1,5 +1,19 @@
-self.addEventListener("install", () => self.skipWaiting());
+const CACHE_NAME = "anbr-shell-v1";
+const APP_SHELL = ["/", "/icon-192.png", "/icon-512.png", "/icon-1024.png"];
+
+self.addEventListener("install", (e) => {
+  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  self.skipWaiting();
+});
+
 self.addEventListener("activate", (e) => e.waitUntil(clients.claim()));
+
+self.addEventListener("fetch", (e) => {
+  if (e.request.method !== "GET") return;
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request).then((cached) => cached || caches.match("/")))
+  );
+});
 
 self.addEventListener("push", (e) => {
   if (!e.data) return;

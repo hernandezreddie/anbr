@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verificarAcessoProfissional } from "@/lib/auth-roles";
 import { NextRequest } from "next/server";
 
 export async function PATCH(request: NextRequest) {
@@ -7,6 +8,11 @@ export async function PATCH(request: NextRequest) {
 
   if (!profissional_id) {
     return Response.json({ error: "profissional_id obrigatório" }, { status: 400 });
+  }
+
+  const acesso = await verificarAcessoProfissional(profissional_id);
+  if (!acesso.permitido) {
+    return Response.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   const { error } = await supabase

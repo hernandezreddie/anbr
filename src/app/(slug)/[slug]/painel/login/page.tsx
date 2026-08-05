@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useParams, useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
 
 export default function PainelLogin() {
   const [email, setEmail] = useState("");
@@ -91,6 +92,15 @@ export default function PainelLogin() {
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>
+        </div>
+
+        <div className="mt-5 space-y-2 text-center text-sm">
+          <Link href="/recuperar-senha" className="block text-teal-700 hover:underline">
+            Esqueci minha senha
+          </Link>
+          <Link href="/entrar" className="block text-neutral-500 hover:text-neutral-700">
+            Entrar em outra conta
+          </Link>
         </div>
       </form>
     </div>

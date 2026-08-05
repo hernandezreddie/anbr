@@ -4,7 +4,7 @@ import { Fragment, useCallback, useRef } from "react";
 import { motion, useReducedMotion, type Easing } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
 import { linkWhatsApp } from "@/lib/whatsapp";
-import { getCopyPadrao, preencherCopy } from "@/lib/copys-padrao";
+import { getCopyEfetivo, preencherCopy } from "@/lib/copys-padrao";
 import { accento } from "@/lib/cores";
 import { Button } from "@/components/ui/Button";
 import type { ProfissionalConfig } from "@/types";
@@ -17,7 +17,11 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
   const temImagem = !!(configuracao.foto_fundo || configuracao.logo_url);
   const sombraTexto = temImagem ? { textShadow: "0 2px 18px rgba(0,0,0,0.30)" } : undefined;
 
-  const copy = getCopyPadrao(profissional.categoria, (configuracao as any).copy_variante);
+  const copy = getCopyEfetivo(
+    profissional.categoria,
+    (configuracao as any).copy_variante,
+    (configuracao as any).textos_personalizados
+  );
   const preencher = (texto: string) =>
     preencherCopy(texto, {
       nome: profissional.primeiro_nome,
@@ -61,6 +65,19 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
     btn.classList.add("ripple-container");
     btn.appendChild(ripple);
     ripple.addEventListener("animationend", () => ripple.remove());
+  }, []);
+
+  const irParaReservar = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    handleRipple(e);
+    window.location.href = `/${profissional.slug}/reservar`;
+  }, [handleRipple, profissional.slug]);
+
+  const irParaServicos = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const el = document.getElementById("servicos");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }, []);
 
   return (
@@ -121,11 +138,11 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
           </motion.p>
 
           <motion.div variants={fade} initial="hidden" animate="show" transition={{ delay: 0.08 }} className="mt-8 flex flex-col items-center gap-3.5 sm:flex-row sm:justify-center">
-            <Button variant="primary" size="lg" className="cta-glow touch-manipulation ripple-container" onClick={handleRipple} style={{ backgroundColor: primary }}>
+            <Button variant="primary" size="lg" className="cta-glow touch-manipulation ripple-container" onClick={irParaReservar} style={{ backgroundColor: primary }}>
               {copy.hero_cta1}
               <ArrowRight size={18} />
             </Button>
-            <Button variant="outline" size="lg" className="touch-manipulation">
+            <Button variant="outline" size="lg" className="touch-manipulation" onClick={irParaServicos}>
               {copy.hero_cta2}
             </Button>
           </motion.div>

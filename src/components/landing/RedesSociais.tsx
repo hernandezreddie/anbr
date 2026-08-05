@@ -40,7 +40,7 @@ export function RedesSociais({ config }: { config: ProfissionalConfig }) {
   if (links.length === 0) return null;
 
   return (
-    <div className="border-t border-neutral-100 bg-white py-8">
+    <div className="border-t border-[var(--color-line)] bg-[var(--color-paper)] py-8">
       <div className="container-x flex flex-wrap items-center justify-center gap-3">
         {links.map(({ href, label, Icon }) => (
           <a

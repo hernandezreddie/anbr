@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { usePathname } from "next/navigation";
 import { Plus, Trash2, Save } from "lucide-react";
 import { motion } from "framer-motion";
-import { FUNDOS, fundoStyle, type FundoEstilo } from "@/lib/backgrounds";
+import { FUNDOS } from "@/lib/backgrounds";
 import { getCopyPadrao } from "@/lib/copys-padrao";
-import { getMensagensPadrao, getCategoriaPadrao } from "@/lib/servicos-padrao";
+import { getMensagensPadrao } from "@/lib/servicos-padrao";
 import { Copy } from "lucide-react";
 import { Dica } from "@/components/painel/Dica";
+import { TextosPersonalizadosEditor } from "@/components/painel/TextosPersonalizadosEditor";
 
 type Servico = {
   id: string;
@@ -59,6 +59,7 @@ type Configuracao = {
   instagram?: string;
   facebook?: string;
   google_maps?: string;
+  textos_personalizados?: Record<string, any> | null;
 };
 
 type Profissional = {
@@ -94,8 +95,6 @@ function CardSection({ title, children }: { title: string; children: React.React
 }
 
 export default function PerfilPage() {
-  const pathname = usePathname();
-  const slug = pathname.split("/")[1];
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fundoInputRef = useRef<HTMLInputElement>(null);
@@ -141,8 +140,6 @@ export default function PerfilPage() {
 
   useEffect(() => { carregar(); }, []);
 
-  const hasChanges = profissional || config;
-
   async function salvarTudo() {
     if (!profissional) {
       flash("Não foi possível carregar seus dados. Recarregue a página.");
@@ -181,6 +178,7 @@ export default function PerfilPage() {
         instagram: config?.instagram ?? "",
         facebook: config?.facebook ?? "",
         google_maps: config?.google_maps ?? "",
+        textos_personalizados: config?.textos_personalizados ?? null,
       }),
     });
 
@@ -366,11 +364,11 @@ export default function PerfilPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="sticky top-0 z-30 -mx-4 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/70 bg-white/90 px-4 py-4 pb-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900">Perfil</h1>
           <p className="mt-1 text-sm text-neutral-500">Personalize sua página e gerencie serviços</p>
-        </div>        <div className="flex items-center gap-3">
+        </div>        <div className="flex flex-wrap items-center gap-3">
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => {
@@ -459,6 +457,7 @@ export default function PerfilPage() {
         <div className="flex items-center gap-6">
           {config?.logo_url ? (
             <div className="relative h-24 w-24 overflow-hidden rounded-xl border border-neutral-200">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={config.logo_url} alt="Logo" className="h-full w-full object-contain" />
               <button onClick={removeLogo}
                 className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow"
@@ -485,6 +484,7 @@ export default function PerfilPage() {
         <div className="flex items-center gap-6">
           {config?.foto_fundo ? (
             <div className="relative h-28 w-48 overflow-hidden rounded-xl border border-neutral-200">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={config.foto_fundo} alt="Foto de fundo" className="h-full w-full object-cover" />
               <button onClick={removeFundo}
                 className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow"
@@ -658,6 +658,21 @@ export default function PerfilPage() {
             );
           })}
         </div>
+      </CardSection>
+
+      {/* Textos personalizados — edição manual */}
+      <CardSection title="Editar meus textos (opcional)">
+        <p className="-mt-3 mb-4 text-sm text-neutral-500">
+          Preencha só os campos que quiser mudar. O que ficar vazio usa o texto pronto do seu nicho.
+          Toque em <strong>Salvar alterações</strong> ao final para aplicar.
+        </p>
+
+        <TextosPersonalizadosEditor
+          valor={config?.textos_personalizados ?? {}}
+          onChange={(novo) => updateConfigField("textos_personalizados", novo)}
+          categoria={profissional?.categoria}
+          variante={config?.copy_variante ?? 0}
+        />
       </CardSection>
 
       {/* Mensagens do WhatsApp */}

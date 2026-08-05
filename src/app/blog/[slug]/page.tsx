@@ -133,13 +133,13 @@ export default async function BlogPostPage({ params }: Props) {
           <p className="mx-auto mt-3 max-w-lg text-white/80">
             Crie seu sistema de agendamento online em menos de 5 minutos. Sem cartão de crédito.
           </p>
-          <a
+          <Link
             href="/cadastro"
             className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-sm font-semibold text-[var(--color-primary)] transition-all hover:bg-white/90 shadow-lg"
           >
             Criar meu sistema agora
             <ArrowRight size={18} />
-          </a>
+          </Link>
         </div>
       </section>
 
@@ -179,9 +179,9 @@ export default async function BlogPostPage({ params }: Props) {
               <span className="font-serif text-base font-semibold">AN.BR</span>
             </div>
             <nav className="flex gap-6 text-sm text-ink-soft">
-              <a href="/" className="hover:text-ink transition-colors">Home</a>
-              <a href="/blog" className="hover:text-ink transition-colors">Blog</a>
-              <a href="/cadastro" className="hover:text-ink transition-colors">Criar Sistema</a>
+              <Link href="/" className="hover:text-ink transition-colors">Home</Link>
+              <Link href="/blog" className="hover:text-ink transition-colors">Blog</Link>
+              <Link href="/cadastro" className="hover:text-ink transition-colors">Criar Sistema</Link>
             </nav>
             <p className="text-sm text-ink-soft">
               &copy; {new Date().getFullYear()} AN.BR. Todos os direitos reservados.

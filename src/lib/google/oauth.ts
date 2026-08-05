@@ -4,7 +4,11 @@ import { randomBytes } from "crypto"
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!
-const SCOPES = ["https://www.googleapis.com/auth/calendar"]
+const SCOPES = [
+  "https://www.googleapis.com/auth/calendar",
+  "openid",
+  "https://www.googleapis.com/auth/userinfo.email",
+]
 
 function getRedirectUri() {
   return process.env.GOOGLE_REDIRECT_URI || `${process.env.NEXT_PUBLIC_DOMAIN}/api/google/callback`
@@ -58,6 +62,25 @@ export async function handleCallback(code: string, profissional_id: string) {
     throw new Error("Tokens inválidos")
   }
 
+  // Resolve o email da conta conectada (id_token → userinfo como fallback)
+  let calendarEmail: string | null = null
+  try {
+    if (tokens.id_token) {
+      const payload = await oauth.verifyIdToken({ idToken: tokens.id_token })
+      calendarEmail = payload.getPayload()?.email || null
+    }
+  } catch {
+    // id_token ausente: tenta userinfo via access token
+  }
+  if (!calendarEmail) {
+    try {
+      const info = await oauth.getTokenInfo(tokens.access_token)
+      calendarEmail = info.email || null
+    } catch {
+      // scopes antigos sem userinfo — email fica nulo
+    }
+  }
+
   const supabase = createAdminClient()
 
   const { error } = await supabase.from("google_calendar_tokens").upsert(
@@ -71,6 +94,7 @@ export async function handleCallback(code: string, profissional_id: string) {
         Date.now() + (tokens.expiry_date || 3600 * 1000)
       ).toISOString(),
       calendar_id: "primary",
+      calendar_email: calendarEmail,
     },
     { onConflict: "profissional_id" }
   )

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { PLANOS, PLANOS_ORDER, formatarBRL } from "@/lib/planos";
+import { PLANOS, formatarBRL } from "@/lib/planos";
 import { gerarPixCopiaECola } from "@/lib/pix";
+import { criarPixCobranca, getConfigGateway } from "@/lib/pagamentos/mercadopago";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -39,16 +40,48 @@ export async function POST(req: NextRequest) {
 
   const info = PLANOS[plano as keyof typeof PLANOS];
   const valor = freq === "anual" ? Math.round(info.precoMensal * 12 * 0.8) : info.precoMensal;
-
   const descricao = `PLANO ${info.nome.toUpperCase()} ${freq === "anual" ? "ANUAL" : "MENSAL"}`;
-  const payload = gerarPixCopiaECola({
-    chave: config.pix_chave,
-    nome: config.pix_nome || "AN.BR",
-    cidade: config.pix_cidade || "BRASIL",
-    valor,
-    descricao,
-    txid: `ANBR${Date.now().toString().slice(-12)}`,
-  });
+  const externalRef = `ANBR${Date.now().toString().slice(-12)}`;
+
+  const gateway = getConfigGateway();
+  let paymentId: string | null = null;
+  let qrCodeBase64: string | null = null;
+  let copiaECola = "";
+  let expiraEm: string | null = null;
+  let txid: string | null = null;
+
+  if (gateway.ativo) {
+    // 1) Gateway (Mercado Pago): PIX dinâmico com expiração de 30 min
+    try {
+      const cobranca = await criarPixCobranca({
+        valor,
+        descricao,
+        external_reference: externalRef,
+        payer_email: user.email || "cliente@anbr.com.br",
+        expires_minutes: 30,
+      });
+      paymentId = cobranca.payment_id;
+      qrCodeBase64 = cobranca.qr_code_base64;
+      copiaECola = cobranca.copia_e_cola;
+      expiraEm = cobranca.expires_at;
+      txid = cobranca.payment_id;
+    } catch (e) {
+      console.error("[planos/pedido] gateway falhou, caindo para Pix manual:", String(e));
+    }
+  }
+
+  // 2) Fallback: Pix estático (copia e cola gerado localmente, ativação manual)
+  if (!paymentId) {
+    copiaECola = gerarPixCopiaECola({
+      chave: config.pix_chave,
+      nome: config.pix_nome || "AN.BR",
+      cidade: config.pix_cidade || "BRASIL",
+      valor,
+      descricao,
+      txid: externalRef,
+    });
+    txid = externalRef;
+  }
 
   const { data: pagamento, error } = await adminDb
     .from("pagamentos_pix")
@@ -57,7 +90,12 @@ export async function POST(req: NextRequest) {
       plano,
       frequencia: freq,
       valor,
-      pix_copia_e_cola: payload,
+      pix_copia_e_cola: copiaECola,
+      payment_id: paymentId,
+      pix_qr_code_base64: qrCodeBase64,
+      txid,
+      pix_chave: config.pix_chave,
+      expira_em: expiraEm,
     })
     .select("id")
     .single();
@@ -66,13 +104,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error?.message || "Erro ao gerar pedido" }, { status: 500 });
   }
 
+  const gatewayNome = paymentId ? "mercadopago" : "manual";
   return NextResponse.json({
     pagamento_id: pagamento.id,
     valor,
     valor_formatado: formatarBRL(valor),
-    pix_copia_e_cola: payload,
+    pix_copia_e_cola: copiaECola,
+    pix_qr_code_base64: qrCodeBase64,
+    expira_em: expiraEm,
+    payment_id: paymentId,
+    gateway: gatewayNome,
     plano_nome: info.nome,
     frequencia: freq,
-    instrucoes: "Aponte a câmera do app do seu banco para o QR Code ou copie o código Pix Copia e Cola. Após o pagamento, o suporte ativa seu plano em até 1 dia útil.",
+    instrucoes:
+      gatewayNome === "mercadopago"
+        ? "Aponte a câmera do app do seu banco para o QR Code ou copie o código Pix Copia e Cola. Seu plano é ativado automaticamente em segundos após o pagamento."
+        : "Aponte a câmera do app do seu banco para o QR Code ou copie o código Pix Copia e Cola. Após o pagamento, o suporte ativa seu plano em até 1 dia útil.",
   });
 }

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import { DomainClient } from "./DomainClient"
 import { isAdminPlataforma } from "@/lib/auth-roles"
 
@@ -35,7 +36,7 @@ export default async function DomainPage({ params }: { params: Promise<{ slug: s
       <header className="sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
-            <a href="/admin" className="btn-ghost btn-sm">← Admin</a>
+            <Link href="/admin" className="btn-ghost btn-sm">← Admin</Link>
             <span className="font-serif text-lg font-semibold">Domínio · {prof.nome}</span>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X, Filter, Search, Plus, Pencil, Trash2, BellRing } from "lucide-react";
+import { Check, X, Filter, Search, Plus, Pencil, Trash2 } from "lucide-react";
 import { Dica } from "@/components/painel/Dica";
 
 type Agendamento = {
@@ -112,19 +112,27 @@ export default function AgendamentosPage() {
 
   useEffect(() => {
     if (!slug || lembretesOk) return;
-    fetch(`/api/agendamentos/lembretes?slug=${slug}`)
+    fetch(`/api/agendamentos/lembretes`)
       .then((r) => r.json())
       .then((d) => {
         setLembretesOk(true);
-        if (d.enviados > 0) flash(`${d.enviados} lembrete(s) enviado(s) para os clientes de amanhã ✔`);
-        else if (d.total > 0 && d.falhas > 0) flash("Lembretes de amanhã sem WhatsApp configurado.");
+        if (d.enviados > 0) flash(`${d.enviados} lembrete(s) enviado(s) para os clientes de hoje/amanhã ✔`);
+        else if (d.total > 0 && d.falhas > 0) flash("Lembretes sem WhatsApp configurado.");
       })
       .catch(() => {});
   }, [slug, lembretesOk]);
 
   const alterarStatus = async (id: string, novoStatus: string) => {
-    const { error } = await supabase.from("agendamentos").update({ status: novoStatus }).eq("id", id);
-    if (!error) carregar();
+    try {
+      await fetch(`/api/agendamentos/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: novoStatus }),
+      });
+    } catch {
+      flash("Erro ao atualizar status.");
+    }
+    carregar();
   };
 
   const abrirNovo = () => {
@@ -198,7 +206,11 @@ export default function AgendamentosPage() {
 
     const res = form.id
       ? await supabase.from("agendamentos").update(patch).eq("id", form.id)
-      : await supabase.from("agendamentos").insert({ ...patch, origem: "manual" });
+      : await supabase.from("agendamentos").insert({
+          ...patch,
+          origem: "manual",
+          token_avaliacao: crypto.randomUUID(),
+        });
     setBusy(false);
     if (res.error) {
       flash("Erro ao salvar. Tente de novo.");

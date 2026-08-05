@@ -22,7 +22,10 @@ export function Nav({ config }: { config: ProfissionalConfig }) {
             </span>
           )}
         </a>
-        <div className="flex items-center gap-4">
+<div className="flex items-center gap-4">
+          <a href={`/${profissional.slug}/painel`} className="text-sm font-medium text-ink-soft transition-colors hover:text-ink">
+            Dashboard
+          </a>
           <a href={`/${profissional.slug}/reservar`} className="btn-primary btn-sm">
             Agendar
           </a>

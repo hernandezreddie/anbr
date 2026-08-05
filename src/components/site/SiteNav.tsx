@@ -45,6 +45,9 @@ export function SiteNav() {
               {l.label}
             </Link>
           ))}
+          <Link href="/entrar" className="btn-ghost btn-sm text-ink">
+            Entrar
+          </Link>
           <Link href="/cadastro" className="btn-primary text-sm px-5 py-2.5">
             Criar meu sistema
           </Link>
@@ -71,6 +74,13 @@ export function SiteNav() {
               {l.label}
             </Link>
           ))}
+          <Link
+            href="/entrar"
+            onClick={() => setMobileMenu(false)}
+            className="block w-full text-left text-sm py-2 font-medium text-teal-700"
+          >
+            Entrar
+          </Link>
           <Link
             href="/cadastro"
             onClick={() => setMobileMenu(false)}

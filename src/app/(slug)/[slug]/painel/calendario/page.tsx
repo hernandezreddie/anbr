@@ -221,7 +221,11 @@ export default function CalendarioPage() {
 
     const res = form.id
       ? await supabase.from("agendamentos").update(patch).eq("id", form.id)
-      : await supabase.from("agendamentos").insert({ ...patch, origem: "manual" });
+      : await supabase.from("agendamentos").insert({
+          ...patch,
+          origem: "manual",
+          token_avaliacao: crypto.randomUUID(),
+        });
     setBusy(false);
     if (res.error) {
       flash("Erro ao salvar. Tente de novo.");
@@ -262,6 +266,7 @@ export default function CalendarioPage() {
       observacoes: a.observacoes,
       serie_id: a.id,
       data_original: moverPrev.dataOriginal,
+      token_avaliacao: crypto.randomUUID(),
     });
     setBusy(false);
     setMoverPrev(null);

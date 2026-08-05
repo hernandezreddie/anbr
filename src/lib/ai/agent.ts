@@ -1,9 +1,10 @@
 import OpenAI from "openai";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-function getOpenAI() {
-  if (!process.env.OPENAI_API_KEY) return null
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+function getOpenAI(apiKey?: string) {
+  const key = apiKey || process.env.OPENAI_API_KEY
+  if (!key) return null
+  return new OpenAI({ apiKey: key })
 }
 
 interface AgentContext {
@@ -142,24 +143,68 @@ export async function chatComAgente(
 Ajude clientes a agendar serviços, tirar dúvidas sobre horários e preços.
 Seja educado e objetivo. Responda em português.`;
 
+  const systemPromptFinal = contextoRAG
+    ? `${systemPrompt}\n\n## Base de Conhecimento\nUse as informações abaixo para responder. Se não encontrar algo relevante, diga que não sabe.\n\n${contextoRAG}`
+    : systemPrompt;
+
+  const model = config.model || "gpt-4o-mini";
+  const isOpenAI = model.toLowerCase().startsWith("gpt");
+
+  // Modelos não-OpenAI (Gemini, Claude, etc.) usam o router multi-provedor
+  // com tool-calling quando o provider suporta (Gemini já usa function calling)
+  if (!isOpenAI) {
+    const { createAIProvider } = await import("./router");
+    const provider = createAIProvider({
+      enabled: true,
+      model,
+      temperature: config.temperature ?? 0.7,
+      max_tokens: config.max_tokens ?? 4096,
+      tools_enabled: toolsConfig,
+      system_prompt: systemPromptFinal,
+      apiKey: resolveApiKey(config, model),
+      executeTool: async (name, args) => {
+        const r = await executarToolPorNome(name, args, profissionalId);
+        return r.result;
+      },
+    });
+    if (!provider) {
+      return { error: "Provedor de IA não reconhecido", status: 500 };
+    }
+    const res = await provider.chat(mensagem, historico);
+    if (res.error) {
+      return { error: res.error, status: res.status || 500 };
+    }
+    await registrarUso(profissionalId, model, res.tokens?.input || 0, res.tokens?.output || 0);
+    return {
+      resposta: res.respuesta,
+      toolCalls: res.toolCalls || [],
+      toolResults: res.toolResults || [],
+      tokens: res.tokens,
+      model: res.model,
+    };
+  }
+
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     {
       role: "system",
-      content: contextoRAG
-        ? `${systemPrompt}\n\n## Base de Conhecimento\nUse as informações abaixo para responder. Se não encontrar algo relevante, diga que não sabe.\n\n${contextoRAG}`
-        : systemPrompt,
+      content: systemPromptFinal,
     },
     ...historico.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
     { role: "user", content: mensagem },
   ];
 
-  const openai = getOpenAI()
+  const openai = getOpenAI(resolveApiKey(config, model))
   if (!openai) {
     return { error: "API key da OpenAI não configurada", status: 500 }
   }
 
-  const completion = await openai.chat.completions.create({
-    model: config.model || "gpt-4o-mini",
+  const toolResults: Array<{ name: string; result: string }> = [];
+  const allToolCalls: Array<{ name: string; args: Record<string, any> }> = [];
+  let resposta = "";
+  let usage = { prompt_tokens: 0, completion_tokens: 0 };
+
+  let completion = await openai.chat.completions.create({
+    model,
     temperature: config.temperature ?? 0.7,
     max_tokens: config.max_tokens ?? 4096,
     messages,
@@ -167,108 +212,153 @@ Seja educado e objetivo. Responda em português.`;
     tool_choice: tools.length > 0 ? "auto" : undefined,
   });
 
-  const choice = completion.choices[0];
-  const resposta = choice.message.content || "";
-  const toolCalls = choice.message.tool_calls || null;
-  const usage = completion.usage || { prompt_tokens: 0, completion_tokens: 0 };
+  // Loop de tool-calling: executa as tools e devolve os resultados ao modelo
+  for (let round = 0; round < 5; round++) {
+    const choice = completion.choices[0];
+    resposta = choice.message.content || "";
+    const toolCalls = choice.message.tool_calls || null;
+    usage = completion.usage || { prompt_tokens: 0, completion_tokens: 0 };
 
-  let toolResults: any[] = [];
-  if (toolCalls) {
-    toolResults = await executarTools(toolCalls, profissionalId);
+    if (!toolCalls || toolCalls.length === 0) break;
+
+    messages.push({
+      role: "assistant",
+      content: resposta || null,
+      tool_calls: toolCalls.map((t) => {
+        const tc = t as any;
+        return {
+          id: tc.id,
+          type: "function",
+          function: { name: tc.function.name, arguments: tc.function.arguments },
+        };
+      }),
+    });
+
+    for (const t of toolCalls) {
+      const tc = t as any;
+      const args = JSON.parse(tc.function.arguments || "{}") as Record<string, any>;
+      allToolCalls.push({ name: tc.function.name, args });
+      const r = await executarToolPorNome(tc.function.name, args, profissionalId);
+      toolResults.push(r);
+      messages.push({
+        role: "tool",
+        tool_call_id: tc.id,
+        content: r.result,
+      });
+    }
+
+    completion = await openai.chat.completions.create({
+      model,
+      temperature: config.temperature ?? 0.7,
+      max_tokens: config.max_tokens ?? 4096,
+      messages,
+      tools: tools.length > 0 ? tools : undefined,
+      tool_choice: tools.length > 0 ? "auto" : undefined,
+    });
   }
 
   await registrarUso(profissionalId, config.model, usage.prompt_tokens, usage.completion_tokens);
 
   return {
     resposta,
-    toolCalls: toolCalls?.map((t: any) => ({ name: t.function?.name || t.name, args: t.function?.arguments || t.arguments })),
+    toolCalls: allToolCalls,
     toolResults,
-    tokens: { input: usage.prompt_tokens, output: usage.completion_tokens, total: (usage as any).total_tokens || usage.prompt_tokens + usage.completion_tokens },
+    tokens: { input: usage.prompt_tokens, output: usage.completion_tokens, total: usage.prompt_tokens + usage.completion_tokens },
     model: config.model,
   };
 }
 
-async function executarTools(
-  toolCalls: OpenAI.Chat.Completions.ChatCompletionMessage["tool_calls"],
-  profissionalId: string
-): Promise<any[]> {
-  const adminDb = createAdminClient();
-  const results = [];
+/**
+ * Resolve a API key do tenant (config.api_keys) conforme o provedor do modelo.
+ * Se o tenant não tiver chave própria, retorna undefined → providers usam a global do servidor.
+ */
+export function resolveApiKey(config: any, model: string): string | undefined {
+  const apiKeys: Record<string, string> = config?.api_keys || {};
+  const m = model.toLowerCase();
 
-  for (const tool of (toolCalls || []) as any[]) {
-    const args = JSON.parse(tool.function?.arguments || tool.arguments || "{}");
+  if (m.startsWith("gemini")) return apiKeys.gemini || undefined;
+  if (m.startsWith("claude")) return apiKeys.anthropic || undefined;
+  if (m.startsWith("gpt")) return apiKeys.openai || undefined;
 
-    switch (tool.function?.name || tool.name) {
-      case "consultar_agendamentos": {
-        let query = adminDb
-          .from("agendamentos")
-          .select("*")
-          .eq("profissional_id", profissionalId)
-          .order("data", { ascending: true })
-          .limit(20);
-
-        if (args.filtro?.data) query = query.eq("data", args.filtro.data);
-        if (args.filtro?.status) query = query.eq("status", args.filtro.status);
-        if (args.filtro?.cliente_nome) query = query.ilike("cliente_nome", `%${args.filtro.cliente_nome}%`);
-
-        const { data } = await query;
-        results.push({ name: "consultar_agendamentos", result: JSON.stringify(data || []) });
-        break;
-      }
-
-      case "consultar_servicos": {
-        const { data } = await adminDb
-          .from("servicos")
-          .select("nome, descricao, tipo_preco, preco_fixo, valor_hora, duracao_minutos")
-          .eq("profissional_id", profissionalId)
-          .eq("ativo", true);
-        results.push({ name: "consultar_servicos", result: JSON.stringify(data || []) });
-        break;
-      }
-
-      case "verificar_disponibilidade": {
-        try {
-          const { checkFreeBusy } = await import("@/lib/google/calendar");
-          const result = await checkFreeBusy(profissionalId, args.inicio, args.fim);
-          results.push({
-            name: "verificar_disponibilidade",
-            result: JSON.stringify({
-              disponivel: !result.busy,
-              eventos_conflitantes: result.events,
-            }),
-          });
-        } catch (e: any) {
-          results.push({ name: "verificar_disponibilidade", result: `Erro: ${e.message}` });
-        }
-        break;
-      }
-
-      case "criar_evento_calendario": {
-        try {
-          const { createCalendarEvent } = await import("@/lib/google/calendar");
-          const event = await createCalendarEvent(profissionalId, {
-            summary: args.titulo,
-            description: args.descricao,
-            start: { dateTime: args.inicio, timeZone: "America/Sao_Paulo" },
-            end: { dateTime: args.fim, timeZone: "America/Sao_Paulo" },
-            location: args.local,
-          });
-          results.push({
-            name: "criar_evento_calendario",
-            result: JSON.stringify({ success: true, event_url: event.htmlLink }),
-          });
-        } catch (e: any) {
-          results.push({ name: "criar_evento_calendario", result: `Erro: ${e.message}` });
-        }
-        break;
-      }
-
-      default:
-        results.push({ name: tool.function.name, result: "Ferramenta não implementada" });
-    }
+  const openRouterPrefixes = ["openai/", "anthropic/", "google/", "meta-llama/", "deepseek/", "mistralai/", "cohere/", "x-ai/", "nousresearch/", "qwen/", "amazon/", "microsoft/"];
+  if (openRouterPrefixes.some((p) => m.startsWith(p)) || m.includes(":free")) {
+    return apiKeys.openrouter || undefined;
   }
 
-  return results;
+  return undefined;
+}
+
+export async function executarToolPorNome(
+  nome: string,
+  args: Record<string, any>,
+  profissionalId: string
+): Promise<{ name: string; result: string }> {
+  const adminDb = createAdminClient();
+
+  switch (nome) {
+    case "consultar_agendamentos": {
+      let query = adminDb
+        .from("agendamentos")
+        .select("*")
+        .eq("profissional_id", profissionalId)
+        .order("data", { ascending: true })
+        .limit(20);
+
+      if (args.filtro?.data) query = query.eq("data", args.filtro.data);
+      if (args.filtro?.status) query = query.eq("status", args.filtro.status);
+      if (args.filtro?.cliente_nome) query = query.ilike("cliente_nome", `%${args.filtro.cliente_nome}%`);
+
+      const { data } = await query;
+      return { name: "consultar_agendamentos", result: JSON.stringify(data || []) };
+    }
+
+    case "consultar_servicos": {
+      const { data } = await adminDb
+        .from("servicos")
+        .select("nome, descricao, tipo_preco, preco_fixo, valor_hora, duracao_minutos")
+        .eq("profissional_id", profissionalId)
+        .eq("ativo", true);
+      return { name: "consultar_servicos", result: JSON.stringify(data || []) };
+    }
+
+    case "verificar_disponibilidade": {
+      try {
+        const { checkFreeBusy } = await import("@/lib/google/calendar");
+        const result = await checkFreeBusy(profissionalId, args.inicio, args.fim);
+        return {
+          name: "verificar_disponibilidade",
+          result: JSON.stringify({
+            disponivel: !result.busy,
+            eventos_conflitantes: result.events,
+          }),
+        };
+      } catch (e: any) {
+        return { name: "verificar_disponibilidade", result: `Erro: ${e.message}` };
+      }
+    }
+
+    case "criar_evento_calendario": {
+      try {
+        const { createCalendarEvent } = await import("@/lib/google/calendar");
+        const event = await createCalendarEvent(profissionalId, {
+          summary: args.titulo,
+          description: args.descricao,
+          start: { dateTime: args.inicio, timeZone: "America/Sao_Paulo" },
+          end: { dateTime: args.fim, timeZone: "America/Sao_Paulo" },
+          location: args.local,
+        });
+        return {
+          name: "criar_evento_calendario",
+          result: JSON.stringify({ success: true, event_url: event.htmlLink }),
+        };
+      } catch (e: any) {
+        return { name: "criar_evento_calendario", result: `Erro: ${e.message}` };
+      }
+    }
+
+    default:
+      return { name: nome, result: JSON.stringify({ erro: "Ferramenta não implementada" }) };
+  }
 }
 
 async function registrarUso(

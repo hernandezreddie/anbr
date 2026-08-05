@@ -22,7 +22,7 @@ const googleFonts = ["Fraunces", "Inter", "Playfair Display", "DM Sans"];
 
 function fontUrl(name: string) {
   const encoded = name.replace(/ /g, "+");
-  return `https://fonts.googleapis.com/css2?family=${encoded}:wght@400;500;600;700&display=swap`;
+  return `https://fonts.googleapis.com/css2?family=${encoded}:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap`;
 }
 
 export default async function SlugLayout({

@@ -118,6 +118,43 @@ export async function handleCallback(code: string, profissional_id: string) {
   )
 
   if (error) throw error
+
+  // Inscreve a página no webhook do app (Messenger)
+  const webhookUrl = `${process.env.NEXT_PUBLIC_DOMAIN}/api/meta/webhook`
+  const verifyToken = getWebhookVerifyToken()
+  const subRes = await fetch(`${FB_API}/${page.id}/subscribed_apps?access_token=${page.access_token}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      subscribed_fields: ["messages", "messaging_postbacks", "message_deliveries", "message_reads", "instagram_messaging_events"],
+      callback_url: webhookUrl,
+      verify_token: verifyToken,
+    }),
+  })
+  const subData = await subRes.json()
+  if (subData.error) {
+    console.error("Meta: falha ao inscrever página no webhook", subData.error)
+    throw new Error(`Falha ao ativar Messenger/Instagram: ${subData.error.message}`)
+  }
+
+  // Inscreve a conta Instagram no webhook (Instagram DM)
+  const igId = igData.instagram_business_account?.id
+  if (igId) {
+    const igSub = await fetch(`${FB_API}/${igId}/subscribed_apps?access_token=${page.access_token}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subscribed_fields: ["messages", "messaging_postbacks"],
+        callback_url: webhookUrl,
+        verify_token: verifyToken,
+      }),
+    })
+    const igSubData = await igSub.json()
+    if (igSubData.error) {
+      console.error("Meta: falha ao inscrever Instagram no webhook", igSubData.error)
+      throw new Error(`Falha ao ativar Instagram DM: ${igSubData.error.message}`)
+    }
+  }
 }
 
 export async function sendMessage(
@@ -142,11 +179,62 @@ export async function sendMessage(
   return res.json()
 }
 
-export async function handleWebhookEvent(
-  profissional_id: string,
-  event: any
-) {
+export function getWebhookVerifyToken(): string {
+  return (
+    process.env.META_WEBHOOK_VERIFY_TOKEN ||
+    process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN ||
+    "anbr-verifica-token-dev"
+  )
+}
+
+/**
+ * Resolve o tenant (profissional_id) a partir do payload do webhook,
+ * sem depender de query string — UMA callback URL serve N tenants.
+ * Messenger: entry.id / messaging.recipient.id = page_id.
+ * Instagram DM: entry.changes[].value.recipient.id = instagram_id da página.
+ */
+export async function resolveProfissionalFromEvent(event: any): Promise<string | null> {
+  const entry = event?.entry?.[0]
+  const changes = entry?.changes?.[0]
+  const messaging = entry?.messaging?.[0]
+  const value = changes?.value
+
+  const candidatos = [
+    entry?.id,
+    messaging?.recipient?.id,
+    value?.recipient?.id,
+    value?.metadata?.page_id,
+    messaging?.sender?.id,
+  ].filter(Boolean) as string[]
+
+  if (!candidatos.length) return null
+
   const supabase = createAdminClient()
+  const ors = candidatos.map((c) => `page_id.eq.${c}`).concat(
+    candidatos.map((c) => `instagram_id.eq.${c}`)
+  )
+
+  const { data, error } = await supabase
+    .from("meta_connections")
+    .select("profissional_id")
+    .or(ors.join(","))
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return data.profissional_id
+}
+
+export async function handleWebhookEvent(event: any) {
+  const supabase = createAdminClient()
+
+  // Multi-tenant: resolve o profissional pelo page_id/instagram_id do evento
+  const profissional_id = await resolveProfissionalFromEvent(event)
+  if (!profissional_id) {
+    console.warn("[meta/webhook] evento sem tenant correspondente, ignorado")
+    return
+  }
+
   const entry = event.entry?.[0]
   const messaging = entry?.messaging?.[0] || entry?.changes?.[0]?.value?.messaging?.[0]
 
@@ -162,7 +250,8 @@ export async function handleWebhookEvent(
   if (!text || !senderId) return
 
   // Determine platform
-  const platform = entry?.changes?.[0]?.field === "instagram" ? "instagram" : "messenger"
+  // Messenger: eventos vêm em entry.messaging. Instagram DM: entry.changes (field "messages").
+  const platform = entry?.messaging ? "messenger" : "instagram"
 
   // Save message
   await supabase.from("meta_messages").insert({

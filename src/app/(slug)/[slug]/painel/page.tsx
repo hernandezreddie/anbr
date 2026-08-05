@@ -11,8 +11,11 @@ import { Toast } from "@/components/ui/Toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { UpgradeBanner } from "@/components/painel/UpgradeBanner";
+import { OnboardingWizard } from "@/components/painel/OnboardingWizard";
+import { InsightCard } from "@/components/painel/InsightCard";
+import { DashboardCharts } from "@/components/painel/DashboardCharts";
 import { usePainelPrimary } from "./primary-context";
-import { gerarAcoes, ACRO_TIPO_META, type AcaoPainel } from "@/lib/acoes-painel";
+import { gerarAcoes, ACRO_TIPO_META } from "@/lib/acoes-painel";
 import { getMensagensPadrao } from "@/lib/servicos-padrao";
 import { contrastante, accento } from "@/lib/cores";
 import {
@@ -29,11 +32,7 @@ import {
   TrendingUp,
   Clock,
   AlertTriangle,
-  ChevronRight,
-  Star,
   Sparkles,
-  ArrowUpRight,
-  MoreHorizontal,
   Palette,
   QrCode,
   ListOrdered,
@@ -68,6 +67,7 @@ type Profissional = {
   pix_cidade: string;
   nome: string;
   whatsapp: string;
+  plano?: string | null;
 };
 
 type Pagamento = {
@@ -82,6 +82,16 @@ const HOJE = () => isoLocal(new Date());
 const AMANHA = () => isoLocal(new Date(Date.now() + 86400000));
 
 const fmtR$ = (n: number) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
+const isThisWeek = (d: string) => {
+  const date = new Date(d + "T12:00:00");
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 7);
+  return date >= startOfWeek && date < endOfWeek;
+};
 const fmtData = (d: string | null, h: string | null) => {
   if (!d) return "A combinar";
   const [y, m, dd] = d.split("-");
@@ -111,7 +121,7 @@ const mapsLink = (a: Agendamento) =>
 const onibusLink = (a: Agendamento) =>
   `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(enderecoCompleto(a))}&travelmode=transit`;
 
-function googleCalLink(a: Agendamento, profissionalNome: string): string | null {
+function googleCalLink(a: Agendamento): string | null {
   if (!a.data) return null;
   const [y, m, d] = a.data.split("-").map(Number);
   const [hh, mi] = (a.hora ?? "09:00").slice(0, 5).split(":").map(Number);
@@ -301,8 +311,8 @@ function Card({
               <Phone size={13} /> Ligar
             </a>
           )}
-          {googleCalLink(a, profissional.primeiro_nome) && (
-            <a href={googleCalLink(a, profissional.primeiro_nome)!} target="_blank" rel="noopener noreferrer"
+          {googleCalLink(a) && (
+            <a href={googleCalLink(a)!} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs text-neutral-500 transition-all hover:bg-neutral-100 hover:text-neutral-700">
               <Calendar size={13} /> Agenda
             </a>
@@ -549,9 +559,9 @@ export default function PainelPage() {
   const [categoria, setCategoria] = useState<string | null>(null);
   const [msgVariante, setMsgVariante] = useState(0);
   const [pagoIds, setPagoIds] = useState<Set<string>>(new Set());
+  const [pgList, setPgList] = useState<Pagamento[]>([]);
   const [ganho, setGanho] = useState(0);
   const [nPagos, setNPagos] = useState(0);
-  const [ganhoAnterior, setGanhoAnterior] = useState(0);
   const [aReceber, setAReceber] = useState(0);
   const [nAReceber, setNAReceber] = useState(0);
   const [semanaValor, setSemanaValor] = useState(0);
@@ -603,15 +613,11 @@ export default function PainelPage() {
       pgs.filter((p) => p.status === "pago").map((p) => p.agendamento_id).filter((id): id is string => !!id)
     );
     setPagoIds(idsPagos);
+    setPgList(pgs);
     const mes = HOJE().slice(0, 7);
-    const dAnt = new Date();
-    dAnt.setDate(1);
-    dAnt.setMonth(dAnt.getMonth() - 1);
-    const mesAnt = isoLocal(dAnt).slice(0, 7);
     const pagos = pgs.filter((p) => p.status === "pago" && (p.pago_em ?? "").startsWith(mes));
     setGanho(soma(pagos));
     setNPagos(pagos.length);
-    setGanhoAnterior(soma(pgs.filter((p) => p.status === "pago" && (p.pago_em ?? "").startsWith(mesAnt))));
 
     const pendentes = lista.filter((a) => a.status === "concluido" && !idsPagos.has(a.id));
     setAReceber(soma(pendentes));
@@ -644,7 +650,15 @@ export default function PainelPage() {
 
   async function mudarStatus(id: string, status: string) {
     setBusy(id);
-    await supabase.from("agendamentos").update({ status }).eq("id", id);
+    try {
+      await fetch(`/api/agendamentos/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+    } catch {
+      flash("Erro ao atualizar status.");
+    }
     await load();
     setBusy(null);
   }
@@ -755,6 +769,9 @@ export default function PainelPage() {
       {/* Upgrade Banner */}
       <UpgradeBanner slug={slug} />
 
+      {/* Onboarding Wizard */}
+      {profissional && <OnboardingWizard slug={slug} profissionalId={profissional.id} />}
+
       {/* Guia de uso */}
       <AnimatePresence>
         {guiaAberto && <GuiaPainel slug={slug} onFechar={fecharGuia} />}
@@ -802,6 +819,22 @@ export default function PainelPage() {
           />
         )}
       </div>
+
+      {/* Sugestões proativas */}
+      <InsightCard
+        nFaltas={items.filter((a) => a.status === "cancelado" && a.data && isThisWeek(a.data)).length}
+        nAgendamentos={nPagos + nAReceber}
+        cotaUsada={items.length}
+        cotaMax={profissional?.plano === "gratis" ? 30 : 0}
+        slug={slug}
+      />
+
+      {/* Dashboard Analítico */}
+      <DashboardCharts
+        agendamentos={items as any}
+        pagamentos={pgList}
+        slug={slug}
+      />
 
       {/* Sections */}
       {loading ? (

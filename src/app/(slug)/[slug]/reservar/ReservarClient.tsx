@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, useMemo, useEffect, Fragment } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import type { ProfissionalConfig, Servico, Adicional, Frequencia } from "@/types";
+import { useState, useMemo, useEffect, Fragment, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { ProfissionalConfig, Servico } from "@/types";
 import { estimar } from "@/lib/precos";
 import { mensagemReserva, linkWhatsApp } from "@/lib/whatsapp";
 import { contrastante, accento } from "@/lib/cores";
 import { Calendar, Clock, Check, ChevronRight, Sparkles, Star, ArrowLeft, CheckCircle2, X, Tag } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 
 const round05 = (n: number) => Math.round(n * 2) / 2;
+
+const WORK_INICIO = 8 * 60;
+const WORK_FIM = 20 * 60;
 
 function SectionTitle({ number, title, color }: { number: string; title: string; color: string }) {
   return (
@@ -108,7 +111,7 @@ function Counter({
   );
 }
 
-function ChipButton<T extends string>({
+function ChipButton({
   label,
   suffix,
   selected,
@@ -156,17 +159,24 @@ const itemVariants = {
 
 export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const primary = config.configuracao?.cor_primaria || "#059669";
-  const secondary = config.configuracao?.cor_secundaria || "#1c1917";
   const headingFont = config.configuracao?.fonte_titulo || "Fraunces";
   const bodyFont = config.configuracao?.fonte_corpo || "Inter";
   const categoria = config.profissional.categoria || "outro";
   const usaComodos = categoria === "limpeza";
 
-  const [servicoId, setServicoId] = useState<string>(config.servicos[0]?.id || "");
+  const servicoInicial = () => {
+    if (typeof window !== "undefined") {
+      const query = new URLSearchParams(window.location.search).get("servico");
+      if (query && config.servicos.some((s) => s.id === query)) return query;
+    }
+    return config.servicos[0]?.id || "";
+  };
+
+  const [servicoId, setServicoId] = useState<string>(servicoInicial);
   const [quartos, setQuartos] = useState(0);
   const [banheiros, setBanheiros] = useState(0);
   const [adicionaisSel, setAdicionaisSel] = useState<string[]>([]);
-  const [freqId, setFreqId] = useState<string>("pontual");
+  const [freqId, setFreqId] = useState<string | null>(null);
   const [nome, setNome] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [endereco, setEndereco] = useState("");
@@ -176,9 +186,13 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const [submitting, setSubmitting] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [erroMsg, setErroMsg] = useState("");
+  const [reservaMsg, setReservaMsg] = useState("");
   const [ocupados, setOcupados] = useState<{ inicio: string; minutos: number }[]>([]);
   const [limiteDia, setLimiteDia] = useState(0);
   const [totalDia, setTotalDia] = useState(0);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const servico = config.servicos.find((s) => s.id === servicoId);
   const frequencia = config.frequencias.find((f) => f.slug === freqId) || null;
@@ -217,55 +231,58 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
     return hh * 60 + mm;
   };
 
-  const WORK_INICIO = 8 * 60;
-  const WORK_FIM = 20 * 60;
-
   const duracaoMin = servico
     ? isPrecoFixo
       ? servico.duracao_minutos || 60
       : Math.max(30, Math.round((orcamento?.horas || 1) * 60))
     : 60;
 
-  const minDate = new Date().toISOString().split("T")[0];
+  const agoraLocal = new Date();
+  const minDate = `${agoraLocal.getFullYear()}-${String(agoraLocal.getMonth() + 1).padStart(2, "0")}-${String(agoraLocal.getDate()).padStart(2, "0")}`;
 
-  const indisponivel = (h: string): boolean => {
-    const inicio = horaParaMin(h);
-    if (inicio < WORK_INICIO || inicio + duracaoMin > WORK_FIM) return true;
-    if (data === minDate) {
-      const agora = new Date().getHours() * 60 + new Date().getMinutes();
-      if (inicio <= agora) return true;
-    }
-    return ocupados.some((o) => {
-      const oIni = horaParaMin(o.inicio);
-      const oFim = oIni + o.minutos;
-      return inicio < oFim && inicio + duracaoMin > oIni;
-    });
-  };
+  const indisponivel = useCallback(
+    (h: string): boolean => {
+      const inicio = horaParaMin(h);
+      if (inicio < WORK_INICIO || inicio + duracaoMin > WORK_FIM) return true;
+      if (data === minDate) {
+        const agora = new Date().getHours() * 60 + new Date().getMinutes();
+        if (inicio <= agora) return true;
+      }
+      return ocupados.some((o) => {
+        const oIni = horaParaMin(o.inicio);
+        const oFim = oIni + o.minutos;
+        return inicio < oFim && inicio + duracaoMin > oIni;
+      });
+    },
+    [data, minDate, ocupados, duracaoMin]
+  );
 
   useEffect(() => {
-    if (!data) {
-      setOcupados([]);
-      return;
-    }
     let ativo = true;
-    fetch(`/api/agendamentos?slug=${config.profissional.slug}&data=${data}`)
-      .then((r) => r.json())
-      .then((j) => {
+    const carregar = async () => {
+      if (!data) {
+        setOcupados([]);
+        setLimiteDia(0);
+        setTotalDia(0);
+        return;
+      }
+      try {
+        const r = await fetch(`/api/agendamentos?slug=${config.profissional.slug}&data=${data}`);
+        const j = await r.json();
         if (!ativo) return;
         setOcupados(Array.isArray(j?.ocupados) ? j.ocupados : []);
         setLimiteDia(Number(j?.max_agendamentos_dia) || 0);
         setTotalDia(Number(j?.total_dia) || 0);
-      })
-      .catch(() => {});
+        setHora((h) => (h && indisponivel(h) ? "" : h));
+      } catch {
+        // rede/erro — mantém estado anterior
+      }
+    };
+    carregar();
     return () => {
       ativo = false;
     };
-  }, [data, config.profissional.slug]);
-
-  useEffect(() => {
-    if (hora && indisponivel(hora)) setHora("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [servicoId, data, ocupados, duracaoMin]);
+  }, [data, config.profissional.slug, indisponivel]);
 
   const handleSubmit = async () => {
     if (!orcamento || !nome || !whatsapp || !data || !hora) return;
@@ -291,6 +308,9 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
           slug: config.profissional.slug,
           servico_id: servicoId,
           adicionais: adicionaisNomes,
+          adicionais_ids: adicionaisSel,
+          quartos,
+          banheiros,
           frequencia,
           horas: orcamento.horas,
           valor: orcamento.total,
@@ -306,32 +326,39 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
         const j = await res.json().catch(() => null);
         if (res.status === 409 && j?.limite) {
           setErroMsg(j.error || "Limite de agendamentos atingido nesse dia.");
-          setSubmitting(false);
-          return;
-        }
-        if (res.status === 409 && j?.conflito) {
+        } else if (res.status === 409 && j?.conflito) {
           setErroMsg(j.error || "Esse horário acabou de ser reservado. Escolha outro.");
-          setSubmitting(false);
-          return;
+        } else if (res.status === 403 && j?.upgrade) {
+          setErroMsg(
+            j.error ||
+              `Seu plano grátis não permite mais agendamentos. Faça upgrade em /${config.profissional.slug}/painel/plano.`,
+          );
+        } else {
+          setErroMsg(j?.error || "Não foi possível salvar o agendamento. Tente novamente.");
         }
-        throw new Error("Falha ao salvar agendamento");
+        setSubmitting(false);
+        return;
       }
+
+      const msg = mensagemReserva(config.profissional.primeiro_nome, {
+        nome,
+        servico: orcamento.servico_nome + extras,
+        adicionais: adicionaisNomes,
+        horas: orcamento.horas,
+        endereco,
+        data,
+        hora,
+        frequencia: frequencia?.nome || "Pontual",
+        total: orcamento.total,
+      });
+
+      setReservaMsg(msg);
       setEnviado(true);
     } catch (err) {
       console.error("Erro ao salvar:", err);
+      setErroMsg("Erro de conexão. Verifique sua internet e tente novamente.");
     }
 
-    const msg = mensagemReserva(config.profissional.primeiro_nome, {
-      nome,
-      servico: orcamento.servico_nome + extras,
-      adicionais: adicionaisNomes,
-      horas: orcamento.horas,
-      endereco,
-      frequencia: frequencia?.nome || "Pontual",
-      total: orcamento.total,
-    });
-
-    window.open(linkWhatsApp(msg, config.profissional.whatsapp), "_blank");
     setSubmitting(false);
   };
 
@@ -344,22 +371,22 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
     return slots;
   }, []);
 
-  let passo = 2;
-  if (isPrecoFixo) passo = 1;
-
   const step2Label = isPrecoFixo ? "2" : "3";
   const step3Label = isPrecoFixo ? "3" : "4";
   const step4Label = isPrecoFixo ? "4" : "5";
   const step5Label = isPrecoFixo ? "5" : "6";
 
-  const steps = [
-    { label: "Serviço", key: "servico" },
-    ...(!isPrecoFixo && usaComodos ? [{ label: "Cômodos", key: "comodos" }] : []),
-    ...(adicionaisFiltrados.length > 0 ? [{ label: "Extras", key: "extras" }] : []),
-    { label: "Frequência", key: "frequencia" },
-    { label: "Data/Hora", key: "datetime" },
-    { label: "Dados", key: "dados" },
-  ];
+  const steps = useMemo(
+    () => [
+      { label: "Serviço", key: "servico", slug: "servico" },
+      ...(!isPrecoFixo && usaComodos ? [{ label: "Cômodos", key: "comodos", slug: "comodos" }] : []),
+      ...(adicionaisFiltrados.length > 0 ? [{ label: "Extras", key: "extras", slug: "extras" }] : []),
+      { label: "Frequência", key: "frequencia", slug: "frequencia" },
+      { label: "Data/Hora", key: "datetime", slug: "data-hora" },
+      { label: "Dados", key: "dados", slug: "dados" },
+    ],
+    [isPrecoFixo, usaComodos, adicionaisFiltrados.length]
+  );
 
   const stepDone: Record<string, boolean> = {
     servico: !!servicoId,
@@ -369,8 +396,44 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
     datetime: !!(data && hora),
     dados: !!(nome && whatsapp),
   };
-  if (stepDone.frequencia || stepDone.datetime || stepDone.dados) stepDone.extras = true;
+  if (stepDone.frequencia || stepDone.datetime || stepDone.dados) {
+    stepDone.extras = true;
+    stepDone.comodos = true;
+  }
   const currentIdx = steps.findIndex((s) => !stepDone[s.key]);
+
+  // Deep links ?step=: ao montar, salta para o passo se os anteriores estão completos
+  const initialStepDone = useRef(false);
+  useEffect(() => {
+    if (initialStepDone.current) return;
+    initialStepDone.current = true;
+    const stepParam = searchParams.get("step");
+    if (!stepParam) return;
+    const idx = steps.findIndex((s) => s.slug === stepParam);
+    if (idx === -1) return;
+    const predecesoresCompletos = steps.slice(0, idx).every((s) => stepDone[s.key]);
+    if (!predecesoresCompletos) return;
+    const el = document.getElementById(`step-${stepParam}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // URL sync — single source of truth, prevents infinite loops
+  const lastPushedSlug = useRef<string | null>(null);
+  useEffect(() => {
+    const targetSlug = steps[currentIdx]?.slug;
+    if (!targetSlug) return;
+    if (lastPushedSlug.current === targetSlug) return;
+    const currentUrlStep = searchParams.get('step');
+    if (currentUrlStep === targetSlug) {
+      lastPushedSlug.current = targetSlug;
+      return;
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('step', targetSlug);
+    lastPushedSlug.current = targetSlug;
+    router.replace(`${window.location.pathname}?${params.toString()}`, { scroll: false });
+  }, [currentIdx, searchParams, router, steps]);
 
   return (
     <div data-niche={categoria} style={{ fontFamily: bodyFont }}>
@@ -426,30 +489,42 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
       <div className="container-x -mt-8 pb-16">
         {/* Step Progress Indicator */}
         {!enviado && (
-          <div className="mb-8 flex items-center justify-center gap-2 overflow-x-auto py-3">
+          <div className="relative z-10 mb-8 flex items-center justify-center gap-2 overflow-x-auto py-3">
             {steps.map((step, i) => {
               const completed = i < currentIdx;
               const current = i === currentIdx;
+              const canClick = completed || current;
               return (
                 <Fragment key={step.key}>
                   {i > 0 && (
                     <div
                       className="h-px w-6 sm:w-10"
-                      style={{ backgroundColor: completed ? primary : "#e5e5e5" }}
+                      style={{ backgroundColor: completed ? primary : "#d1d1d1" }}
                     />
                   )}
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1 cursor-pointer">
                     <div
-                      className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${
-                        current ? "text-white shadow-sm" : completed ? "text-white" : "bg-neutral-100 text-neutral-400"
+                      className={`flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors ${
+                        current
+                          ? "border-transparent text-white shadow-sm"
+                          : completed
+                            ? "border-transparent text-white"
+                            : "border-primary/30 bg-primary/10 text-primary"
                       }`}
                       style={completed || current ? { backgroundColor: primary } : undefined}
+                      onClick={canClick ? () => {
+                        const el = document.getElementById(`step-${step.slug}`);
+                        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        const params = new URLSearchParams(searchParams.toString());
+                        params.set("step", step.slug);
+                        router.push(`${window.location.pathname}?${params.toString()}`);
+                      } : undefined}
                     >
                       {completed ? <Check size={12} /> : i + 1}
                     </div>
                     <span
                       className={`text-[10px] font-medium whitespace-nowrap ${
-                        completed || current ? "text-ink" : "text-neutral-400"
+                        completed || current ? "text-ink" : "text-primary"
                       }`}
                     >
                       {step.label}
@@ -481,12 +556,11 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                   Solicitação enviada!
                 </h2>
                 <p className="mt-3 text-sm leading-relaxed text-neutral-500">
-                  Abrimos o WhatsApp para você confirmar o pedido com{" "}
-                  <b className="text-neutral-800">{config.profissional.primeiro_nome}</b>.
-                  Se o WhatsApp não abriu, toque no botão abaixo.
+                  Seu agendamento com{" "}
+                  <b className="text-neutral-800">{config.profissional.primeiro_nome}</b> foi salvo. Toque no botão abaixo para confirmar via WhatsApp.
                 </p>
                 <a
-                  href={linkWhatsApp(`Olá ${config.profissional.primeiro_nome}! Confirmando meu agendamento que enviei pelo site.`, config.profissional.whatsapp)}
+                  href={linkWhatsApp(reservaMsg, config.profissional.whatsapp)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-semibold transition-transform hover:scale-[1.01]"
@@ -525,7 +599,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
             {/* Left Column - Form */}
             <div className="space-y-10">
               {/* Step 1: Service */}
-              <motion.section variants={itemVariants}>
+              <motion.section id="step-servico" variants={itemVariants}>
                 <SectionTitle number="1" title="Tipo de serviço" color={primary} />
                 <div className="grid gap-3 sm:grid-cols-2">
                   {config.servicos.map((s) => (
@@ -533,7 +607,10 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                       key={s.id}
                       s={s}
                       selected={servicoId === s.id}
-                      onClick={() => setServicoId(s.id)}
+                      onClick={() => {
+                        setServicoId(s.id);
+                        setHora("");
+                      }}
                       color={primary}
                     />
                   ))}
@@ -542,11 +619,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
 
               {/* Step 2: Rooms (only for limpeza por_hora) */}
               {servico && !isPrecoFixo && usaComodos && (
-                <motion.section
-                  variants={itemVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
+                <motion.section id="step-comodos" variants={itemVariants} initial="hidden" animate="visible">
                   <SectionTitle number="2" title="Cômodos" color={primary} />
                   <div className="flex flex-wrap gap-8">
                     <Counter label="Quartos" value={quartos} onChange={setQuartos} />
@@ -557,7 +630,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
 
               {/* Step 3 / 2: Add-ons */}
               {adicionaisFiltrados.length > 0 && (
-                <motion.section variants={itemVariants}>
+                <motion.section id="step-extras" variants={itemVariants}>
                   <SectionTitle
                     number={step2Label}
                     title="Adicionais"
@@ -585,7 +658,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
               )}
 
               {/* Step 4 / 3: Frequency */}
-              <motion.section variants={itemVariants}>
+              <motion.section id="step-frequencia" variants={itemVariants}>
                 <SectionTitle number={step3Label} title="Frequência" color={primary} />
                 <div className="flex flex-wrap gap-2">
                   {config.frequencias.map((f) => (
@@ -602,7 +675,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
               </motion.section>
 
               {/* Step 5 / 4: Date & Time */}
-              <motion.section variants={itemVariants}>
+              <motion.section id="step-data-hora" variants={itemVariants}>
                 <SectionTitle number={step4Label} title="Data e horário" color={primary} />
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
@@ -612,7 +685,10 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                       <input
                         type="date"
                         value={data}
-                        onChange={(e) => setData(e.target.value)}
+                        onChange={(e) => {
+                          setData(e.target.value);
+                          setHora("");
+                        }}
                         min={minDate}
                         className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 pl-12 text-sm outline-none transition-all focus:border-teal-500 focus:shadow-md"
                         style={{ borderColor: data ? primary : undefined }}
@@ -655,7 +731,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
               </motion.section>
 
               {/* Step 6 / 5: User Data */}
-              <motion.section variants={itemVariants}>
+              <motion.section id="step-dados" variants={itemVariants}>
                 <SectionTitle number={step5Label} title="Seus dados" color={primary} />
                 <div className="space-y-4">
                   <input
@@ -809,6 +885,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                         className="w-full"
                         disabled={!nome || !whatsapp || !data || !hora || submitting}
                         style={{ backgroundColor: primary }}
+                        onClick={handleSubmit}
                       >
                         {submitting ? (
                           "Salvando..."

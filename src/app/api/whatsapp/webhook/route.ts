@@ -1,10 +1,32 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { processIncomingMessage, sendText } from "@/lib/whatsapp/evolution"
+import { timingSafeEqual } from "node:crypto"
 
 export async function POST(req: NextRequest) {
   const profissional_id = req.nextUrl.searchParams.get("profissional_id")
   if (!profissional_id) return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 })
+
+  const supabase = createAdminClient()
+  const { data: instancia } = await supabase
+    .from("whatsapp_instances")
+    .select("webhook_secret")
+    .eq("profissional_id", profissional_id)
+    .maybeSingle()
+
+  if (!instancia?.webhook_secret) {
+    return NextResponse.json({ error: "WhatsApp não configurado" }, { status: 404 })
+  }
+
+  const assinatura = req.headers.get("x-webhook-secret") || ""
+  const secretBuffer = Buffer.from(instancia.webhook_secret);
+  const assinaturaBuffer = Buffer.from(assinatura);
+  if (
+    secretBuffer.length !== assinaturaBuffer.length ||
+    !timingSafeEqual(secretBuffer, assinaturaBuffer)
+  ) {
+    return NextResponse.json({ error: "Assinatura inválida" }, { status: 401 })
+  }
 
   try {
     const body = await req.json()
@@ -41,7 +63,6 @@ export async function POST(req: NextRequest) {
     )
 
     // Check if agent should auto-reply
-    const supabase = createAdminClient()
     const { data: config } = await supabase
       .from("agent_configs")
       .select("enabled, connectors")

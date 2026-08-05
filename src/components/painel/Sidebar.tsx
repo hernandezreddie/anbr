@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 const links = [
   { href: "", label: "Dashboard", icon: "📊" },
   { href: "/agendamentos", label: "Agendamentos", icon: "📅" },
+  { href: "/ads", label: "AI Ads", icon: "📢" },
   { href: "/perfil", label: "Meu Perfil", icon: "👤" },
 ];
 

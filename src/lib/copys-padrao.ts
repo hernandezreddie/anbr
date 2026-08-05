@@ -36,6 +36,24 @@ export type CopyPadrao = {
   variantes: CopyVariante[];
 };
 
+/** Textos editáveis manualmente pelo profissional — sobrescrevem o copy padrão. */
+export type TextosPersonalizados = Partial<Pick<CopyPadrao,
+  | "hero_titulo"
+  | "hero_destaque"
+  | "hero_sub"
+  | "hero_cta1"
+  | "hero_cta2"
+  | "confianca_eyebrow"
+  | "confianca_titulo"
+  | "confianca_hooks"
+  | "servicos_titulo"
+  | "servicos_sub"
+  | "cta_titulo"
+  | "cta_sub"
+  | "cta_btn"
+  | "whatsapp_msg"
+>>;
+
 export const VARIANTS_ATUAL = { nome: "Equilibrado", descricao: "O texto padrão: claro e acolhedor" };
 
 export const COPYS_PADRAO: Record<CategoriaId, CopyPadrao> = {
@@ -873,6 +891,24 @@ export function getCopyPadrao(categoria?: string | null, variante = 0): CopyPadr
     confianca_titulo: v.confianca_titulo,
     cta_titulo: v.cta_titulo,
     cta_sub: v.cta_sub,
+  };
+}
+
+/**
+ * Retorna o copy efetivo da landing: o padrão do nicho/variante
+ * mesclado com os textos personalizados que o profissional editou manualmente.
+ * Textos personalizados SEMPRE têm prioridade (quando presentes).
+ */
+export function getCopyEfetivo(
+  categoria: string | null | undefined,
+  variante = 0,
+  personalizados?: TextosPersonalizados | null
+): CopyPadrao {
+  const base = getCopyPadrao(categoria, variante);
+  if (!personalizados || Object.keys(personalizados).length === 0) return base;
+  return {
+    ...base,
+    ...personalizados,
   };
 }
 

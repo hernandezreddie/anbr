@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { SiteNav } from "@/components/site/SiteNav";
 import {
   Check, ArrowRight, CalendarCheck, MessageCircle, Bot,
   Palette, LayoutDashboard, Bell, Moon, Zap, Shield,
   Wrench, Scissors, Stethoscope, Dumbbell, Brush, ChefHat,
-  Camera, MonitorSmartphone, HelpCircle, Globe, Hand, HeartPulse, Car, PawPrint,
+  Camera, MonitorSmartphone, HelpCircle, Globe, Hand, HeartPulse, Car, PawPrint, TrendingUp, Clock, X,
 } from "lucide-react";
 
 type CategoriaServico = {
@@ -18,92 +18,86 @@ type CategoriaServico = {
 };
 
 const categorias: CategoriaServico[] = [
-  { icone: <Wrench size={28} />, nome: "Limpeza e Conservação", exemplos: "Diaristas, faxina, pós-obra" },
   { icone: <Scissors size={28} />, nome: "Beleza e Estética", exemplos: "Cabeleireiro, manicure, depilação" },
-  { icone: <Hand size={28} />, nome: "Manicure & Nail Designer", exemplos: "Alongamento em gel, fibra de vidro, nail art" },
+  { icone: <Wrench size={28} />, nome: "Limpeza e Conservação", exemplos: "Diaristas, faxina, pós-obra" },
   { icone: <Stethoscope size={28} />, nome: "Saúde e Bem-estar", exemplos: "Massagem, acupuntura, nutrição" },
   { icone: <HeartPulse size={28} />, nome: "Clínica e Consultório", exemplos: "Médicos, dentistas, fisioterapia" },
   { icone: <Dumbbell size={28} />, nome: "Personal & Esportes", exemplos: "Personal trainer, pilates, yoga" },
   { icone: <Car size={28} />, nome: "Automotivo", exemplos: "Lava-jato, polimento, mecânica" },
-  { icone: <PawPrint size={28} />, nome: "Pet Shop & Veterinária", exemplos: "Veterinário, banho e tosa, vacinas" },
+  { icone: <PawPrint size={28} />, nome: "Pet Shop & Veterinária", exemplos: "Banho e tosa, consultas, vacinas" },
+  { icone: <Hand size={28} />, nome: "Nail Designer", exemplos: "Alongamento em gel, fibra de vidro" },
   { icone: <Brush size={28} />, nome: "Artes e Ofícios", exemplos: "Tatuagem, pintura, artesanato" },
   { icone: <ChefHat size={28} />, nome: "Gastronomia", exemplos: "Chef em casa, buffet, confeitaria" },
-  { icone: <Camera size={28} />, nome: "Fotografia e Eventos", exemplos: "Ensaio, festa, casamento" },
-  { icone: <MonitorSmartphone size={28} />, nome: "Consultoria e Aulas", exemplos: "Mentoria, coaching, aulas particulares" },
+  { icone: <Camera size={28} />, nome: "Fotografia e Eventos", exemplos: "Ensaio, festas, casamentos" },
+  { icone: <MonitorSmartphone size={28} />, nome: "Consultoria e Aulas", exemplos: "Mentoria, coaching, reforço escolar" },
 ];
 
-const pilares = [
-  {
-    icone: <Globe size={24} />,
-    titulo: "Site profissional com a sua cara",
-    desc: "Página completa com seus serviços, preços e horários — suas cores, seu logo, seu domínio próprio nos planos Profissional e IA Premium.",
-  },
-  {
-    icone: <CalendarCheck size={24} />,
-    titulo: "Agenda, Pix e lembretes no WhatsApp",
-    desc: "O cliente marca sozinho, 24h por dia. Confirmação e lembrete automáticos no WhatsApp reduzem as faltas — e o pagamento via Pix chega direto pra você.",
-  },
-  {
-    icone: <Bot size={24} />,
-    titulo: "AI Agent nas suas redes sociais",
-    desc: "Conecte WhatsApp, Instagram e Facebook: a IA responde dúvidas, qualifica clientes e agenda por você — de dia, de noite, sem folga.",
-  },
+const problemas = [
+  { antes: "Cliente pergunta preço no WhatsApp e você demora 3h para responder", depois: "AI Agent responde em segundos, 24h por dia, com preços e horários certos" },
+  { antes: "Agenda no papel ou no celular: cliente desmarca em cima da hora e você perde o slot", depois: "Confirmação e lembrete automáticos no WhatsApp reduzem faltas em até 40%" },
+  { antes: "Você passa o dia no telefone marcando horário em vez de trabalhar", depois: "Sua página de agendamento vende por você: cliente escolhe, agenda e paga sozinho" },
 ];
 
 const beneficios = [
   {
-    icone: <Bell size={24} />,
-    titulo: "Reduza faltas em até 40%",
-    desc: "Lembretes automáticos pelo WhatsApp diminuem drasticamente os cancelamentos de última hora. Seu cliente recebe confirmação e lembrete sem você precisar ligar.",
+    icone: <CalendarCheck size={24} />,
+    titulo: "Sua página de agendamento 24h",
+    desc: "O cliente entra, escolhe o serviço, vê seus horários livres e agenda sozinho — de dia ou de noite. Você só aparece para atender.",
+    destaque: "Pare de perder cliente por não responder WhatsApp a tempo.",
   },
   {
-    icone: <Moon size={24} />,
-    titulo: "Atenda 24 horas por dia",
-    desc: "Enquanto você dorme, sua página de agendamento continua funcionando. O cliente marca o horário direto, na hora que quiser — sem telefonemas, sem esperar.",
-  },
-  {
-    icone: <Palette size={24} />,
-    titulo: "Imagem profissional",
-    desc: "Uma página com a cara do seu negócio: suas cores, seu logo, suas fotos. Domínio próprio nos planos Profissional e IA Premium. Causa uma impressão que vende.",
+    icone: <Bot size={24} />,
+    titulo: "AI Agent atende por você no WhatsApp, Instagram e Facebook",
+    desc: "A IA responde dúvidas sobre preços e horários, qualifica leads e fecha agendamentos automaticamente. Você acompanha tudo pelo painel.",
+    destaque: "Incluso nos planos Profissional e IA Premium.",
   },
   {
     icone: <LayoutDashboard size={24} />,
-    titulo: "Tudo em um painel só",
-    desc: "Agenda centralizada, cadastro de clientes, relatórios de faturamento e Pix integrado. Um painel completo sem planilha, caderninho ou maquininha.",
+    titulo: "Painel completo: agenda, clientes, Pix e relatórios",
+    desc: "Agenda centralizada, cadastro de clientes com histórico, pagamentos via Pix, lembretes automáticos e relatórios de faturamento — tudo em um lugar só.",
+    destaque: "Chega de planilha, caderninho e maquininha separados.",
+  },
+  {
+    icone: <Bell size={24} />,
+    titulo: "Lembretes automáticos que reduzem faltas em até 40%",
+    desc: "Confirmação e lembrete no WhatsApp no dia anterior e no mesmo dia. O cliente confirma com um toque — e se cancelar, o horário libera automaticamente.",
+    destaque: "Cada falta evitada é dinheiro que entra no seu bolso.",
+  },
+  {
+    icone: <Palette size={24} />,
+    titulo: "Com a sua cara: suas cores, seu logo, seu domínio",
+    desc: "Personalize tudo visualmente. Nos planos Profissional e IA Premium, use seu próprio domínio (ex: seu-nome.com.br) e passe a imagem que seu negócio merece.",
+    destaque: "Sem parecer 'mais um marketplace' — a página é 100% sua.",
   },
   {
     icone: <Shield size={24} />,
-    titulo: "Seus dados, seu negócio",
-    desc: "Você é dono da sua página, do seu domínio e da sua base de clientes. Sem dependência de marketplace, sem comissão sobre cada atendimento.",
-  },
-  {
-    icone: <Zap size={24} />,
-    titulo: "Sem complicação",
-    desc: "Crie seu sistema em menos de 5 minutos, sem programação, sem designer, sem burocracia. Suporte humanizado em português sempre que precisar.",
+    titulo: "Seus dados, sua base de clientes, zero comissão",
+    desc: "Você é dono da sua página, do seu domínio e da sua lista de clientes. Sem repasse de comissão por agendamento. Comece grátis, cancele quando quiser.",
+    destaque: "Planos a partir de R$ 49/mês — menos que uma pizza por mês.",
   },
 ];
 
 const passos = [
-  { titulo: "Cadastre seus serviços", desc: "Informe o que você faz, seus preços, horários e dias de atendimento. Leva 2 minutos — e não precisa de experiência nenhuma." },
-  { titulo: "Personalize sua página", desc: "Escolha cores, logo, fonte e template. Sua página de agendamento fica pronta com a sua cara, do seu jeito." },
-  { titulo: "Conecte o AI Agent e receba clientes", desc: "Conecte o agente ao seu WhatsApp e às suas redes sociais, cole o link no Instagram e comece a receber clientes 24h por dia." },
+  { titulo: "Cadastre seus serviços", tempo: "2 min", desc: "Informe o que você faz, seus preços, horários e dias de atendimento. Preencheu? Sua página já está no ar." },
+  { titulo: "Personalize sua página", tempo: "3 min", desc: "Escolha cores, logo, fonte e template. Sua página de agendamento fica pronta com a sua identidade visual." },
+  { titulo: "Conecte o AI Agent e receba clientes", tempo: "Instantâneo", desc: "Conecte o agente ao seu WhatsApp e redes sociais. Cole o link no Instagram e comece a receber agendamentos." },
 ];
 
 const precosPreview = [
-  { nome: "Grátis", preco: "R$ 0", destaque: false, slug: "/precos#gratis", desc: "30 agendamentos/mês" },
-  { nome: "Profissional", preco: "R$ 49", destaque: true, slug: "/precos#profissional", desc: "Domínio próprio + Google Calendar + AI Agent" },
-  { nome: "IA Premium", preco: "R$ 99", destaque: false, slug: "/precos#ia-premium", desc: "AI Agent + WhatsApp API" },
+  { nome: "Grátis", preco: "R$ 0", destaque: false, slug: "/precos#gratis", desc: "30 agendamentos/mês", extras: ["Página profissional", "Agendamento online 24h", "Confirmação no WhatsApp"] },
+  { nome: "Profissional", preco: "R$ 49", destaque: true, slug: "/precos#profissional", desc: "Tudo do Grátis + AI Agent + Google Calendar + domínio próprio", extras: ["AI Agent nas redes sociais", "Google Calendar sincronizado", "Domínio próprio (seu-nome.com.br)", "Relatórios de faturamento"] },
+  { nome: "IA Premium", preco: "R$ 99", destaque: false, slug: "/precos#ia-premium", desc: "Tudo do Profissional + WhatsApp API + anúncios inteligentes", extras: ["WhatsApp API (Meta oficial)", "AI Ads — IA cria anúncios para você", "Atendimento prioritário"] },
 ];
 
 const faq = [
   { q: "Preciso saber programação para criar meu sistema?", r: "Não. Você cadastra seus dados, escolhe um template e pronto — seu sistema está no ar em menos de 5 minutos. Tudo visual, sem uma linha de código." },
-  { q: "O que está incluído no sistema?", r: "Tudo o que seu negócio precisa: página profissional com seus serviços e preços, agendamento online 24h, confirmação e lembretes no WhatsApp, pagamento via Pix, painel completo de gestão e o AI Agent que atende no WhatsApp, Instagram e Facebook." },
-  { q: "Como funciona o AI Agent?", r: "Você conecta suas redes sociais ao agente e ele passa a atender no seu lugar: responde dúvidas sobre serviços e horários, qualifica clientes e agenda compromissos automaticamente, em português e em tempo real. Você acompanha tudo pelo painel." },
-  { q: "Posso usar meu próprio domínio?", r: "Sim! Nos planos Profissional e IA Premium você pode usar seu próprio domínio (ex: seu-nome.com.br). Ajudamos com a configuração do DNS." },
-  { q: "Como recebo os pagamentos?", r: "Seu cliente escolhe o serviço, agenda e paga com Pix direto para a sua chave. O valor cai na sua conta na hora, sem taxa da plataforma em cima." },
-  { q: "Tem algum custo? É realmente grátis?", r: "O plano Grátis é 100% gratuito, sem cartão de crédito, com 30 agendamentos por mês. Conforme seu negócio cresce, você pode migrar para um plano pago a partir de R$ 49/mês." },
-  { q: "Quais tipos de serviço funcionam no AN.BR?", r: "Qualquer serviço profissional: beleza, estética, saúde, limpeza, consultoria, aulas particulares, fotografia, eventos, personal trainer, tatuagem e muito mais. Se você cobra pelo seu tempo, o AN.BR funciona para você." },
-  { q: "Tem suporte em português?", r: "Sim, suporte humanizado em português. Nossa equipe está no Brasil e responde por WhatsApp e email de segunda a sexta." },
+  { q: "É realmente grátis? Qual é a pegadinha?", r: "O plano Grátis é 100% gratuito para sempre, com 30 agendamentos por mês. Sem cartão de crédito. Se seu negócio crescer, você faz upgrade para um plano pago — mas só se quiser." },
+  { q: "Como o AI Agent atende meus clientes?", r: "Você conecta seu WhatsApp, Instagram e Facebook ao agente. Ele responde dúvidas sobre serviços, preços e horários, qualifica o cliente e agenda no seu lugar. Tudo em português, 24h por dia. Você acompanha as conversas pelo painel." },
+  { q: "Vale a pena pagar R$ 49 pelo plano Profissional?", r: "Se você tem mais de 30 agendamentos por mês, sim. O plano se paga com 1 ou 2 agendamentos a mais que você não perderia. Além disso, o AI Agent sozinho economiza horas de WhatsApp todo dia. Menos que R$ 1,65 por dia." },
+  { q: "Posso usar meu próprio domínio (meu-nome.com.br)?", r: "Sim! Nos planos Profissional e IA Premium você conecta seu domínio próprio. Ajudamos com a configuração do DNS — leva 5 minutos." },
+  { q: "Como recebo os pagamentos?", r: "Seu cliente escolhe o serviço, agenda e paga com Pix direto para a sua chave. O valor cai na sua conta na hora. A plataforma não cobra taxa sobre cada agendamento." },
+  { q: "Quais tipos de serviço funcionam no AN.BR?", r: "Qualquer serviço profissional: beleza, estética, saúde, limpeza, consultoria, aulas particulares, fotografia, eventos, personal trainer, tatuagem, petshop e muito mais. Se você cobra pelo seu tempo, funciona." },
+  { q: "Tem suporte em português?", r: "Sim, suporte humanizado em português por WhatsApp e email. Nossa equipe está no Brasil e responde de segunda a sexta." },
 ];
 
 function Secao({ children, className = "", id }: { children: React.ReactNode; className?: string; id?: string }) {
@@ -138,6 +132,23 @@ function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   );
 }
 
+function AnimatedCounter({ end, suffix = "" }: { end: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    if (!isInView || started) return;
+    setStarted(true);
+  }, [isInView, started]);
+
+  return (
+    <span ref={ref} className="tabular-nums">
+      {started ? end : 0}{suffix}
+    </span>
+  );
+}
+
 export default function HomePage() {
   const [faqAberto, setFaqAberto] = useState<number | null>(null);
   const mesAtual = new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
@@ -158,18 +169,16 @@ export default function HomePage() {
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[var(--color-primary)]/10 px-4 py-1.5 text-sm font-medium text-[var(--color-primary)]">
               <Check size={14} />
-              Site + agenda + pagamentos + IA — tudo conectado
+              Grátis · 5 minutos · Sem cartão de crédito
             </div>
             <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Seu negócio inteiro online:<br />
-              <span className="italic text-[var(--color-primary)]">site, agenda e IA atendendo por você</span>
+              Seu negócio inteiro no digital:<br />
+              <span className="italic text-[var(--color-primary)]">site, agenda, Pix e IA atendendo por você</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-ink-soft sm:text-xl">
-              Página profissional, agendamento 24h, Pix e lembretes no WhatsApp. <br className="hidden sm:block" />
-              Conecte o AI Agent às suas redes sociais e ele atende por você — de dia e de noite.
+              Pare de perder clientes no WhatsApp. Crie sua página profissional, deixe o AI Agent atender 24h e receba agendamentos automáticos — sem precisar programar nada.
             </p>
 
-            {/* Honest facts */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-sm text-ink-soft">
               <span className="flex items-center gap-1.5">
                 <Check size={15} className="text-[var(--color-primary)]" />
@@ -177,7 +186,7 @@ export default function HomePage() {
               </span>
               <span className="flex items-center gap-1.5">
                 <Check size={15} className="text-[var(--color-primary)]" />
-                <strong className="text-ink">Pronto em 5 minutos</strong> sem programação
+                <strong className="text-ink">Pronto em 5 minutos</strong> — zero código
               </span>
               <span className="flex items-center gap-1.5">
                 <Check size={15} className="text-[var(--color-primary)]" />
@@ -192,9 +201,10 @@ export default function HomePage() {
               </Link>
               <Link href="/precos" className="flex items-center gap-2 rounded-xl border border-[var(--color-line)] bg-white px-8 py-4 text-sm font-medium text-ink transition-all hover:bg-[var(--color-bg)]">
                 <MonitorSmartphone size={18} />
-                Ver planos
+                Ver planos e preços
               </Link>
             </div>
+            <p className="mt-4 text-xs text-ink-soft/60">Cancele quando quiser. Upgrade só se você precisar.</p>
           </motion.div>
 
           {/* Premium mockup + AI chat card */}
@@ -209,7 +219,7 @@ export default function HomePage() {
                 <div className="h-3 w-3 rounded-full bg-red-400" />
                 <div className="h-3 w-3 rounded-full bg-amber-400" />
                 <div className="h-3 w-3 rounded-full bg-teal-400" />
-                <div className="ml-4 flex-1 rounded-md bg-[var(--color-line)]/50 px-3 py-1 text-left text-xs text-ink-soft">an.br/seu-negocio</div>
+                <div className="ml-4 flex-1 rounded-md bg-[var(--color-line)]/50 px-3 py-1 text-left text-xs text-ink-soft">seu-negocio.an.br</div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-12 text-left">
                 {/* Left: Service selection */}
@@ -288,7 +298,7 @@ export default function HomePage() {
                   </div>
                   <div className="mt-4 flex items-center gap-2 rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-700">
                     <MessageCircle size={14} />
-                    Você receberá a confirmação no WhatsApp
+                    Confirmação e lembrete enviados pelo WhatsApp
                   </div>
                 </div>
               </div>
@@ -301,9 +311,8 @@ export default function HomePage() {
               className="pointer-events-none absolute -bottom-10 left-0 z-10 hidden w-80 lg:block lg:-left-2 xl:-left-10"
             >
               <div className="rounded-2xl border border-[var(--color-line)] bg-white/95 p-5 text-left shadow-2xl shadow-[var(--color-primary)]/15 backdrop-blur">
-                {/* header */}
                 <div className="mb-3 flex items-center gap-3">
-                  <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-accent)] text-white shadow-md shadow-[var(--color-primary)]/30">
+                  <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-primary)] to-emerald-400 text-white shadow-md shadow-[var(--color-primary)]/30">
                     <Bot size={17} />
                     <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -312,20 +321,19 @@ export default function HomePage() {
                   </span>
                   <div>
                     <p className="text-sm font-semibold text-ink">AI Agent</p>
-                    <p className="text-[11px] font-medium text-emerald-600">Online · atende 24h</p>
+                    <p className="text-[11px] font-medium text-emerald-600">Online · responde em segundos</p>
                   </div>
                 </div>
 
-                {/* chat */}
                 <div className="space-y-2 text-xs">
                   <div className="ml-auto max-w-[88%] rounded-2xl rounded-br-md bg-[var(--color-primary)] px-3.5 py-2.5 text-white shadow-sm">
-                    Oi! Tem horário livre amanhã?
+                    Quanto custa o corte feminino?
                   </div>
                   <div className="max-w-[92%] rounded-2xl rounded-bl-md border border-[var(--color-line)] bg-white px-3.5 py-2.5 text-ink shadow-sm">
-                    Tenho sim! Corte às 10h ou 15h — qual prefere? Posso confirmar aqui mesmo.
+                    R$ 75, dura 45 minutos. Temos horário amanhã às 10h ou 15h — qual prefere? Posso agendar aqui mesmo.
                   </div>
                   <div className="max-w-[92%] rounded-2xl rounded-bl-md border border-[var(--color-line)] bg-white px-3.5 py-2.5 text-ink shadow-sm">
-                    Pronto: Corte Feminino, amanhã 15h. Confirmação e lembrete enviados no WhatsApp.
+                    Pronto! Corte Feminino agendado para amanhã às 15h. Você receberá a confirmação no WhatsApp.
                   </div>
                   <div className="flex w-fit items-center gap-1 rounded-2xl rounded-bl-md border border-[var(--color-line)] bg-white px-3.5 py-3 shadow-sm">
                     <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-soft/50" style={{ animationDelay: "0ms" }} />
@@ -334,7 +342,6 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* footer */}
                 <div className="mt-3 flex items-center gap-3 border-t border-[var(--color-line)] pt-3">
                   <div className="flex -space-x-1.5">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-2 ring-white">
@@ -348,7 +355,7 @@ export default function HomePage() {
                     </span>
                   </div>
                   <p className="text-[11px] leading-snug text-ink-soft">
-                    WhatsApp, Instagram e Facebook conectados ao seu agente
+                    Conectado ao WhatsApp, Instagram e Facebook
                   </p>
                 </div>
               </div>
@@ -360,7 +367,7 @@ export default function HomePage() {
       {/* Social Proof Marquee */}
       <section className="border-y border-[var(--color-line)]/50 bg-white py-8 overflow-hidden">
         <div className="container-x">
-          <p className="mb-6 text-center text-sm font-medium text-ink-soft">Feito para quem vive de hora marcada</p>
+          <p className="mb-6 text-center text-sm font-medium text-ink-soft">Mais de 12 categorias de profissionais já usam AN.BR</p>
           <div className="flex overflow-hidden">
             <motion.div
               className="flex shrink-0 gap-8"
@@ -382,40 +389,61 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Complete package pillars */}
-      <Secao id="pacote">
-        <TituloSecao subtitulo="Enquanto os outros vendem uma peça do quebra-cabeça, o AN.BR entrega tudo conectado em uma assinatura.">
-          Um sistema, <span className="text-[var(--color-primary)]">tudo conectado</span>
+      {/* Antes vs Depois */}
+      <Secao id="antes-depois" className="bg-white">
+        <TituloSecao subtitulo="Veja como sua rotina muda quando você para de marcar horário no telefone e deixa o sistema trabalhar por você.">
+          Chega de mensagem sem resposta.<br />
+          <span className="text-[var(--color-primary)]">Sua agenda no automático.</span>
         </TituloSecao>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {pilares.map((p, i) => (
-            <FadeIn key={p.titulo} delay={i * 0.08}>
-              <article className="card group h-full p-6 transition-all hover:shadow-lg hover:border-[var(--color-primary)]/20">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] transition-transform group-hover:scale-110">
-                  {p.icone}
+        <div className="mx-auto max-w-4xl space-y-6">
+          {problemas.map((item, i) => (
+            <FadeIn key={i} delay={i * 0.12}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex gap-3 rounded-2xl border border-red-200 bg-red-50/50 p-5">
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-500">
+                    <X size={14} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-red-500/70 mb-1">Antes</p>
+                    <p className="text-sm text-ink leading-relaxed">{item.antes}</p>
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-ink">{p.titulo}</h3>
-                <p className="mt-2 text-sm text-ink-soft leading-relaxed">{p.desc}</p>
-              </article>
+                <div className="flex gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                    <Check size={14} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600/70 mb-1">Com AN.BR</p>
+                    <p className="text-sm text-ink leading-relaxed">{item.depois}</p>
+                  </div>
+                </div>
+              </div>
             </FadeIn>
           ))}
         </div>
       </Secao>
 
-      {/* Benefits */}
-      <Secao id="beneficios" className="bg-white">
-        <TituloSecao subtitulo="Cada peça trabalha junto: a página atrai, a agenda organiza, o Pix cobra e o AI Agent atende.">
-          Por que profissionais escolhem o <span className="text-[var(--color-primary)]">AN.BR</span>
+      {/* Unified Benefits */}
+      <Secao id="beneficios">
+        <TituloSecao subtitulo="Do agendamento ao pagamento: cada peça do sistema trabalha junta para você ganhar mais tempo e mais clientes.">
+          Tudo que seu negócio precisa,<br />
+          <span className="text-[var(--color-primary)]">em uma assinatura só</span>
         </TituloSecao>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {beneficios.map((b, i) => (
             <FadeIn key={b.titulo} delay={i * 0.08}>
-              <article className="card group p-6 transition-all hover:shadow-lg hover:border-[var(--color-primary)]/20">
+              <article className="card group flex flex-col h-full p-6 transition-all hover:shadow-lg hover:border-[var(--color-primary)]/20">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] transition-transform group-hover:scale-110">
                   {b.icone}
                 </div>
                 <h3 className="text-lg font-semibold text-ink">{b.titulo}</h3>
-                <p className="mt-2 text-sm text-ink-soft leading-relaxed">{b.desc}</p>
+                <p className="mt-2 text-sm text-ink-soft leading-relaxed flex-1">{b.desc}</p>
+                {b.destaque && (
+                  <div className="mt-3 flex items-start gap-1.5 rounded-lg bg-[var(--color-primary)]/5 px-3 py-2 text-xs font-medium text-[var(--color-primary)]">
+                    <Zap size={13} className="mt-0.5 shrink-0" />
+                    {b.destaque}
+                  </div>
+                )}
               </article>
             </FadeIn>
           ))}
@@ -423,17 +451,18 @@ export default function HomePage() {
       </Secao>
 
       {/* How it works */}
-      <Secao id="funciona">
-        <TituloSecao subtitulo="Você está a poucos passos de nunca mais precisar atender telefone para marcar horário.">
-          Como <span className="text-[var(--color-primary)]">funciona</span>
+      <Secao id="funciona" className="bg-white">
+        <TituloSecao subtitulo="Em menos de 5 minutos seu sistema está no ar. Sem código, sem designer, sem burocracia.">
+          Do zero ao seu <span className="text-[var(--color-primary)]">primeiro agendamento</span>
         </TituloSecao>
         <div className="mx-auto grid max-w-5xl gap-8 sm:grid-cols-3">
           {passos.map((passo, i) => (
             <FadeIn key={passo.titulo} delay={i * 0.15}>
               <div className="relative text-center">
-                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-primary)] text-lg font-bold text-white shadow-lg shadow-[var(--color-primary)]/20">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-primary)] text-lg font-bold text-white shadow-lg shadow-[var(--color-primary)]/20">
                   {i + 1}
                 </div>
+                <span className="inline-block mb-2 rounded-full bg-[var(--color-primary)]/10 px-3 py-0.5 text-xs font-semibold text-[var(--color-primary)]">{passo.tempo}</span>
                 <h3 className="text-lg font-semibold text-ink">{passo.titulo}</h3>
                 <p className="mt-2 text-sm text-ink-soft leading-relaxed">{passo.desc}</p>
                 {i < passos.length - 1 && (
@@ -448,14 +477,15 @@ export default function HomePage() {
       </Secao>
 
       {/* Categorias */}
-      <Secao id="categorias" className="bg-white">
-        <TituloSecao subtitulo="Beleza, limpeza, consultoria, aulas, eventos — qualquer serviço profissional, com página e copy prontas para o seu nicho.">
-          Para todo tipo de <span className="text-[var(--color-primary)]">serviço</span>
+      <Secao id="categorias">
+        <TituloSecao subtitulo="Beleza, saúde, limpeza, consultoria, eventos — sua categoria tem página e copy prontas para converter.">
+          Feito para todo tipo de{" "}
+          <span className="text-[var(--color-primary)]">serviço profissional</span>
         </TituloSecao>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {categorias.map((cat, i) => (
             <FadeIn key={cat.nome} delay={i * 0.05}>
-              <div className="card flex items-start gap-4 p-5 transition-all hover:shadow-md hover:border-[var(--color-primary)]/20 group">
+              <div className="card flex items-start gap-4 p-5 transition-all hover:shadow-md hover:border-[var(--color-primary)]/20 group cursor-pointer">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-hover:scale-110 transition-transform">
                   {cat.icone}
                 </div>
@@ -470,40 +500,58 @@ export default function HomePage() {
       </Secao>
 
       {/* Pricing Preview */}
-      <Secao id="precos" className="relative">
+      <Secao id="precos" className="bg-white relative">
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-full max-w-3xl rounded-full bg-[var(--color-primary)]/[0.03] blur-[120px]" />
         </div>
-        <TituloSecao subtitulo="Do gratuito ao completo — escolha o plano que encaixa no seu momento.">
-          Planos <span className="text-[var(--color-primary)]">transparentes</span>
+        <TituloSecao subtitulo="Comece grátis. Quando seu negócio crescer, faça upgrade — sem pressa, sem armadilha.">
+          Planos <span className="text-[var(--color-primary)]">simples e honestos</span>
         </TituloSecao>
-        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-3">
           {precosPreview.map((p, i) => (
             <FadeIn key={p.nome} delay={i * 0.08}>
               <Link
                 href={p.slug}
-                className={`relative flex flex-col rounded-2xl border p-5 text-center transition-all hover:shadow-lg ${
+                className={`relative flex flex-col rounded-2xl border p-6 transition-all hover:shadow-lg h-full ${
                   p.destaque
-                    ? "border-[var(--color-primary)] bg-white shadow-md shadow-[var(--color-primary)]/10 scale-[1.02] sm:scale-105 z-10"
+                    ? "border-[var(--color-primary)] bg-white shadow-xl shadow-[var(--color-primary)]/10 scale-[1.02] lg:scale-105 z-10 ring-1 ring-[var(--color-primary)]/30"
                     : "border-[var(--color-line)] bg-white shadow-sm hover:border-[var(--color-primary)]/30"
                 }`}
               >
                 {p.destaque && (
-                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-[var(--color-primary)] px-3 py-0.5 text-[10px] font-semibold text-white shadow-sm">
-                    <Check size={10} />
-                    POPULAR
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-semibold text-white shadow-md">
+                    <Check size={11} />
+                    MAIS POPULAR
                   </div>
                 )}
-                <h3 className="text-sm font-semibold text-ink">{p.nome}</h3>
-                <p className="mt-2 text-2xl font-bold tracking-tight text-ink">{p.preco}</p>
-                <p className="mt-0.5 text-[11px] text-ink-soft">{p.desc}</p>
+                <h3 className="text-lg font-bold text-ink">{p.nome}</h3>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-3xl font-bold tracking-tight text-ink">{p.preco}</span>
+                  <span className="text-sm text-ink-soft">/mês</span>
+                </div>
+                <p className="mt-2 text-sm text-ink-soft">{p.desc}</p>
+                <ul className="mt-4 space-y-2 flex-1">
+                  {p.extras.map((e) => (
+                    <li key={e} className="flex items-start gap-2 text-sm text-ink">
+                      <Check size={15} className="mt-0.5 shrink-0 text-[var(--color-primary)]" />
+                      {e}
+                    </li>
+                  ))}
+                </ul>
+                <div className={`mt-5 w-full rounded-xl py-2.5 text-sm font-semibold text-center transition-all ${
+                  p.destaque
+                    ? "bg-[var(--color-primary)] text-white shadow-sm hover:brightness-110"
+                    : "border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5"
+                }`}>
+                  {p.destaque ? "Começar agora" : "Ver plano"}
+                </div>
               </Link>
             </FadeIn>
           ))}
         </div>
         <div className="mt-10 text-center">
           <Link href="/precos" className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition-colors hover:underline">
-            Ver comparação completa dos planos
+            Comparação completa dos planos
             <ArrowRight size={16} />
           </Link>
         </div>
@@ -515,13 +563,15 @@ export default function HomePage() {
           <div className="mx-auto max-w-5xl">
             <div className="grid gap-10 text-center sm:grid-cols-4">
               {[
-                { valor: "5 min", label: "Para criar seu sistema" },
-                { valor: "30/mês", label: "Agendamentos grátis" },
-                { valor: "-40%", label: "Menos faltas em média" },
-                { valor: "24h", label: "AI Agent atendendo por você" },
+                { valor: 5, suffix: " min", label: "Para criar seu sistema" },
+                { valor: 30, suffix: "/mês", label: "Agendamentos grátis" },
+                { valor: 40, suffix: "%", label: "Menos faltas em média" },
+                { valor: 24, suffix: "h", label: "AI Agent atendendo por você" },
               ].map((n, i) => (
                 <FadeIn key={n.label} delay={i * 0.1}>
-                  <p className="text-3xl font-bold sm:text-4xl">{n.valor}</p>
+                  <p className="text-3xl font-bold sm:text-4xl tabular-nums">
+                    <AnimatedCounter end={n.valor} suffix={n.suffix} />
+                  </p>
                   <p className="mt-2 text-white/80 text-sm">{n.label}</p>
                 </FadeIn>
               ))}
@@ -532,7 +582,7 @@ export default function HomePage() {
 
       {/* FAQ */}
       <Secao id="faq" className="bg-white">
-        <TituloSecao subtitulo="Dúvidas comuns sobre o AN.BR.">
+        <TituloSecao subtitulo="Respostas diretas para as dúvidas mais comuns.">
           Perguntas <span className="text-[var(--color-primary)]">frequentes</span>
         </TituloSecao>
         <div className="mx-auto max-w-3xl space-y-3">
@@ -578,20 +628,20 @@ export default function HomePage() {
               <div className="relative z-10">
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-white">
                   <Check size={14} />
-                  Comece agora, grátis
+                  Comece agora, grátis para sempre
                 </div>
                 <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  Seu negócio completo online,<br />
-                  <span className="italic">em minutos.</span>
+                  Seu sistema completo no ar<br />
+                  <span className="italic">em menos de 5 minutos.</span>
                 </h2>
                 <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
-                  Site, agenda, pagamentos e AI Agent — sem cartão de crédito, sem compromisso.
+                  Site profissional, agendamento 24h, lembretes no WhatsApp, pagamento via Pix e AI Agent — sem cartão de crédito, sem compromisso.
                 </p>
                 <Link href="/cadastro" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-lg font-semibold text-[var(--color-primary)] shadow-lg transition-all hover:brightness-105">
                   Criar meu sistema grátis
                   <ArrowRight size={20} />
                 </Link>
-                <p className="mt-4 text-sm text-white/60">Nenhum cartão de crédito necessário · Cancele quando quiser</p>
+                <p className="mt-4 text-sm text-white/60">Nenhum cartão de crédito · Cancele quando quiser · Sem multa</p>
               </div>
             </div>
           </FadeIn>
@@ -601,23 +651,42 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-[var(--color-line)] py-12">
         <div className="container-x">
-          <div className="flex flex-col items-center justify-between gap-8 sm:flex-row sm:items-start">
-            <div className="flex flex-col items-center gap-3 sm:items-start">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
               <Link href="/" className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--color-primary)] text-white text-xs font-bold">A</span>
                 <span className="font-serif text-base font-semibold">AN.BR</span>
               </Link>
-              <p className="text-xs text-ink-soft">Sistema completo online<br />Feito no Brasil</p>
+              <p className="mt-3 text-sm text-ink-soft leading-relaxed">
+                Sistema completo para profissionais.<br />
+                Site, agenda, Pix e IA. Feito no Brasil.
+              </p>
             </div>
-            <nav className="flex flex-wrap justify-center gap-6 text-sm text-ink-soft">
-              <Link href="/" className="transition-colors hover:text-ink">Início</Link>
-              <Link href="/precos" className="transition-colors hover:text-ink">Preços</Link>
-              <Link href="/blog" className="transition-colors hover:text-ink">Blog</Link>
-              <Link href="/privacidade" className="transition-colors hover:text-ink">Privacidade</Link>
-              <Link href="/termos" className="transition-colors hover:text-ink">Termos</Link>
-            </nav>
+            <div>
+              <h4 className="text-sm font-semibold text-ink mb-3">Produto</h4>
+              <nav className="flex flex-col gap-2 text-sm text-ink-soft">
+                <Link href="/precos" className="transition-colors hover:text-ink">Preços</Link>
+                <Link href="/#funciona" className="transition-colors hover:text-ink">Como funciona</Link>
+                <Link href="/#beneficios" className="transition-colors hover:text-ink">Recursos</Link>
+                <Link href="/#categorias" className="transition-colors hover:text-ink">Categorias</Link>
+              </nav>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-ink mb-3">Conteúdo</h4>
+              <nav className="flex flex-col gap-2 text-sm text-ink-soft">
+                <Link href="/blog" className="transition-colors hover:text-ink">Blog</Link>
+                <Link href="/#faq" className="transition-colors hover:text-ink">FAQ</Link>
+              </nav>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-ink mb-3">Legal</h4>
+              <nav className="flex flex-col gap-2 text-sm text-ink-soft">
+                <Link href="/privacidade" className="transition-colors hover:text-ink">Privacidade</Link>
+                <Link href="/termos" className="transition-colors hover:text-ink">Termos de Uso</Link>
+              </nav>
+            </div>
           </div>
-          <div className="mt-8 border-t border-[var(--color-line)]/50 pt-8 text-center">
+          <div className="mt-10 border-t border-[var(--color-line)]/50 pt-8 text-center">
             <p className="text-sm text-ink-soft">
               &copy; {new Date().getFullYear()} AN.BR. Todos os direitos reservados.
             </p>
@@ -640,7 +709,7 @@ function Chevron({ size, className }: { size: number; className?: string }) {
 function WhatsAppIcon({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z" />
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.73.44 3.42 1.28 4.92L2 22l5.32-1.4a9.9 9.9 0 0 0 4.72 1.2h.004c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.02A9.85 9.85 0 0 0 12.04 2zm4.93 14.48c-.21.58-1.04.98-1.47.75a9.2 9.2 0 0 1-4.1-3.1c-.63-.84-.82-1.81-.1-2.38.26-.2.66-.52.86-.52.2 0 .43.08.56.37.16.34.78 1.9.85 2.04.07.14.02.32-.12.47-.14.17-.28.35-.43.5-.14.14-.23.3-.07.5s1.18 1.35 2.53 1.86c.48.18.72.09.88-.1.16-.17.67-.85.84-1.14.17-.29.33-.24.55-.15.22.1 1.39.66 1.63.78.24.12.4.18.46.27.06.1.06.53-.14.9z" />
     </svg>
   );
 }
@@ -648,7 +717,7 @@ function WhatsAppIcon({ size = 14 }: { size?: number }) {
 function InstagramIcon({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
+      <path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.22-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.64-.07-4.85s.01-3.58.07-4.85C2.38 5.87 3.9 4.35 7.15 4.2c1.27-.06 1.64-.07 4.85-.07zm0 5.84a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm6.41-4.14a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z" />
     </svg>
   );
 }
@@ -656,7 +725,7 @@ function InstagramIcon({ size = 14 }: { size?: number }) {
 function FacebookIcon({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+      <path d="M24 12.07C24 5.45 18.63 0 12 0S0 5.45 0 12.07C0 18.1 4.39 23.1 10.12 24v-8.44H7.08v-3.46h3.05V9.43c0-3.01 1.79-4.67 4.53-4.67 1.31 0 2.68.24 2.68.24v2.95h-1.51c-1.49 0-1.96.93-1.96 1.88v2.25h3.33l-.53 3.46h-2.8V24C19.61 23.1 24 18.1 24 12.07z" />
     </svg>
   );
 }

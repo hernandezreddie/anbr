@@ -1,7 +1,7 @@
 "use client";
 
 import { Shield, Wallet, Heart } from "lucide-react";
-import { getCopyPadrao, preencherCopy } from "@/lib/copys-padrao";
+import { getCopyEfetivo, preencherCopy } from "@/lib/copys-padrao";
 import { accento } from "@/lib/cores";
 import type { ProfissionalConfig } from "@/types";
 
@@ -11,7 +11,11 @@ export function Confianca({ config }: { config: ProfissionalConfig }) {
   const { profissional, configuracao } = config;
   const primary = configuracao.cor_primaria;
 
-  const copy = getCopyPadrao(profissional.categoria, (configuracao as any).copy_variante);
+  const copy = getCopyEfetivo(
+    profissional.categoria,
+    (configuracao as any).copy_variante,
+    (configuracao as any).textos_personalizados
+  );
   const preencher = (texto: string) =>
     preencherCopy(texto, {
       nome: profissional.primeiro_nome,

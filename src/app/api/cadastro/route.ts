@@ -8,8 +8,18 @@ import {
 } from "@/lib/servicos-padrao";
 import type { CategoriaId } from "@/lib/servicos-padrao";
 import { gerarLogoSVG } from "@/lib/logo-padrao";
+import { rateLimitar, ipDoRequest } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const ip = ipDoRequest(request);
+  const { permitido, emBreve } = rateLimitar(`cadastro:${ip}`, 3, 60000);
+  if (!permitido) {
+    return Response.json(
+      { error: "Muitas tentativas. Tente novamente mais tarde.", retryAfter: emBreve },
+      { status: 429, headers: { "Retry-After": String(emBreve) } }
+    );
+  }
+
   const body = await request.json();
   const { nome, email, senha, slug, whatsapp, cidade, pix_chave, servicos, slogan, template_id, categoria, copy_variante, msg_variante, consentimento } = body;
 

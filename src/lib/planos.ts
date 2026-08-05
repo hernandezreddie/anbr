@@ -19,7 +19,7 @@ export const PLANOS: Record<PlanoId, PlanoInfo> = {
 export const PLANOS_ORDER: PlanoId[] = ["gratis", "profissional", "ia_premium"];
 
 export const PLANOS_COM_GOOGLE: PlanoId[] = ["profissional", "ia_premium"];
-export const PLANOS_COM_META: PlanoId[] = ["profissional", "ia_premium"];
+export const PLANOS_COM_META: PlanoId[] = ["gratis", "profissional", "ia_premium"];
 export const PLANOS_COM_AGENTE: PlanoId[] = ["profissional", "ia_premium"];
 export const PLANOS_COM_DOMINIO: PlanoId[] = ["profissional", "ia_premium"];
 export const PLANOS_ILIMITADO: PlanoId[] = ["profissional", "ia_premium"];
@@ -96,6 +96,41 @@ export async function exigirPlano(
 }
 
 /**
+ * Ativa/renova o plano de um profissional de forma ACUMULATIVA:
+ * expiração = max(hoje, expiração atual) + N meses.
+ * Usada pelo webhook de pagamento (Fase 5) e pela confirmação manual do admin.
+ */
+export async function extenderPlano(
+  profissional_id: string,
+  plano: PlanoId,
+  meses: number
+): Promise<{ expira_em: string }> {
+  const supabase = createAdminClient();
+  const { data: prof } = await supabase
+    .from("profissionais")
+    .select("plano, plano_expira_em")
+    .eq("id", profissional_id)
+    .single();
+
+  const expiraAtual = prof?.plano_expira_em ? new Date(prof.plano_expira_em) : null;
+  const inicio = expiraAtual && expiraAtual.getTime() > Date.now() ? expiraAtual : new Date();
+  const novaExpira = new Date(inicio);
+  novaExpira.setMonth(novaExpira.getMonth() + meses);
+
+  const { error } = await supabase
+    .from("profissionais")
+    .update({
+      plano,
+      plano_expira_em: novaExpira.toISOString(),
+      ultimo_pagamento: new Date().toISOString(),
+    })
+    .eq("id", profissional_id);
+
+  if (error) throw error;
+  return { expira_em: novaExpira.toISOString() };
+}
+
+/**
  * Verifica o limite mensal de mensagens de IA do plano.
  * Retorna null se houver cota, ou erro com upgrade info.
  */
@@ -114,6 +149,7 @@ export async function checarCotaAgente(
     .select("id", { count: "exact", head: true })
     .eq("profissional_id", profissional_id)
     .eq("role", "assistant")
+    .gt("tokens_input", 0)
     .gte("created_at", inicioMes.toISOString());
 
   if ((count || 0) >= limite) {

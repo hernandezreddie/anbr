@@ -3,43 +3,46 @@
 import { useState, useEffect, useRef } from "react";
 import { Bot, Send, MessageSquare, BarChart3, Clock, Gauge } from "lucide-react";
 import { AGENTE_MSG_POR_MES } from "@/lib/planos";
+import { StatusAgente } from "@/components/painel/StatusAgente";
 
 interface Props {
   profissionalId: string
   slug: string
 }
 
-export function AgenteClient({ profissionalId, slug }: Props) {
+export function AgenteClient({ profissionalId }: Props) {
   const [tab, setTab] = useState<"chat" | "conversas" | "uso">("chat");
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">AI Agent</h1>
           <p className="mt-1 text-sm text-gray-500">Assistente inteligente para seus clientes</p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white p-1">
-          {[
-            { id: "chat" as const, label: "Chat", icon: Bot },
-            { id: "conversas" as const, label: "Conversas", icon: MessageSquare },
-            { id: "uso" as const, label: "Uso & Custos", icon: BarChart3 },
-          ].map((t) => {
-            const Icon = t.icon;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                  tab === t.id ? "bg-teal-600 text-white" : "text-gray-500 hover:bg-gray-100"
-                }`}
-              >
-                <Icon size={16} />
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+      </div>
+
+      <StatusAgente profissionalId={profissionalId} />
+      <div className="mt-6 flex items-center gap-2 rounded-xl border border-gray-200 bg-white p-1">
+        {[
+          { id: "chat" as const, label: "Chat", icon: Bot },
+          { id: "conversas" as const, label: "Conversas", icon: MessageSquare },
+          { id: "uso" as const, label: "Uso & Custos", icon: BarChart3 },
+        ].map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                tab === t.id ? "bg-teal-600 text-white" : "text-gray-500 hover:bg-gray-100"
+              }`}
+            >
+              <Icon size={16} />
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {tab === "chat" && <ChatView profissionalId={profissionalId} />}
