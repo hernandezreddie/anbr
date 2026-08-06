@@ -7,8 +7,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ---
 
 ## 📋 PROJECT MEMORY — AUTOMATIZACURITIBA26
-**Last updated:** 2026-08-05
-**Status:** ✅ PRODUCTION READY — Fases 0–9 ✅. Sistema completo con seguridad, home pulida, dashboard inteligente y AI Ads MVP.
+**Last updated:** 2026-08-06
+**Status:** ✅ PRODUCTION READY — Fases 0–10 ✅. Sistema completo con seguridad, home pulida, dashboard inteligente y AI Ads MVP.
 
 ---
 
@@ -31,9 +31,10 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 | `src/lib/precos.ts` | `estimar()` — service quote calculator |
 | `src/lib/ai/ads.ts` | **AI Ads engine** — brief automático, generación de copys, segmentación |
 | `src/lib/ai/tool-definitions.ts` | `buildAgentTools` + `toOpenAITools` — tools compartidas |
-| `src/components/painel/OnboardingWizard.tsx` | **Nuevo** — wizard 4 pasos para nuevos prestadores |
+| `src/components/painel/OnboardingWizard.tsx` | Wizard 4 pasos para nuevos prestadores |
 | `src/components/painel/DashboardCharts.tsx` | **Nuevo** — gráficos faturamento, taxa de ocupação + métricas |
-| `src/lib/notificacoes.ts` | Templates Meta + fallback texto libre |
+| `src/components/painel/InsightCard.tsx` | Sugerencias proactivas (faltas, cota, link, clientes inactivos) |
+| `src/lib/notificacoes.ts` | Templates Meta + fallback texto libre + `enviarConviteReagendamento` |
 | `src/lib/whatsapp/meta.ts` | Meta Cloud: sendText (24h), sendTemplate |
 | `src/lib/whatsapp/evolution.ts` | Evolution API + fallback Meta Cloud |
 | `src/lib/meta/graph.ts` | OAuth Meta + webhook multi-tenant |
@@ -42,15 +43,22 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 | `src/lib/pagamentos/mercadopago.ts` | Gateway PIX dinámico Mercado Pago |
 | `src/lib/webhook-firma.ts` | `validarAssinaturaMeta` — HMAC SHA256 |
 
-### 🆕 FASE 8.5–9 NUEVOS FILES
+### 🆕 FASE 8.5–10 NUEVOS FILES
 | File | Purpose |
 |------|---------|
 | `src/proxy.ts` | **Unificado** — CSRF validation + CSP headers + custom domains + security headers |
 | `src/components/painel/OnboardingWizard.tsx` | Wizard 4 pasos: WhatsApp → Página → Serviços → Google Calendar |
-| `src/components/painel/InsightCard.tsx` | Sugerencias proactivas con CTAs inline |
+| `src/components/painel/InsightCard.tsx` | Sugerencias proactivas con CTAs inline + clientes inactivos |
+| `src/components/painel/DashboardCharts.tsx` | Gráficos recharts + métricas + empty state con CTA |
+| `src/components/painel/StatusAgente.tsx` | **Nuevo** — API Keys per-tenant UI + test diagnóstico |
 | `src/lib/ai/ads.ts` | **AI Ads engine**: brief + headlines + segmentación + presupuesto + dicas |
 | `src/app/(slug)/[slug]/painel/ads/page.tsx` | Server entry AI Ads |
 | `src/app/(slug)/[slug]/painel/ads/AdsClient.tsx` | **AI Ads UI** — selector objetivo, generación copys, copy-to-clipboard |
+| `src/app/(slug)/[slug]/painel/loading.tsx` | Loading spinner para sub-rutas del painel |
+| `src/lib/notificacoes.ts` | `enviarConviteReagendamento` — WhatsApp post-conclusión |
+| `src/lib/ai/agent.ts` | `resolveApiKey` — keys por tenant o globales |
+| `src/lib/ai/diagnostico.ts` | `usando_chave_propria` en respuesta de test |
+| `docs/CICLOS_DEL_SISTEMA.md` | **Nuevo** — 7 ciclos actuales + 5 propuestos + roadmap |
 
 ### ✅ COMPLETED (v1.0 → v2.0)
 
@@ -82,6 +90,12 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 - [x] `InsightCard`: faltas, cota agotada, link no compartido, crecimiento
 - [x] Integrados en painel home (después del UpgradeBanner, antes de stats)
 
+#### Fase 8.7.2 — Dashboard Analítico
+- [x] Gráficos con `recharts`: faturamento mensal, taxa de ocupação — `DashboardCharts.tsx`
+- [x] Métricas: faltas %, leads convertidos, ticket médio
+- [x] Empty state con CTA "Compartilhar meu link" para profesionales sin datos
+- [x] Instalar `recharts`
+
 #### Fase 9 — AI Ads MVP
 - [x] `src/lib/ai/ads.ts`: `gerarBriefBasico()` + `gerarCopysAnuncio()` con 4 objetivos
 - [x] Templates por objetivo: agendamentos, seguidores, promocao, recuperacao
@@ -92,26 +106,26 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 - [x] `Sidebar.tsx` actualizado con link "AI Ads"
 - [x] Ruta `/painel/ads` activa
 
-### 📦 NEXT (acciones manuales — usuario)
-- [ ] `.env.production` con todos los secrets en Netlify UI
-- [ ] DNS: `autonexabrasil.com.br` → Netlify
-- [ ] Google OAuth consent screen → modo producción
-- [ ] Meta App Review: templates `confirmacao_agendamento`, `lembrete_agendamento`, `convite_avaliacao`
-- [ ] Alta piloto `bella-beleza` en producción (SQL en `docs/RUNBOOK.md`)
-- [ ] Generar `og-image.png` 1200x630 para redes sociales
-
-### 📦 Fase 8.7.2 COMPLETED (Dashboard analítico)
-
-### 🆕 FASE 10 — POLISH & QUICK WINS (Agosto 2026)
+#### Fase 10 — Polish & Quick Wins (Agosto 2026)
 - [x] **CTA nichos:** "outro" corregido — `cta_btn: "Fazer orçamento"` → `"Agendar horário"` (coherente con `hero_cta1`)
 - [x] **Quick Win 1: Upsell Inteligente** — en el booking, al seleccionar un servicio, aparecen sugerencias inline de add-ons con quick-add chips (`ReservarClient.tsx`)
 - [x] **Quick Win 2: Reagendamento automático** — al concluir un agendamento, se envía convite de reagendamento vía WhatsApp con link (`notificacoes.ts:enviarConviteReagendamento`, llamado desde `PATCH /api/agendamentos/[id]/status`)
 - [x] **Quick Win 3: Alerta de abandono** — InsightCard detecta clientes sin agendar hace 60+ días y sugiere reaproximación (`InsightCard.tsx:clientesInativos`)
+- [x] **Homepage redesign:** gradient text, font-serif, glass cards, radial gradient bg, stats con patrón SVG
+- [x] **Landing prestador:** "Painel" → "Dashboard", colores CSS variables en SidebarClient + RedesSociais, italic font real
+- [x] **API Keys per-tenant:** UI en StatusAgente (4 provedores), PUT config accesible al profesional, diagnóstico muestra origen
+- [x] **Fix:** `servico_nome` se persiste en `POST /api/agendamentos`
+- [x] **Fix:** `painel/loading.tsx` para sub-rutas
+- [x] **OG Image:** SVG 1200x630 generado
 - [x] **Doc:** `docs/CICLOS_DEL_SISTEMA.md` — 7 ciclos actuales + 5 nuevos propuestos + roadmap de priorización
 - [x] Build 70/70, typecheck limpio
-- [x] Gráficos con `recharts`: faturamento mensal, taxa de ocupação — `DashboardCharts.tsx`
-- [x] Métricas: faltas %, leads convertidos, ticket médio
-- [x] Instalar `recharts`
+
+### 📦 NEXT (acciones manuales — usuario)
+- [ ] `.env.production` con todos los secrets en Netlify UI (especialmente `MERCADOPAGO_ACCESS_TOKEN`)
+- [ ] DNS: `autonexabrasil.com.br` → Netlify
+- [ ] Google OAuth consent screen → modo producción
+- [ ] Meta App Review: templates `confirmacao_agendamento`, `lembrete_agendamento`, `convite_avaliacao`
+- [ ] Alta piloto `bella-beleza` en producción (SQL en `docs/RUNBOOK.md`)
 
 ### 🚀 DEPLOYMENT COMMANDS
 ```cmd
@@ -128,10 +142,10 @@ npm run build
 
 ### 🧠 AGENT CONTEXT FOR NEXT SESSION
 - **Working dir:** `D:\CCP\AUTOMATIZACURITIBA26`
-- **Status:** PRODUCTION READY — Fases 0–9 ✅ + Dashboard analítico (Fase 8.7.2 ✅). Build 70/70 páginas, 0 errores.
+- **Status:** ✅ PRODUCTION READY — Fases 0–10 ✅. Build 70/70 páginas, 0 errores.
 - **Hosting:** Netlify (conectado via GitHub). Crons: `cron-lembretes` (12:00), `cron-vencidos` (03:00).
 - **Color:** teal `#059669` (Tailwind `primary` variable)
-- **Stack:** Next.js 16, React 19, Framer Motion, Supabase, Vitest
+- **Stack:** Next.js 16, React 19, Framer Motion, Recharts, Supabase, Vitest
 - **Docs:** `docs/PLAN_PRODUCCION.md` (9 fases, ~130/130 completados), `docs/RUNBOOK.md`, `docs/GO_LIVE.md`, `docs/CICLOS_DEL_SISTEMA.md` (7 ciclos + 5 nuevos propuestos)
 - **Lo que falta:** Acciones manuales de go-live (DNS, env vars, OAuth, Meta Review).
-- **NUEVO:** DashboardCharts con recharts (faturamento mensal, taxa de ocupação, faltas %, ticket médio, leads IA).
+- **NUEVO:** Homepage redesign, API Keys per-tenant, Quick Wins (upsell + reagendamento + alerta abandono), DashboardCharts con recharts, polish landing prestadores.
