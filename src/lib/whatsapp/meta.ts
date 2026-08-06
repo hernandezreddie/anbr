@@ -81,6 +81,7 @@ export type TemplateName =
   | "confirmacao_agendamento"
   | "lembrete_agendamento"
   | "convite_avaliacao"
+  | "convite_reagendamento"
 
 /**
  * Envia mensagem business-initiated via template aprovado na WhatsApp Cloud API.

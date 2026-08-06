@@ -362,9 +362,66 @@ export async function enviarConviteAvaliacao(
 
     await sendText(ag.profissional_id, whatsapp, texto);
     await supabase
-      .from("agendamentos")
-      .update({ convite_avaliacao_enviado: true })
-      .eq("id", ag.id);
+        .from("agendamentos")
+        .update({ convite_avaliacao_enviado: true })
+        .eq("id", ag.id);
+    return { enviado: true };
+  } catch (e) {
+    return { enviado: false, motivo: String(e) };
+  }
+}
+
+export async function enviarConviteReagendamento(
+  agendamentoId: string
+): Promise<{ enviado: boolean; motivo?: string }> {
+  const supabase = createAdminClient();
+
+  const { data: ag } = await supabase
+    .from("agendamentos")
+    .select("id, profissional_id, cliente_whatsapp, cliente_nome, servico_nome, data, hora, reagendamento_enviado")
+    .eq("id", agendamentoId)
+    .single();
+
+  if (!ag) return { enviado: false, motivo: "agendamento não encontrado" };
+  if (ag.reagendamento_enviado) return { enviado: false, motivo: "convite já enviado" };
+
+  const whatsapp = ag.cliente_whatsapp?.replace(/\D/g, "");
+  if (!whatsapp || whatsapp.length < 10) {
+    return { enviado: false, motivo: "sem whatsapp do cliente" };
+  }
+  if (!(await podeEnviarAutomatico(ag.profissional_id))) {
+    return { enviado: false, motivo: "agente ativo" };
+  }
+
+  const { data: prof } = await supabase
+    .from("profissionais")
+    .select("slug")
+    .eq("id", ag.profissional_id)
+    .single();
+
+  if (!prof?.slug) return { enviado: false, motivo: "sem slug" };
+
+  const nome = ag.cliente_nome?.split(" ")[0] || "cliente";
+  const servico = ag.servico_nome || "o serviço";
+  const data = formatarData(ag.data);
+  const link = `https://autonexabrasil.com.br/${prof.slug}/reservar`;
+  const texto = `Olá ${nome}! Espero que tenha gostado do(a) ${servico} no dia ${data}. 😊\n\nJá quer garantir o próximo horário? É rapidinho: ${link}`;
+
+  try {
+    const provider = await getProvider(ag.profissional_id);
+
+    if (provider === "meta_cloud") {
+      try {
+        const { getInstance, sendTemplate } = await import("@/lib/whatsapp/meta");
+        const instance = await getInstance(ag.profissional_id);
+        await sendTemplate(instance, whatsapp, "convite_reagendamento", [nome, servico, data, link]);
+        await supabase.from("agendamentos").update({ reagendamento_enviado: true }).eq("id", ag.id);
+        return { enviado: true };
+      } catch { /* fallback texto livre */ }
+    }
+
+    await sendText(ag.profissional_id, whatsapp, texto);
+    await supabase.from("agendamentos").update({ reagendamento_enviado: true }).eq("id", ag.id);
     return { enviado: true };
   } catch (e) {
     return { enviado: false, motivo: String(e) };

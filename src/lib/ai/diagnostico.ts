@@ -47,6 +47,7 @@ export interface DiagnosticoAgente {
     tipo_erro: TipoErro;
     mensagem: string;
     duracao_ms: number;
+    usando_chave_propria?: boolean;
   };
   status: StatusItem[];
 }
@@ -281,7 +282,7 @@ export async function diagnosticarAgente(
     if (apiKey) {
       const inicio = Date.now();
       const resultado = await testarConexao(provedor, modelo, apiKey);
-      teste = { ...resultado, duracao_ms: Date.now() - inicio };
+      teste = { ...resultado, duracao_ms: Date.now() - inicio, usando_chave_propria: temChaveTenant };
       if (resultado.ok) {
         status.push({ nivel: "ok", titulo: "Teste de conexão OK", detalhe: `Provedor ${provedor.toUpperCase()} respondeu corretamente.` });
       } else {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, TrendingUp, Link2, Zap, ArrowRight } from "lucide-react";
+import { AlertTriangle, TrendingUp, Link2, Zap, ArrowRight, UserX } from "lucide-react";
 
 type Insight = {
   tipo: "warning" | "info" | "success" | "tip";
@@ -10,7 +10,7 @@ type Insight = {
   acao?: { label: string; href: string };
 };
 
-function getInsights(nFaltas: number, nAgendamentos: number, cotaUsada: number, cotaMax: number, temLink: boolean, slug: string): Insight[] {
+function getInsights(nFaltas: number, nAgendamentos: number, cotaUsada: number, cotaMax: number, temLink: boolean, slug: string, clientesInativos = 0): Insight[] {
   const insights: Insight[] = [];
 
   if (nFaltas >= 2) {
@@ -28,6 +28,15 @@ function getInsights(nFaltas: number, nAgendamentos: number, cotaUsada: number, 
       titulo: "Divulgue seu link de agendamento",
       mensagem: "Copie o link e cole na bio do Instagram, status do WhatsApp e Facebook para receber mais clientes.",
       acao: { label: "Copiar link", href: `/${slug}/painel/qr` },
+    });
+  }
+
+  if (clientesInativos >= 3) {
+    insights.push({
+      tipo: "warning",
+      titulo: `${clientesInativos} clientes não voltaram`,
+      mensagem: "Eles agendaram antes mas não apareceram há mais de 60 dias. Envie uma mensagem de reaproximação com desconto especial.",
+      acao: { label: "Ver clientes", href: `/${slug}/painel/clientes` },
     });
   }
 
@@ -59,6 +68,7 @@ export function InsightCard({
   cotaMax = 0,
   temLink = false,
   slug = "",
+  clientesInativos = 0,
 }: {
   nFaltas?: number;
   nAgendamentos?: number;
@@ -66,8 +76,9 @@ export function InsightCard({
   cotaMax?: number;
   temLink?: boolean;
   slug?: string;
+  clientesInativos?: number;
 }) {
-  const insights = getInsights(nFaltas, nAgendamentos, cotaUsada, cotaMax, temLink, slug);
+  const insights = getInsights(nFaltas, nAgendamentos, cotaUsada, cotaMax, temLink, slug, clientesInativos);
 
   if (insights.length === 0) return null;
 

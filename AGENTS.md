@@ -101,6 +101,14 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 - [ ] Generar `og-image.png` 1200x630 para redes sociales
 
 ### 📦 Fase 8.7.2 COMPLETED (Dashboard analítico)
+
+### 🆕 FASE 10 — POLISH & QUICK WINS (Agosto 2026)
+- [x] **CTA nichos:** "outro" corregido — `cta_btn: "Fazer orçamento"` → `"Agendar horário"` (coherente con `hero_cta1`)
+- [x] **Quick Win 1: Upsell Inteligente** — en el booking, al seleccionar un servicio, aparecen sugerencias inline de add-ons con quick-add chips (`ReservarClient.tsx`)
+- [x] **Quick Win 2: Reagendamento automático** — al concluir un agendamento, se envía convite de reagendamento vía WhatsApp con link (`notificacoes.ts:enviarConviteReagendamento`, llamado desde `PATCH /api/agendamentos/[id]/status`)
+- [x] **Quick Win 3: Alerta de abandono** — InsightCard detecta clientes sin agendar hace 60+ días y sugiere reaproximación (`InsightCard.tsx:clientesInativos`)
+- [x] **Doc:** `docs/CICLOS_DEL_SISTEMA.md` — 7 ciclos actuales + 5 nuevos propuestos + roadmap de priorización
+- [x] Build 70/70, typecheck limpio
 - [x] Gráficos con `recharts`: faturamento mensal, taxa de ocupação — `DashboardCharts.tsx`
 - [x] Métricas: faltas %, leads convertidos, ticket médio
 - [x] Instalar `recharts`
@@ -124,6 +132,6 @@ npm run build
 - **Hosting:** Netlify (conectado via GitHub). Crons: `cron-lembretes` (12:00), `cron-vencidos` (03:00).
 - **Color:** teal `#059669` (Tailwind `primary` variable)
 - **Stack:** Next.js 16, React 19, Framer Motion, Supabase, Vitest
-- **Docs:** `docs/PLAN_PRODUCCION.md` (9 fases, ~120/130 completados), `docs/RUNBOOK.md`, `docs/GO_LIVE.md`
+- **Docs:** `docs/PLAN_PRODUCCION.md` (9 fases, ~130/130 completados), `docs/RUNBOOK.md`, `docs/GO_LIVE.md`, `docs/CICLOS_DEL_SISTEMA.md` (7 ciclos + 5 nuevos propuestos)
 - **Lo que falta:** Acciones manuales de go-live (DNS, env vars, OAuth, Meta Review).
 - **NUEVO:** DashboardCharts con recharts (faturamento mensal, taxa de ocupação, faltas %, ticket médio, leads IA).

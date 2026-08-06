@@ -700,6 +700,21 @@ export default function PainelPage() {
   const outros = items.filter((i) => i.status === "concluido" || i.status === "cancelado").slice(0, 12);
   const rota = rotaLink(items);
 
+  const clientesInativos = (() => {
+    const hoje = new Date();
+    const sessentaDiasAtras = new Date(hoje);
+    sessentaDiasAtras.setDate(hoje.getDate() - 60);
+    const recente = new Map<string, Date>();
+    for (const a of items) {
+      if (!a.cliente_whatsapp || !a.data || a.status === "cancelado") continue;
+      const key = a.cliente_whatsapp.replace(/\D/g, "");
+      const dataAg = new Date(a.data + "T12:00:00");
+      const existed = recente.get(key);
+      if (!existed || dataAg > existed) recente.set(key, dataAg);
+    }
+    return [...recente.values()].filter((d) => d < sessentaDiasAtras).length;
+  })();
+
   const msgsEstilo = getMensagensPadrao(categoria, msgVariante);
   const acoes = gerarAcoes(items as any, pagoIds, {
     confirmacao: msgsEstilo.confirmacao,
@@ -827,6 +842,7 @@ export default function PainelPage() {
         cotaUsada={items.length}
         cotaMax={profissional?.plano === "gratis" ? 30 : 0}
         slug={slug}
+        clientesInativos={clientesInativos}
       />
 
       {/* Dashboard Analítico */}

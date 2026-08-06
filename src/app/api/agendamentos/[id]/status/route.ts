@@ -41,10 +41,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   if (status === "concluido") {
     try {
-      const { enviarConviteAvaliacao } = await import("@/lib/notificacoes");
+      const { enviarConviteAvaliacao, enviarConviteReagendamento } = await import("@/lib/notificacoes");
       await enviarConviteAvaliacao(id);
+      await enviarConviteReagendamento(id);
     } catch (err) {
-      console.warn("Convite de avaliação não enviado:", err);
+      console.warn("Convite de avaliação / reagendamento não enviado:", err);
     }
   }
 

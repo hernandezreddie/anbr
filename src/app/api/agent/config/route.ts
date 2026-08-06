@@ -49,14 +49,15 @@ export async function PUT(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
-  if (!(await isAdminPlataforma())) {
-    return NextResponse.json({ error: "Acesso restrito ao admin" }, { status: 403 });
-  }
-
   const body = await req.json();
   const { profissional_id, ...configData } = body;
 
   if (!profissional_id) return NextResponse.json({ error: "profissional_id é obrigatório" }, { status: 400 });
+
+  const acesso = await verificarAcessoProfissional(profissional_id);
+  if (!acesso.permitido) {
+    return NextResponse.json({ error: "Sem permissão para este profissional" }, { status: 403 });
+  }
 
   const adminDb = createAdminClient();
 

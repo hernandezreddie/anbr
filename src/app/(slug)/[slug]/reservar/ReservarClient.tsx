@@ -615,6 +615,42 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                     />
                   ))}
                 </div>
+                {servicoId && adicionaisFiltrados.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-dashed p-3.5 text-sm"
+                    style={{ borderColor: primary + "40", backgroundColor: primary + "08" }}
+                  >
+                    <Sparkles size={15} style={{ color: primary }} />
+                    <span className="font-medium" style={{ color: accento(primary) }}>Aproveite e adicione:</span>
+                    {adicionaisFiltrados.slice(0, 3).map((a) => (
+                      <motion.button
+                        key={a.id}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setAdicionaisSel((prev) => prev.includes(a.id) ? prev.filter((id) => id !== a.id) : [...prev, a.id])}
+                        className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                          adicionaisSel.includes(a.id)
+                            ? "text-white shadow-sm"
+                            : "bg-white text-neutral-600 hover:shadow-sm"
+                        }`}
+                        style={{
+                          backgroundColor: adicionaisSel.includes(a.id) ? primary : undefined,
+                          borderColor: adicionaisSel.includes(a.id) ? primary : primary + "40",
+                        }}
+                      >
+                        {adicionaisSel.includes(a.id) ? (
+                          <span className="flex items-center gap-1"><CheckCircle2 size={12} /> {a.nome}</span>
+                        ) : (
+                          <span className="flex items-center gap-1">+ {a.nome}</span>
+                        )}
+                        {a.preco > 0 && (
+                          <span className="ml-1 opacity-70">R${a.preco.toFixed(0)}</span>
+                        )}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
               </motion.section>
 
               {/* Step 2: Rooms (only for limpeza por_hora) */}

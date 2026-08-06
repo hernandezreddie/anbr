@@ -852,8 +852,8 @@ export const COPYS_PADRAO: Record<CategoriaId, CopyPadrao> = {
       { nome: "Renata V.", bairro: "Centro", texto: "Sem taxa de aplicativo e sem dor de cabeça. Recomendo de olhos fechados." },
     ],
     cta_titulo: "Vamos conversar?",
-    cta_sub: "Faça seu orçamento agora. Leva 1 minutinho e sem compromisso.",
-    cta_btn: "Fazer orçamento",
+    cta_sub: "Agende seu horário agora. Leva 1 minutinho e sem compromisso.",
+    cta_btn: "Agendar horário",
     whatsapp_msg: "Olá {nome}! Vi seu site e gostaria de agendar.",
     variantes: [
       {
