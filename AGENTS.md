@@ -220,10 +220,27 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 - [ ] **Google OAuth consent screen → modo producción** (agregar dominio verificado `autonexabrasil.com.br`)
 - [ ] **Meta App Review**: templates `confirmacao_agendamento`, `lembrete_agendamento`, `convite_avaliacao` (+ opcional `cancelamento_agendamento`)
 - [ ] **Aplicar `supabase/migrations_video_fundo.sql`** en Supabase (ADD COLUMN `video_fundo`) — sin esto el upload de video falla en producción
+- [ ] **Aplicar `supabase/migrations_admin_rls_fix.sql`** en Supabase (RLS bypass para admins) — ya funciona vía admin API endpoint, pero las RLS nativas no están actualizadas
 - [ ] **Endpoint chat AI público** para /demo: tenant demo whitelisted + env `DEMO_TENANT_ID` + fallback scripted
 - [ ] **Video demo corto** (30-60s, outcome-led) como asset futuro
 - [ ] Solicitar depoimentos reales a pilotos para que la sección de home se llene
 - [ ] Alta piloto `bella-beleza` en producción (SQL en `docs/RUNBOOK.md`)
+
+### 🔑 ADMIN ACCESS
+**Admins:** `eddy.rey90@hotmail.com` + `fabiopollak@gmail.com` (caridad@email.com fue removida de admin → ahora `owner`)
+**Password admin:** `Admin123!@#` (reseteada vía Supabase Admin API — los admins deben cambiar después del primer login)
+
+#### Admin can access any tenant panel:
+- `PainelAuthGate.tsx` permite a admins con rol `admin`/`plataforma` acceder a cualquier `/{slug}/painel` sin redirect
+- `/api/admin/painel/[slug]` endpoint: usa `createAdminClient` (bypasses RLS) con verificación de auth admin
+- `page.tsx` (painel): usa endpoint API admin cuando `isAdmin === true`, todos los datos filtrados por slug tenant
+- `agendamentos/[id]/status/route.ts`: usa admin client cuando el usuario es admin
+- `AgentePage`: `profissional_id` resuelto desde el slug URL (crítico para que el agente AI cree agendamentos en el tenant correcto)
+
+#### AI Agent scheduling fix:
+- Prompt del nicho veterinario era ambiguo → agente se quedaba en loops de confirmación
+- Fix: añadida regla explícita "usar `criar_agendamento` INMEDIATAMENTE cuando tengas todos los datos"
+- Prompt veterinario simplificado: más directo, menos frases de relleno
 
 ### 🚀 DEPLOYMENT COMMANDS
 ```cmd
