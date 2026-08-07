@@ -1,0 +1,5 @@
+# Caddy auto-genera HTTPS (Let's Encrypt) para estos dominios.
+# Agregá los dominios custom de cada tenant aquí (o usá on-demand TLS).
+autonexabrasil.com.br, www.autonexabrasil.com.br, *.autonexabrasil.com.br {
+	reverse_proxy app:3000
+}
