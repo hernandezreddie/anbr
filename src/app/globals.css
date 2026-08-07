@@ -351,6 +351,30 @@ h1, h2, h3, h4 {
   overflow: hidden;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+#servicos {
+  scroll-margin-top: 5.5rem;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .touch-manipulation {
   touch-action: manipulation;
 }

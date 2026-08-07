@@ -6,7 +6,9 @@ export type FundoEstilo =
   | "glass"
   | "aurora"
   | "geometric"
-  | "noise";
+  | "noise"
+  | "blobs"
+  | "grid";
 
 export type FundoItem = {
   id: FundoEstilo;
@@ -27,6 +29,8 @@ export const FUNDOS: FundoItem[] = [
   { id: "glass", nome: "Vidro", descricao: "Efeito vidro fosco moderno", primary: "#0891b2", secondary: "#1c1917" },
   { id: "geometric", nome: "Geométrico", descricao: "Padrão geométrico contemporâneo", primary: "#d97706", secondary: "#1c1917" },
   { id: "noise", nome: "Textura", descricao: "Textura de ruído sutil", primary: "#4f46e5", secondary: "#1c1917" },
+  { id: "blobs", nome: "Blobs", descricao: "Manchas animadas em movimento", primary: "#7c3aed", secondary: "#1e1b4b" },
+  { id: "grid", nome: "Grade", descricao: "Linhas finas estilo blueprint", primary: "#0d9488", secondary: "#1c1917" },
 ];
 
 export function fundoStyle(estilo: FundoEstilo, corPrimaria: string): React.CSSProperties {
@@ -36,9 +40,13 @@ export function fundoStyle(estilo: FundoEstilo, corPrimaria: string): React.CSSP
     none: { backgroundColor: "var(--color-bg)" },
     mesh: {
       background: `linear-gradient(to bottom right, var(--color-bg), ${c}08, ${c}15)`,
+      backgroundSize: "200% 200%",
+      animation: "gradientShift 26s ease-in-out infinite",
     },
     aurora: {
       background: `linear-gradient(to bottom right, var(--color-bg), ${c}18, ${c}08, var(--color-bg))`,
+      backgroundSize: "220% 220%",
+      animation: "gradientShift 30s ease-in-out infinite",
     },
     waves: {
       backgroundColor: "var(--color-bg)",
@@ -65,6 +73,17 @@ export function fundoStyle(estilo: FundoEstilo, corPrimaria: string): React.CSSP
       backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`,
       backgroundRepeat: "repeat",
       backgroundSize: "256px 256px",
+    },
+    blobs: {
+      backgroundColor: "var(--color-bg)",
+      backgroundImage: `radial-gradient(38% 55% at 18% 28%, ${c}38, transparent 70%), radial-gradient(30% 45% at 82% 68%, ${c}2e, transparent 70%), radial-gradient(22% 35% at 65% 22%, ${c}26, transparent 70%), radial-gradient(26% 40% at 30% 85%, ${c}20, transparent 70%)`,
+      backgroundSize: "140% 140%",
+      animation: "gradientShift 22s ease-in-out infinite",
+    },
+    grid: {
+      backgroundColor: "var(--color-bg)",
+      backgroundImage: `linear-gradient(${c}12 1px, transparent 1px), linear-gradient(90deg, ${c}12 1px, transparent 1px)`,
+      backgroundSize: "44px 44px",
     },
   };
 
@@ -112,6 +131,17 @@ export function fundoHeaderStyle(estilo: FundoEstilo, corPrimaria: string): Reac
       backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E")`,
       backgroundRepeat: "repeat",
       backgroundSize: "256px 256px",
+    },
+    blobs: {
+      backgroundColor: c,
+      backgroundImage: `radial-gradient(38% 55% at 18% 28%, #ffffff2e, transparent 70%), radial-gradient(30% 45% at 82% 68%, #ffffff26, transparent 70%), radial-gradient(22% 35% at 65% 22%, #ffffff1f, transparent 70%), radial-gradient(26% 40% at 30% 85%, #ffffff1a, transparent 70%)`,
+      backgroundSize: "140% 140%",
+      animation: "gradientShift 22s ease-in-out infinite",
+    },
+    grid: {
+      backgroundColor: c,
+      backgroundImage: `linear-gradient(#ffffff1a 1px, transparent 1px), linear-gradient(90deg, #ffffff1a 1px, transparent 1px)`,
+      backgroundSize: "44px 44px",
     },
   };
 

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { posts, getPost } from "@/lib/blog/posts";
 import { ArrowLeft, ArrowRight, CalendarDays, Tag } from "lucide-react";
 import { SiteNav } from "@/components/site/SiteNav";
+import { SITE_URL } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) return {};
-  const url = `https://autonexabrasil.com.br/blog/${post.slug}`;
+  const url = `${SITE_URL}/blog/${post.slug}`;
   return {
     title: `${post.title} | Blog AN.BR`,
     description: post.description,
@@ -51,16 +52,11 @@ export default async function BlogPostPage({ params }: Props) {
     datePublished: post.date,
     dateModified: post.date,
     inLanguage: "pt-BR",
-    mainEntityOfPage: `https://autonexabrasil.com.br/blog/${post.slug}`,
+    mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
     publisher: {
       "@type": "Organization",
       name: "AN.BR",
-      url: "https://autonexabrasil.com.br",
-    },
-    author: {
-      "@type": "Organization",
-      name: "AN.BR",
-      url: "https://autonexabrasil.com.br",
+      url: SITE_URL,
     },
     articleSection: post.category,
     keywords: ["agendamento online", "profissional autônomo", post.category],

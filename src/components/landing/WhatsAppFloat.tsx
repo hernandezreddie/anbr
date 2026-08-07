@@ -28,7 +28,9 @@ export function WhatsAppFloat({ config }: { config: ProfissionalConfig }) {
       ticking = true;
       requestAnimationFrame(() => {
         const y = window.scrollY;
-        if (y > lastScroll && y > 120) {
+        if (window.innerWidth < 768 && y > 520) {
+          setVisible(false);
+        } else if (y > lastScroll && y > 120) {
           setVisible(false);
         } else if (y < lastScroll) {
           setVisible(true);

@@ -6,6 +6,7 @@ import type { ProfissionalConfig, Promocao } from "@/types";
 import { Tag } from "lucide-react";
 import { contrastante, accento } from "@/lib/cores";
 import { RedesSociais } from "@/components/landing/RedesSociais";
+import { MobileCtaBar } from "@/components/landing/MobileCtaBar";
 
 function PromoBanner({ promo, config }: { promo: Promocao; config: ProfissionalConfig }) {
   const primary = config.configuracao.cor_primaria || "#059669";
@@ -72,6 +73,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
       <template.Footer config={config} />
       <RedesSociais config={config} />
       <template.WhatsAppFloat config={config} />
+      <MobileCtaBar config={config} />
     </div>
   );
 }

@@ -4,12 +4,7 @@ import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-import {
-  gerarBriefBasico,
-  gerarCopysAnuncio,
-  type CampanhaBrief,
-  type CopysAnuncio,
-} from "@/lib/ai/ads";
+import type { CopysAnuncio } from "@/lib/ai/ads";
 import {
   Megaphone,
   Users,
@@ -22,7 +17,9 @@ import {
   Target,
   DollarSign,
   MapPin,
-  Clock,
+  BrainCircuit,
+  ArrowUpRight,
+  AlertTriangle,
 } from "lucide-react";
 
 const objetivos = [
@@ -38,25 +35,39 @@ export function AdsClient() {
   const supabase = createClient();
 
   const [loading, setLoading] = useState(true);
-  const [servicos, setServicos] = useState<{ nome: string; preco_fixo: number; valor_hora: number; tipo_preco: string; duracao_minutos: number }[]>([]);
-  const [profissional, setProfissional] = useState<{ nome: string; cidade: string; categoria: string | null } | null>(null);
+  const [profissionalId, setProfissionalId] = useState("");
+  const [servicos, setServicos] = useState<{ id: string; nome: string }[]>([]);
   const [servicoSel, setServicoSel] = useState("");
-  const [objetivoSel, setObjetivoSel] = useState<CampanhaBrief["objetivo"]>("agendamentos");
+  const [objetivoSel, setObjetivoSel] = useState<"agendamentos" | "seguidores" | "promocao" | "recuperacao">("agendamentos");
   const [copys, setCopys] = useState<CopysAnuncio | null>(null);
+  const [origem, setOrigem] = useState<"ia" | "template" | null>(null);
+  const [modelUsado, setModelUsado] = useState("");
+  const [plano, setPlano] = useState<{ nome: string; limiteMensalGratis: number | null } | null>(null);
   const [gerando, setGerando] = useState(false);
+  const [erro, setErro] = useState("");
   const [copiado, setCopiado] = useState<string | null>(null);
 
   useEffect(() => {
     async function carregar() {
-      const [prof, serv] = await Promise.all([
-        supabase.from("profissionais").select("nome, cidade, categoria").single(),
-        supabase.from("servicos").select("nome, preco_fixo, valor_hora, tipo_preco, duracao_minutos").order("ordem"),
+      const [prof, serv, planoRes] = await Promise.all([
+        supabase.from("profissionais").select("id").single(),
+        supabase.from("servicos").select("id, nome").order("ordem"),
+        null,
       ]);
-      if (prof.data) setProfissional(prof.data as typeof profissional);
+      let planStatus: { nome: string; limiteMensalGratis: number | null } | null = null;
+      if (prof.data?.id) {
+        try {
+          const r = await fetch(`/api/ads/gerar?profissional_id=${prof.data.id}`);
+          const j = await r.json();
+          planStatus = j?.nome ? { nome: j.nome, limiteMensalGratis: j.limiteMensalGratis || null } : null;
+        } catch {}
+      }
+      if (prof.data) setProfissionalId(prof.data.id);
       if (serv.data?.length) {
         setServicos(serv.data as typeof servicos);
         setServicoSel(serv.data[0].nome);
       }
+      setPlano(planStatus);
       setLoading(false);
     }
     carregar();
@@ -64,26 +75,29 @@ export function AdsClient() {
 
   const gerar = async () => {
     setGerando(true);
+    setErro("");
     const servico = servicos.find((s) => s.nome === servicoSel);
-    const preco = servico
-      ? servico.tipo_preco === "fixo"
-        ? `R$ ${servico.preco_fixo.toFixed(0)}`
-        : `R$ ${servico.valor_hora}/h`
-      : "sob consulta";
-
-    const duracao = servico ? `${servico.duracao_minutos}min` : "a combinar";
-    const categoria = profissional?.categoria || "Serviços";
-    const cidade = profissional?.cidade || "sua cidade";
-    const diferencial = profissional?.nome
-      ? `${profissional.nome} — ${categoria} profissional`
-      : "Atendimento de qualidade";
-
-    const brief = gerarBriefBasico(servicoSel, preco, duracao, categoria, cidade, diferencial, objetivoSel);
-    const resultado = gerarCopysAnuncio(brief);
-
-    await new Promise((r) => setTimeout(r, 600));
-    setCopys(resultado);
-    setGerando(false);
+    try {
+      const res = await fetch("/api/ads/gerar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profissional_id: profissionalId,
+          servico_id: servico?.id,
+          objetivo: objetivoSel,
+        }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "Erro ao gerar campanha");
+      setCopys(j.copys);
+      setOrigem(j.origem);
+      setModelUsado(j.model || "");
+      setPlano(j.nome ? { nome: j.nome, limiteMensalGratis: j.limiteMensalGratis || null } : plano);
+    } catch (e: any) {
+      setErro(e.message || "Erro ao gerar campanha");
+    } finally {
+      setGerando(false);
+    }
   };
 
   const copiar = async (texto: string, id: string) => {
@@ -108,6 +122,32 @@ export function AdsClient() {
           A IA gera copys prontos para você publicar no Facebook, Instagram e Google Ads. Copie e cole — sem precisar pensar no texto.
         </p>
       </div>
+
+      {/* Plano */}
+      {plano && (
+        <div className={`rounded-2xl border p-4 text-sm shadow-sm ${plano.limiteMensalGratis ? "border-amber-200 bg-amber-50/60 text-amber-800" : "border-teal-100 bg-teal-50/60 text-teal-800"}`}>
+          {plano.limiteMensalGratis ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="flex items-center gap-2">
+                <AlertTriangle size={16} className="shrink-0" />
+                Plano Grátis: até {plano.limiteMensalGratis} agendamentos/mês. Campanhas de anúncio geram tráfego — o limite pode esgotar rápido.
+              </p>
+              <a
+                href={`/${slug}/painel/plano`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-amber-700"
+              >
+                Fazer upgrade
+                <ArrowUpRight size={14} />
+              </a>
+            </div>
+          ) : (
+            <p className="flex items-center gap-2">
+              <Sparkles size={16} className="shrink-0" />
+              Recurso incluído no seu plano <strong>{plano.nome}</strong> — copys gerados conforme os recursos do seu plano.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Configuração */}
       <div className="rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm">
@@ -170,6 +210,13 @@ export function AdsClient() {
             </>
           )}
         </button>
+
+        {erro && (
+          <p className="mt-3 flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+            <AlertTriangle size={15} className="shrink-0" />
+            {erro}
+          </p>
+        )}
       </div>
 
       {/* Resultados */}
@@ -179,6 +226,28 @@ export function AdsClient() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4"
         >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-bold text-neutral-900">Sua campanha</h2>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                origem === "ia"
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-neutral-100 text-neutral-500"
+              }`}
+            >
+              {origem === "ia" ? (
+                <>
+                  <BrainCircuit size={13} />
+                  Gerado com IA · {modelUsado}
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} />
+                  Modelo local · configure sua chave de IA em /painel/agente para gerar com IA
+                </>
+              )}
+            </span>
+          </div>
           {/* Headlines */}
           <div className="rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm">
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-neutral-900">

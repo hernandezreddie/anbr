@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, Check, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import { FUNDOS } from "@/lib/backgrounds";
 import { getCopyPadrao } from "@/lib/copys-padrao";
 import { getMensagensPadrao } from "@/lib/servicos-padrao";
+import { TEMAS_POR_NICHO, getTemaPorNicho, type TemaPreset } from "@/lib/temas";
 import { Copy } from "lucide-react";
 import { Dica } from "@/components/painel/Dica";
 import { TextosPersonalizadosEditor } from "@/components/painel/TextosPersonalizadosEditor";
@@ -45,15 +46,19 @@ type Frequencia = {
 
 type Configuracao = {
   profissional_id: string;
+  template_id: number;
   cor_primaria: string;
   cor_secundaria: string;
   fonte_titulo: string;
   fonte_corpo: string;
   logo_url: string;
   foto_fundo: string;
+  video_fundo: string;
   slogan: string;
   fundo_estilo: string;
   max_agendamentos_dia: string;
+  horario_inicio?: number | null;
+  horario_fim?: number | null;
   copy_variante?: number;
   msg_variante?: number;
   instagram?: string;
@@ -61,6 +66,14 @@ type Configuracao = {
   google_maps?: string;
   textos_personalizados?: Record<string, any> | null;
 };
+
+const OPCOES_HORARIO = Array.from({ length: 48 }, (_, i) => {
+  const min = i * 30;
+  return {
+    min,
+    label: `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`,
+  };
+});
 
 type Profissional = {
   id: string;
@@ -105,6 +118,7 @@ export default function PerfilPage() {
   const [frequencias, setFrequencias] = useState<Frequencia[]>([]);
   const [config, setConfig] = useState<Configuracao | null>(null);
   const [uploading, setUploading] = useState(false);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmarDelete, setConfirmarDelete] = useState<{ tipo: string; id: string } | null>(null);
@@ -167,12 +181,15 @@ export default function PerfilPage() {
         profissional_id: config?.profissional_id || profissional.id,
         cor_primaria: config?.cor_primaria,
         cor_secundaria: config?.cor_secundaria,
+        template_id: config?.template_id ?? 1,
         fonte_titulo: config?.fonte_titulo,
         fonte_corpo: config?.fonte_corpo,
         fundo_estilo: config?.fundo_estilo || "none",
         max_agendamentos_dia: config?.max_agendamentos_dia
           ? Number(config.max_agendamentos_dia)
           : null,
+        horario_inicio: config?.horario_inicio ?? null,
+        horario_fim: config?.horario_fim ?? null,
         copy_variante: Number(config?.copy_variante) || 0,
         msg_variante: Number(config?.msg_variante) || 0,
         instagram: config?.instagram ?? "",
@@ -216,6 +233,16 @@ export default function PerfilPage() {
 
   function updateConfigField(field: keyof Configuracao, value: any) {
     setConfig((prev) => prev ? { ...prev, [field]: value } : null);
+  }
+
+  function aplicarTema(t: TemaPreset) {
+    updateConfigField("template_id", t.template_id);
+    updateConfigField("cor_primaria", t.cor_primaria);
+    updateConfigField("cor_secundaria", t.cor_secundaria);
+    updateConfigField("fundo_estilo", t.fundo_estilo);
+    updateConfigField("fonte_titulo", t.fonte_titulo);
+    updateConfigField("fonte_corpo", t.fonte_corpo);
+    flash("Tema aplicado! Toque em Salvar alterações para publicar");
   }
 
   async function updateServico(id: string, field: string, value: any) {
@@ -362,6 +389,33 @@ export default function PerfilPage() {
     flash("Foto de fundo removida");
   };
 
+  const uploadVideo = async (file: File) => {
+    if (!config) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("profissional_id", config.profissional_id);
+    formData.append("destino", "video");
+    const res = await fetch("/api/upload/logo", { method: "POST", body: formData });
+    const data = await res.json();
+    if (res.ok) {
+      setConfig((prev) => prev ? { ...prev, video_fundo: data.url } : null);
+      flash("Vídeo de fundo atualizado!");
+    } else flash(data.error || "Erro ao enviar vídeo");
+    setUploading(false);
+  };
+
+  const removeVideo = async () => {
+    if (!config?.video_fundo) return;
+    setConfig((prev) => prev ? { ...prev, video_fundo: "" } : null);
+    await fetch("/api/config/atualizar", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profissional_id: config!.profissional_id, video_fundo: "" }),
+    });
+    flash("Vídeo de fundo removido");
+  };
+
   return (
     <div className="space-y-6">
       <div className="sticky top-0 z-30 -mx-4 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/70 bg-white/90 px-4 py-4 pb-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
@@ -372,6 +426,7 @@ export default function PerfilPage() {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => {
+              updateConfigField("template_id", 1);
               updateConfigField("fundo_estilo", "none");
               updateConfigField("cor_primaria", "#059669");
               updateConfigField("cor_secundaria", "#1c1917");
@@ -506,6 +561,36 @@ export default function PerfilPage() {
         </div>
       </CardSection>
 
+      {/* Vídeo de fundo */}
+      <CardSection title="Vídeo de fundo">
+        <div className="flex items-center gap-6">
+          {config?.video_fundo ? (
+            <div className="relative h-28 w-48 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-950">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <video src={config.video_fundo} autoPlay muted loop playsInline className="h-full w-full object-cover" />
+              <button onClick={removeVideo}
+                className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow"
+              >×</button>
+            </div>
+          ) : (
+            <div className="flex h-28 w-48 items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-neutral-400">
+              <Play size={28} />
+            </div>
+          )}
+          <div>
+            <button onClick={() => videoInputRef.current?.click()} disabled={uploading}
+              className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-teal-700 disabled:opacity-50"
+            >{uploading ? "Enviando..." : config?.video_fundo ? "Trocar vídeo" : "Enviar vídeo"}</button>
+            <p className="mt-1.5 max-w-xs text-xs text-neutral-500">
+              Loop curto (10–20s) na vertical funciona melhor no celular. Toca no fundo da página,
+              no lugar da foto, com leve transparência. MP4 ou WebM · Máx 15MB · Sem som
+            </p>
+            <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadVideo(f); }} />
+          </div>
+        </div>
+      </CardSection>
+
       {/* Fundo */}
       <CardSection title="Fundo da página">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -563,6 +648,77 @@ export default function PerfilPage() {
                 </div>
                 <p className="text-sm font-medium text-neutral-900">{f.nome}</p>
                 <p className="text-xs text-neutral-500">{f.descricao}</p>
+              </button>
+            );
+          })}
+        </div>
+      </CardSection>
+
+      {/* Tema do seu nicho */}
+      <CardSection title="Tema do seu nicho">
+        <p className="-mt-3 mb-4 text-sm text-neutral-500">
+          Temas prontos pensados para cada tipo de negócio — plantilla, cores, fundo e fontes de uma vez só.
+          Toque em um tema e depois em <strong>Salvar alterações</strong>.
+        </p>
+
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Plantilla visual</p>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { id: 1, nome: "Clássico", desc: "Serifada elegante, tons suaves" },
+            { id: 2, nome: "Moderno", desc: "Minimalista, linhas retas" },
+          ].map((t) => {
+            const selected = (config?.template_id ?? 1) === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => { updateConfigField("template_id", t.id); flash("Plantilla aplicada! Salve para publicar"); }}
+                className={`relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all ${
+                  selected ? "border-teal-500 shadow-sm" : "border-neutral-200 hover:border-neutral-300"
+                }`}
+              >
+                {selected && (
+                  <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-white"><Check size={13} /></span>
+                )}
+                <div
+                  className="-mx-4 -mt-4 mb-3 flex h-12 items-end px-3 pb-1.5"
+                  style={{ background: t.id === 1 ? "linear-gradient(135deg,#059669,#14b8a6)" : "linear-gradient(135deg,#7c3aed,#1e1b4b)" }}
+                >
+                  <span className="text-lg font-semibold text-white" style={{ fontFamily: t.id === 1 ? "Fraunces, serif" : "Inter, sans-serif" }}>Aa</span>
+                </div>
+                <p className="text-sm font-medium text-neutral-900">{t.nome}</p>
+                <p className="text-xs text-neutral-500">{t.desc}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wide text-neutral-400">Temas prontos por nicho</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {(Object.entries(TEMAS_POR_NICHO) as [string, TemaPreset][]).map(([cat, t]) => {
+            const ehMeuNicho = cat === profissional?.categoria;
+            const ativo =
+              (config?.template_id ?? 1) === t.template_id &&
+              (config?.cor_primaria || "").toLowerCase() === t.cor_primaria.toLowerCase() &&
+              (config?.fundo_estilo || "none") === t.fundo_estilo;
+            return (
+              <button
+                key={cat}
+                onClick={() => aplicarTema(t)}
+                className={`relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all ${
+                  ativo ? "border-teal-500 shadow-sm" : "border-neutral-200 hover:border-neutral-300"
+                } ${ehMeuNicho ? "ring-1 ring-teal-400/40" : ""}`}
+              >
+                <div
+                  className="-mx-4 -mt-4 mb-3 flex h-14 items-end justify-end p-2"
+                  style={{ background: `linear-gradient(135deg, ${t.cor_primaria}, ${t.cor_secundaria})` }}
+                >
+                  {ehMeuNicho && (
+                    <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-neutral-700">Seu nicho</span>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-neutral-900">{t.nome}</p>
+                <p className="text-xs text-neutral-500">{t.descricao}</p>
+                <p className="mt-1.5 text-[10px] text-neutral-400">{t.template_id === 1 ? "Clássico" : "Moderno"} · fundo {t.fundo_estilo}</p>
               </button>
             );
           })}
@@ -773,6 +929,35 @@ export default function PerfilPage() {
               Deixe vazio para aceitar quantos quiser. O site bloqueia novos pedidos quando atingir o limite.
             </span>
           </div>
+        </div>
+        <div className="mt-5 border-t border-neutral-100 pt-4">
+          <label className="mb-1 block text-xs font-semibold text-neutral-500">
+            Horário de atendimento
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={config?.horario_inicio ?? ""}
+              onChange={(e) => updateConfigField("horario_inicio", e.target.value ? Number(e.target.value) : null)}
+              className="rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-teal-600">
+              <option value="">08:00 (padrão)</option>
+              {OPCOES_HORARIO.map((o) => (
+                <option key={o.min} value={o.min}>{o.label}</option>
+              ))}
+            </select>
+            <span className="text-xs text-neutral-400">até</span>
+            <select
+              value={config?.horario_fim ?? ""}
+              onChange={(e) => updateConfigField("horario_fim", e.target.value ? Number(e.target.value) : null)}
+              className="rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-teal-600">
+              <option value="">20:00 (padrão)</option>
+              {OPCOES_HORARIO.map((o) => (
+                <option key={o.min} value={o.min}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <p className="mt-2 text-xs text-neutral-400">
+            O cliente só verá horários dentro desta faixa no site de reservas. Deixe em branco para 08:00–20:00.
+          </p>
         </div>
       </CardSection>
 

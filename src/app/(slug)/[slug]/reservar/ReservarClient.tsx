@@ -7,7 +7,7 @@ import type { ProfissionalConfig, Servico } from "@/types";
 import { estimar } from "@/lib/precos";
 import { mensagemReserva, linkWhatsApp } from "@/lib/whatsapp";
 import { contrastante, accento } from "@/lib/cores";
-import { Calendar, Clock, Check, ChevronRight, Sparkles, Star, ArrowLeft, CheckCircle2, X, Tag } from "lucide-react";
+import { Calendar, Clock, Check, ChevronRight, Sparkles, Star, ArrowLeft, CheckCircle2, X, Tag, AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 const round05 = (n: number) => Math.round(n * 2) / 2;
@@ -190,6 +190,8 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
   const [ocupados, setOcupados] = useState<{ inicio: string; minutos: number }[]>([]);
   const [limiteDia, setLimiteDia] = useState(0);
   const [totalDia, setTotalDia] = useState(0);
+  const [horarioInicio, setHorarioInicio] = useState<number | null>(null);
+  const [horarioFim, setHorarioFim] = useState<number | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -237,13 +239,27 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
       : Math.max(30, Math.round((orcamento?.horas || 1) * 60))
     : 60;
 
+  const wIni = horarioInicio ?? WORK_INICIO;
+  const wFim = horarioFim ?? WORK_FIM;
+  const multiDia = duracaoMin > wFim - wIni;
+  const diasMulti = multiDia ? Math.max(1, Math.round(duracaoMin / 1440)) : 0;
+
   const agoraLocal = new Date();
   const minDate = `${agoraLocal.getFullYear()}-${String(agoraLocal.getMonth() + 1).padStart(2, "0")}-${String(agoraLocal.getDate()).padStart(2, "0")}`;
 
   const indisponivel = useCallback(
     (h: string): boolean => {
       const inicio = horaParaMin(h);
-      if (inicio < WORK_INICIO || inicio + duracaoMin > WORK_FIM) return true;
+      if (multiDia) {
+        if (inicio !== wIni) return true;
+        if (data === minDate && inicio <= new Date().getHours() * 60 + new Date().getMinutes()) return true;
+        return ocupados.some((o) => {
+          const oIni = horaParaMin(o.inicio);
+          const oFim = oIni + o.minutos;
+          return inicio < oFim && inicio + duracaoMin > oIni;
+        });
+      }
+      if (inicio < wIni || inicio + duracaoMin > wFim) return true;
       if (data === minDate) {
         const agora = new Date().getHours() * 60 + new Date().getMinutes();
         if (inicio <= agora) return true;
@@ -254,7 +270,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
         return inicio < oFim && inicio + duracaoMin > oIni;
       });
     },
-    [data, minDate, ocupados, duracaoMin]
+    [data, minDate, ocupados, duracaoMin, horarioInicio, horarioFim, multiDia, wIni, wFim]
   );
 
   useEffect(() => {
@@ -264,6 +280,8 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
         setOcupados([]);
         setLimiteDia(0);
         setTotalDia(0);
+        setHorarioInicio(null);
+        setHorarioFim(null);
         return;
       }
       try {
@@ -273,6 +291,8 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
         setOcupados(Array.isArray(j?.ocupados) ? j.ocupados : []);
         setLimiteDia(Number(j?.max_agendamentos_dia) || 0);
         setTotalDia(Number(j?.total_dia) || 0);
+        setHorarioInicio(Number(j?.horario_inicio) || null);
+        setHorarioFim(Number(j?.horario_fim) || null);
         setHora((h) => (h && indisponivel(h) ? "" : h));
       } catch {
         // rede/erro — mantém estado anterior
@@ -364,12 +384,19 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
 
   const horarios = useMemo(() => {
     const slots: string[] = [];
-    for (let h = 8; h <= 18; h++) {
-      slots.push(`${h.toString().padStart(2, "0")}:00`);
-      if (h < 18) slots.push(`${h.toString().padStart(2, "0")}:30`);
+    const wIni = horarioInicio ?? WORK_INICIO;
+    const wFim = horarioFim ?? WORK_FIM;
+    for (let m = wIni; m < wFim; m += 30) {
+      const h = Math.floor(m / 60);
+      const mm = m % 60;
+      slots.push(`${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`);
     }
     return slots;
-  }, []);
+  }, [horarioInicio, horarioFim]);
+
+  const diaLimite = !!data && limiteDia > 0 && totalDia >= limiteDia;
+  const diaSemHorarios = !!data && horarios.every((h) => indisponivel(h));
+  const diaCheio = diaLimite || diaSemHorarios;
 
   const step2Label = isPrecoFixo ? "2" : "3";
   const step3Label = isPrecoFixo ? "3" : "4";
@@ -401,6 +428,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
     stepDone.comodos = true;
   }
   const currentIdx = steps.findIndex((s) => !stepDone[s.key]);
+  const passoAtual = currentIdx === -1 ? steps.length - 1 : currentIdx;
 
   // Deep links ?step=: ao montar, salta para o passo se os anteriores estão completos
   const initialStepDone = useRef(false);
@@ -486,10 +514,23 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
         </div>
       </div>
 
-      <div className="container-x -mt-8 pb-16">
+      <div className={`container-x -mt-8 ${!enviado && orcamento ? "pb-32" : "pb-16"}`}>
         {/* Step Progress Indicator */}
         {!enviado && (
-          <div className="relative z-10 mb-8 flex items-center justify-center gap-2 overflow-x-auto py-3">
+          <div className="relative z-10 mb-8">
+            <div className="flex items-center justify-center gap-2 py-3 sm:hidden">
+              <span
+                className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{ backgroundColor: primary }}
+              >
+                {passoAtual + 1}
+              </span>
+              <span className="text-sm font-semibold" style={{ color: primary }}>
+                Passo {passoAtual + 1} de {steps.length}
+              </span>
+              <span className="text-sm opacity-60">· {steps[passoAtual]?.label}</span>
+            </div>
+            <div className="hidden items-center justify-center gap-2 overflow-x-auto py-3 sm:flex">
             {steps.map((step, i) => {
               const completed = i < currentIdx;
               const current = i === currentIdx;
@@ -533,6 +574,7 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                 </Fragment>
               );
             })}
+            </div>
           </div>
         )}
         {enviado ? (
@@ -553,11 +595,11 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                   <CheckCircle2 size={34} style={{ color: primary }} />
                 </motion.div>
                 <h2 className="text-2xl font-bold" style={{ fontFamily: headingFont }}>
-                  Solicitação enviada!
+                  Horário confirmado!
                 </h2>
                 <p className="mt-3 text-sm leading-relaxed text-neutral-500">
                   Seu agendamento com{" "}
-                  <b className="text-neutral-800">{config.profissional.primeiro_nome}</b> foi salvo. Toque no botão abaixo para confirmar via WhatsApp.
+                  <b className="text-neutral-800">{config.profissional.primeiro_nome}</b> foi confirmado e os detalhes foram enviados para o seu WhatsApp. Qualquer dúvida, fale direto:
                 </p>
                 <a
                   href={linkWhatsApp(reservaMsg, config.profissional.whatsapp)}
@@ -733,33 +775,43 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium opacity-60">Horário</label>
+                    {diaCheio && (
+                      <div className="mb-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-medium text-amber-700">
+                        <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                        {diaLimite
+                          ? `Este dia já atingiu o limite de ${limiteDia} agendamento(s). Escolha outra data.`
+                          : "Sem horários livres neste dia — escolha outra data."}
+                      </div>
+                    )}
                     <div className="relative">
                       <Clock className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 opacity-40" />
                       <select
                         value={hora}
                         onChange={(e) => setHora(e.target.value)}
-                        className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 pl-12 text-sm outline-none transition-all focus:border-teal-500 focus:shadow-md appearance-none"
-                        style={{ borderColor: hora ? primary : undefined }}
+                        disabled={diaCheio}
+                        className="w-full rounded-2xl border-2 border-neutral-200 bg-white px-4 py-3.5 pl-12 text-sm outline-none transition-all focus:border-teal-500 focus:shadow-md appearance-none disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400"
+                        style={{ borderColor: hora ? primary : diaCheio ? "#d97706" : undefined }}
                       >
-                        <option value="">Selecione</option>
-                        {horarios.map((h) => {
-                          const ocupado = indisponivel(h);
-                          return (
-                            <option key={h} value={h} disabled={ocupado}>
-                              {h}{ocupado ? " — indisponível" : ""}
-                            </option>
-                          );
-                        })}
+                        <option value="">
+                          {diaCheio ? "Sem horários livres" : "Selecione"}
+                        </option>
+                        {!diaCheio &&
+                          horarios.map((h) => {
+                            const ocupado = indisponivel(h);
+                            return (
+                              <option key={h} value={h} disabled={ocupado}>
+                                {h}{ocupado ? " — indisponível" : ""}
+                              </option>
+                            );
+                          })}
                       </select>
                     </div>
-                    {data && horarios.every((h) => indisponivel(h)) && (
-                      <p className="mt-2 text-xs font-medium" style={{ color: "#d97706" }}>
-                        Sem horários livres neste dia — escolha outra data.
-                      </p>
-                    )}
-                    {data && limiteDia > 0 && totalDia >= limiteDia && (
-                      <p className="mt-2 text-xs font-medium" style={{ color: "#d97706" }}>
-                        Este dia já atingiu o limite de {limiteDia} agendamento(s).
+                    {multiDia && (
+                      <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-700">
+                        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        Este serviço dura {diasMulti} dia{diasMulti > 1 ? "s" : ""} inteiro
+                        {diasMulti > 1 ? "s" : ""} — só pode iniciar às{" "}
+                        {`${String(Math.floor(wIni / 60)).padStart(2, "0")}:${String(wIni % 60).padStart(2, "0")}`}.
                       </p>
                     )}
                   </div>
@@ -772,6 +824,8 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                 <div className="space-y-4">
                   <input
                     type="text"
+                    name="nome"
+                    autoComplete="name"
                     placeholder="Seu nome"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
@@ -780,6 +834,9 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                   />
                   <input
                     type="tel"
+                    name="whatsapp"
+                    autoComplete="tel"
+                    inputMode="tel"
                     placeholder="WhatsApp com DDD"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ""))}
@@ -789,6 +846,8 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
                   />
                   <input
                     type="text"
+                    name="endereco"
+                    autoComplete="street-address"
                     placeholder="Seu endereço (opcional)"
                     value={endereco}
                     onChange={(e) => setEndereco(e.target.value)}
@@ -945,6 +1004,32 @@ export function ReservarClient({ config }: { config: ProfissionalConfig }) {
         </motion.div>
         )}
       </div>
+
+      {!enviado && orcamento && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-neutral-900">{orcamento.servico_nome}</p>
+              <p className="text-xs text-neutral-500">
+                R$ {orcamento.total.toFixed(2).replace(".", ",")}
+                {orcamento.descontoFrequencia + orcamento.descontoPromo > 0 ? " · com desconto" : ""}
+              </p>
+            </div>
+            <button
+              onClick={() =>
+                document
+                  .getElementById(`step-${steps[passoAtual]?.slug}`)
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+              className="flex shrink-0 items-center gap-1.5 rounded-full px-5 py-3 text-sm font-bold text-white shadow-lg transition-transform active:scale-95"
+              style={{ backgroundColor: primary }}
+            >
+              {passoAtual === steps.length - 1 ? "Finalizar" : "Continuar"}
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

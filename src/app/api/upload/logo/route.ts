@@ -19,12 +19,14 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Não autorizado" }, { status: 401 });
   }
 
-  if (!file.type.startsWith("image/")) {
-    return Response.json({ error: "Apenas imagens são permitidas" }, { status: 400 });
+  const ehVideo = destino === "video";
+  if (!file.type.startsWith(ehVideo ? "video/" : "image/")) {
+    return Response.json({ error: ehVideo ? "Apenas vídeos são permitidos" : "Apenas imagens são permitidas" }, { status: 400 });
   }
 
-  if (file.size > 5 * 1024 * 1024) {
-    return Response.json({ error: "Arquivo muito grande (máx 5MB)" }, { status: 400 });
+  const MAX = ehVideo ? 15 * 1024 * 1024 : 5 * 1024 * 1024;
+  if (file.size > MAX) {
+    return Response.json({ error: `Arquivo muito grande (máx ${ehVideo ? "15MB (vídeo)" : "5MB"})` }, { status: 400 });
   }
 
   const ext = file.name.split(".").pop() || "png";
@@ -42,7 +44,12 @@ export async function POST(request: NextRequest) {
     .from("logos")
     .getPublicUrl(fileName);
 
-  if (destino === "fundo") {
+  if (destino === "video") {
+    await supabase
+      .from("configuracoes")
+      .update({ video_fundo: publicUrl.publicUrl })
+      .eq("profissional_id", profissionalId);
+  } else if (destino === "fundo") {
     await supabase
       .from("configuracoes")
       .update({ foto_fundo: publicUrl.publicUrl })

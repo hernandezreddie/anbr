@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 function getOpenAI(apiKey?: string) {
   const key = apiKey || process.env.OPENAI_API_KEY
   if (!key) return null
-  return new OpenAI({ apiKey: key })
+  return new OpenAI({ apiKey: key, timeout: 60_000, maxRetries: 1 })
 }
 
 interface AgentContext {
@@ -62,7 +62,14 @@ export async function chatComAgente(
     return { error: "Agente não configurado ou desativado", status: 400 };
   }
 
-  const contextoRAG = await buscarContextoRAG(profissionalId, mensagem, 5);
+  // RAG é opcional: se os embeddings falharem (ex: sem OPENAI_API_KEY global),
+  // o chat continua normalmente sem o contexto — nunca deve derrubar o agente.
+  let contextoRAG = "";
+  try {
+    contextoRAG = await buscarContextoRAG(profissionalId, mensagem, 5);
+  } catch (e: any) {
+    console.warn("[agent] RAG indisponível, seguindo sem contexto:", e?.message || e);
+  }
 
   const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [];
   const toolsConfig: string[] = config.tools_enabled || [];

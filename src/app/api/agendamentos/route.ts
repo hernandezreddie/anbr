@@ -6,8 +6,6 @@ import { estimar } from "@/lib/precos";
 import { rateLimitar, ipDoRequest } from "@/lib/rate-limit";
 import type { Servico, Adicional, Frequencia, Promocao } from "@/types";
 
-const WORK_INICIO = 8 * 60;
-const WORK_FIM = 20 * 60;
 const VALID_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 const VALID_WHATSAPP = /^\d{10,13}$/;
 const round05 = (n: number) => Math.round(n * 2) / 2;
@@ -23,6 +21,30 @@ function duracaoMinutos(servico: Servico, horas: number): number {
   }
   return Math.max(30, Math.round((horas || 1) * 60));
 }
+
+const MAX_DURACAO_DIAS = 31;
+
+const somarDiasISO = (dataISO: string, dias: number) => {
+  const d = new Date(dataISO + "T12:00:00");
+  d.setDate(d.getDate() + dias);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+};
+
+const formatarMinuto = (m: number) =>
+  `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
+const ehMultiDia = (duracao: number, wIni: number, wFim: number) => duracao > wFim - wIni;
+
+// Días (incluyendo el de inicio) que ocupa un servicio que empieza a inicioMin del día dataInicio
+const diasDaFaixa = (dataInicio: string, inicioMin: number, duracao: number) => {
+  const nDias = Math.max(1, Math.ceil((inicioMin + duracao) / 1440));
+  return Array.from({ length: nDias }, (_, i) =>
+    i === 0 ? dataInicio : somarDiasISO(dataInicio, i)
+  );
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,14 +70,15 @@ export async function GET(request: NextRequest) {
     const [ags, servicos, config] = await Promise.all([
       supabase
         .from("agendamentos")
-        .select("hora, servico_id, horas")
+        .select("data, hora, servico_id, horas")
         .eq("profissional_id", prof.id)
-        .eq("data", data)
+        .gte("data", somarDiasISO(data, -MAX_DURACAO_DIAS))
+        .lte("data", data)
         .neq("status", "cancelado"),
       supabase.from("servicos").select("id, tipo_preco, duracao_minutos"),
       supabase
         .from("configuracoes")
-        .select("max_agendamentos_dia")
+        .select("max_agendamentos_dia, horario_inicio, horario_fim")
         .eq("profissional_id", prof.id)
         .single(),
     ]);
@@ -67,19 +90,31 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const ocupados = (ags.data || [])
-      .filter((a) => a.hora)
-      .map((a) => {
-        const minutos =
-          durPorServico.get(a.servico_id) ||
-          Math.max(30, Math.round((Number(a.horas) || 1) * 60));
-        return { inicio: a.hora.slice(0, 5), minutos };
-      });
+    const wIni = Number(config.data?.horario_inicio) || 8 * 60;
+    const wFim = Number(config.data?.horario_fim) || 20 * 60;
+
+    // Servicios multi-día bloquean el día completo en cada día que ocupan
+    const ocupados: { inicio: string; minutos: number }[] = [];
+    for (const a of ags.data || []) {
+      if (!a.hora) continue;
+      const minutos =
+        durPorServico.get(a.servico_id) ||
+        Math.max(30, Math.round((Number(a.horas) || 1) * 60));
+      if (ehMultiDia(minutos, wIni, wFim)) {
+        if (diasDaFaixa(a.data, horaParaMin(a.hora), minutos).includes(data)) {
+          ocupados.push({ inicio: "00:00", minutos: 1440 });
+        }
+      } else if (a.data === data) {
+        ocupados.push({ inicio: a.hora.slice(0, 5), minutos });
+      }
+    }
 
     return NextResponse.json({
       ocupados,
       max_agendamentos_dia: Number(config.data?.max_agendamentos_dia) || 0,
-      total_dia: ags.data?.length || 0,
+      horario_inicio: Number(config.data?.horario_inicio) || null,
+      horario_fim: Number(config.data?.horario_fim) || null,
+      total_dia: (ags.data || []).filter((a) => a.data === data).length,
     });
   } catch (err) {
     console.error("Erro:", err);
@@ -246,10 +281,31 @@ export async function POST(request: NextRequest) {
     const horas = servico.tipo_preco === "fixo" ? 0 : orcamento.horas;
     const valor = orcamento.total;
 
-    // ---- Jornada de trabalho ----
+    // ---- Jornada de trabalho (horários do profissional, fallback 08:00–20:00) ----
+    const { data: cfgJornada } = await adminDb
+      .from("configuracoes")
+      .select("horario_inicio, horario_fim")
+      .eq("profissional_id", prof.id)
+      .single();
+
+    const wIni = Number(cfgJornada?.horario_inicio) || 8 * 60;
+    const wFim = Number(cfgJornada?.horario_fim) || 20 * 60;
     const duracao = duracaoMinutos(servico as Servico, horas);
     const inicioMin = horaParaMin(hora);
-    if (inicioMin < WORK_INICIO || inicioMin + duracao > WORK_FIM) {
+    const multiDia = ehMultiDia(duracao, wIni, wFim);
+
+    if (multiDia) {
+      if (duracao > MAX_DURACAO_DIAS * 1440) {
+        return NextResponse.json({
+          error: `Duração máxima suportada é de ${MAX_DURACAO_DIAS} dias.`,
+        }, { status: 400 });
+      }
+      if (inicioMin !== wIni) {
+        return NextResponse.json({
+          error: `Este serviço dura mais de um dia de expediente — só pode iniciar às ${formatarMinuto(wIni)}.`,
+        }, { status: 400 });
+      }
+    } else if (inicioMin < wIni || inicioMin + duracao > wFim) {
       return NextResponse.json({ error: "Horário fora do expediente." }, { status: 400 });
     }
 
@@ -301,11 +357,14 @@ export async function POST(request: NextRequest) {
     }
 
     // ---- Conflito por SOBREPOSIÇÃO de duração (não só hora exata) ----
+    // Serviços multi-dia bloqueiam o dia inteiro em cada dia que ocupam.
+    const minhasDatas = multiDia ? diasDaFaixa(data, inicioMin, duracao) : [data];
     const { data: doDia } = await adminDb
       .from("agendamentos")
-      .select("hora, servico_id, horas")
+      .select("data, hora, servico_id, horas")
       .eq("profissional_id", prof.id)
-      .eq("data", data)
+      .gte("data", somarDiasISO(data, -MAX_DURACAO_DIAS))
+      .lte("data", data)
       .neq("status", "cancelado");
 
     const servicosDia = await adminDb.from("servicos").select("id, tipo_preco, duracao_minutos");
@@ -318,7 +377,16 @@ export async function POST(request: NextRequest) {
       if (!a.hora) return false;
       const aIni = horaParaMin(a.hora);
       const aDur = durMap.get(a.servico_id) || Math.max(30, Math.round((Number(a.horas) || 1) * 60));
-      return inicioMin < aIni + aDur && inicioMin + duracao > aIni;
+      const aMulti = ehMultiDia(aDur, wIni, wFim);
+      const aDatas = aMulti ? diasDaFaixa(a.data, aIni, aDur) : [a.data];
+      return aDatas.some((ad) => {
+        if (!minhasDatas.includes(ad)) return false;
+        const meuIni = multiDia ? 0 : inicioMin;
+        const meuFim = multiDia ? 1440 : inicioMin + duracao;
+        const delIni = aMulti ? 0 : aIni;
+        const delFim = aMulti ? 1440 : aIni + aDur;
+        return meuIni < delFim && meuFim > delIni;
+      });
     });
 
     if (conflito) {
@@ -372,7 +440,7 @@ export async function POST(request: NextRequest) {
         hora,
         horas,
         valor,
-        status: "solicitado",
+        status: "confirmado",
         adicionais: Array.isArray(adicionais) ? adicionais : [],
         recorrencia: frequenciaDb?.slug || null,
         token_avaliacao: crypto.randomUUID(),

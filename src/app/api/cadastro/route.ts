@@ -7,6 +7,7 @@ import {
   getCategoriaPadrao,
 } from "@/lib/servicos-padrao";
 import type { CategoriaId } from "@/lib/servicos-padrao";
+import { getTemaPorNicho } from "@/lib/temas";
 import { gerarLogoSVG } from "@/lib/logo-padrao";
 import { rateLimitar, ipDoRequest } from "@/lib/rate-limit";
 
@@ -83,9 +84,16 @@ export async function POST(request: Request) {
     }
   }
 
+  const tema = getTemaPorNicho(categoria);
+
   const configRow = {
     profissional_id: prof.id,
-    template_id: template_id || 1,
+    template_id: template_id || tema.template_id,
+    cor_primaria: tema.cor_primaria,
+    cor_secundaria: tema.cor_secundaria,
+    fundo_estilo: tema.fundo_estilo,
+    fonte_titulo: tema.fonte_titulo,
+    fonte_corpo: tema.fonte_corpo,
     slogan: slogan || `${nome} — Profissional de confiança`,
   };
   const { error: configError } = await supabase

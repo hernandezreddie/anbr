@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces } from "next/font/google";
 import { ConsentBanner } from "@/components/site/ConsentBanner";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,21 +23,21 @@ export const metadata: Metadata = {
   description: "Crie seu sistema de agendamento online grátis em 5 minutos. Página profissional, agenda 24h, lembretes no WhatsApp, pagamento via Pix e IA que atende seus clientes. Sem programação.",
   keywords: ["sistema de agendamento", "agendamento online", "agenda online grátis", "sistema para profissionais", "agendamento whatsapp", "marcar horário online", "sistema para barbearia", "sistema para salão", "agenda digital", "booking Brasil", "agendamento com IA", "agenda automática", "site para profissional", "página de agendamento"],
   authors: [{ name: "AN.BR" }],
-  metadataBase: new URL("https://autonexabrasil.com.br"),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     type: "website",
     locale: "pt_BR",
     siteName: "AN.BR",
     title: "AN.BR — Seu Negócio Online em 5 Minutos | Agendamento com IA",
     description: "Site profissional, agendamento 24h, Pix e lembretes no WhatsApp. Conecte o AI Agent às suas redes e ele atende por você. Grátis para começar.",
-    url: "https://autonexabrasil.com.br",
-    images: [{ url: "https://autonexabrasil.com.br/og-image.svg", width: 1200, height: 630, alt: "AN.BR — Sistema de Agendamento Online" }],
+    url: SITE_URL,
+    images: [{ url: `${SITE_URL}/og-image.svg`, width: 1200, height: 630, alt: "AN.BR — Sistema de Agendamento Online" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "AN.BR — Agendamento Online com IA",
     description: "Seu sistema de agendamento pronto em 5 minutos. Grátis para começar.",
-    images: ["https://autonexabrasil.com.br/og-image.svg"],
+    images: [`${SITE_URL}/og-image.svg`],
   },
   robots: {
     index: true,
@@ -87,7 +88,7 @@ export default function RootLayout({
                 "@type": "Organization",
                 name: "AN.BR",
               },
-              url: "https://autonexabrasil.com.br",
+              url: SITE_URL,
               inLanguage: "pt-BR",
               areaServed: "BR",
             }),

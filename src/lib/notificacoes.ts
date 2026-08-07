@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendText, getProvider } from "@/lib/whatsapp/evolution";
 import { getMensagensPadrao } from "@/lib/servicos-padrao";
 import { textoConviteAvaliacao } from "@/lib/avaliacoes";
+import { SITE_URL } from "@/lib/site";
 
 function formatarData(data: string | null | undefined): string {
   if (!data) return "no dia combinado";
@@ -156,7 +157,7 @@ export async function enviarNotificacaoProfissional(dados: {
     dados.data ? `📅 ${formatarData(dados.data)}${dados.hora ? ` às ${formatarHora(dados.hora)}` : ""}` : "",
     `💰 Valor: ${fmtMoeda(dados.valor)}`,
     ``,
-    `Acesse seu painel para confirmar: /painel/agendamentos`,
+    `✅ Agendamento confirmado automaticamente. Acesse seu painel para gerenciar: /painel/agendamentos`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -302,6 +303,46 @@ export async function processarLembretesGlobais() {
  * O link aponta para o Google (se o profissional tiver link) ou para a página
  * interna de avaliação com o token do agendamento.
  */
+export async function enviarCancelamento(destino: {
+  profissional_id: string;
+  cliente_whatsapp?: string | null;
+  servico_nome?: string | null;
+  data?: string | null;
+  hora?: string | null;
+}): Promise<{ enviado: boolean; motivo?: string }> {
+  const whatsapp = destino.cliente_whatsapp?.replace(/\D/g, "");
+  if (!whatsapp || whatsapp.length < 10) {
+    return { enviado: false, motivo: "sem whatsapp do cliente" };
+  }
+  if (!(await podeEnviarAutomatico(destino.profissional_id))) {
+    return { enviado: false, motivo: "agente ativo" };
+  }
+
+  const supabase = createAdminClient();
+  const { data: prof } = await supabase
+    .from("profissionais")
+    .select("slug")
+    .eq("id", destino.profissional_id)
+    .single();
+  if (!prof?.slug) return { enviado: false, motivo: "sem slug" };
+
+  const texto = [
+    `⚠️ *Seu horário foi cancelado*`,
+    ``,
+    `${destino.servico_nome || "O serviço"} do dia ${formatarData(destino.data)}${destino.hora ? ` às ${formatarHora(destino.hora)}` : ""} foi cancelado.`,
+    ``,
+    `Quer remarcar? É rapidinho: ${SITE_URL}/${prof.slug}/reservar`,
+  ].join("\n");
+
+  try {
+    const { sendText } = await import("@/lib/whatsapp/evolution");
+    await sendText(destino.profissional_id, whatsapp, texto);
+    return { enviado: true };
+  } catch (e) {
+    return { enviado: false, motivo: String(e) };
+  }
+}
+
 export async function enviarConviteAvaliacao(
   agendamentoId: string
 ): Promise<{ enviado: boolean; motivo?: string }> {
@@ -404,7 +445,7 @@ export async function enviarConviteReagendamento(
   const nome = ag.cliente_nome?.split(" ")[0] || "cliente";
   const servico = ag.servico_nome || "o serviço";
   const data = formatarData(ag.data);
-  const link = `https://autonexabrasil.com.br/${prof.slug}/reservar`;
+  const link = `${SITE_URL}/${prof.slug}/reservar`;
   const texto = `Olá ${nome}! Espero que tenha gostado do(a) ${servico} no dia ${data}. 😊\n\nJá quer garantir o próximo horário? É rapidinho: ${link}`;
 
   try {

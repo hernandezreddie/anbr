@@ -4,11 +4,14 @@ import Link from "next/link";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { SiteNav } from "@/components/site/SiteNav";
+import { Depoimentos } from "@/components/site/Depoimentos";
+import { ChatDemo } from "@/components/site/ChatDemo";
+import { AdocaoStats } from "@/components/site/AdocaoStats";
 import {
   Check, ArrowRight, CalendarCheck, MessageCircle, Bot,
   Palette, LayoutDashboard, Bell, Zap, Shield,
   Wrench, Scissors, Stethoscope, Dumbbell, Brush, ChefHat,
-  Camera, MonitorSmartphone, HelpCircle, Hand, HeartPulse, Car, PawPrint, TrendingUp, Clock, Star, Sparkles, ChevronDown,
+  Camera, MonitorSmartphone, HelpCircle, Hand, HeartPulse, Car, PawPrint, TrendingUp, Clock, Star, Sparkles, ChevronDown, Play,
 } from "lucide-react";
 
 type CategoriaServico = {
@@ -174,11 +177,19 @@ export default function HomePage() {
                   <span className="relative z-10 flex items-center gap-2">Criar meu sistema grátis <ArrowRight size={20} className="transition-transform group-hover:translate-x-0.5" /></span>
                   <div className="absolute inset-0 -z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                 </Link>
-                <Link href="/precos" className="flex items-center gap-2 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper)] px-8 py-4 text-sm font-medium text-ink transition-all hover:border-[var(--color-primary)]/30 hover:shadow-md">
-                  <MonitorSmartphone size={18} /> Ver planos e preços
+                <Link href="/demo" className="group flex items-center gap-2 rounded-2xl border border-[var(--color-primary)]/25 bg-white/70 px-8 py-4 text-sm font-semibold text-[var(--color-primary)] backdrop-blur-sm transition-all hover:border-[var(--color-primary)]/50 hover:shadow-md">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-primary)] text-white">
+                    <Play size={11} className="ml-0.5" />
+                  </span>
+                  Ver demo ao vivo
                 </Link>
               </div>
-              <p className="mt-4 text-xs text-ink-soft/60">Cancele quando quiser. Upgrade só se você precisar.</p>
+              <p className="mt-4 text-xs text-ink-soft/60">
+                Cancele quando quiser. Upgrade só se você precisar.{" "}
+                <Link href="/precos" className="font-medium text-[var(--color-primary)] underline underline-offset-2 hover:text-emerald-600">
+                  Ver planos e preços
+                </Link>
+              </p>
             </motion.div>
 
             {/* Mockup */}
@@ -222,28 +233,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Floating AI chat card */}
-              <motion.div
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="pointer-events-none absolute -bottom-8 left-0 z-10 hidden w-72 lg:block lg:-left-4 xl:-left-10"
-              >
-                <div className="rounded-2xl border border-[var(--color-line)] bg-white/95 p-4 text-left shadow-2xl shadow-[var(--color-primary)]/8 backdrop-blur-md">
-                  <div className="mb-3 flex items-center gap-2.5">
-                    <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-primary)] to-emerald-400 text-white shadow-md">
-                      <Bot size={15} />
-                      <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" /></span>
-                    </span>
-                    <div><p className="text-xs font-semibold text-ink">AI Agent</p><p className="text-[10px] font-medium text-emerald-600">Online · responde em segundos</p></div>
-                  </div>
-                  <div className="space-y-2 text-[11px]">
-                    <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[var(--color-primary)] px-3 py-2 text-white shadow-sm">Quanto custa o corte?</div>
-                    <div className="max-w-[90%] rounded-2xl rounded-bl-md border border-[var(--color-line)] bg-white px-3 py-2 text-ink shadow-sm">R$ 75. Temos amanhã às 10h ou 15h — qual prefere?</div>
-                    <div className="max-w-[90%] rounded-2xl rounded-bl-md border border-[var(--color-line)] bg-white px-3 py-2 text-ink shadow-sm">Agendado! Confirmado para amanhã às 15h. Você receberá a confirmação no WhatsApp.</div>
-                    <div className="flex w-fit items-center gap-1 rounded-2xl rounded-bl-md border border-[var(--color-line)] bg-white px-3 py-3 shadow-sm"><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-soft/40" style={{ animationDelay: "0ms" }} /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-soft/40" style={{ animationDelay: "150ms" }} /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-soft/40" style={{ animationDelay: "300ms" }} /></div>
-                  </div>
-                </div>
-              </motion.div>
+              {/* Floating AI chat card (interactivo) */}
+              <ChatDemo />
             </motion.div>
           </div>
         </div>
@@ -401,6 +392,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ═══════════ DEPOIMENTOS REAIS ═══════════ */}
+      <Depoimentos />
+
       {/* ═══════════ PRICING ═══════════ */}
       <section id="precos" className="relative py-20 sm:py-28 bg-white">
         <div className="absolute inset-0 -z-10">
@@ -468,6 +462,12 @@ export default function HomePage() {
             <Link href="/precos" className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:text-emerald-600">
               Comparação completa dos planos <ArrowRight size={15} />
             </Link>
+            <p className="mt-2 text-sm text-ink-soft">
+              Quer ver o painel antes de decidir?{" "}
+              <Link href="/demo" className="inline-flex items-center gap-1 font-semibold text-[var(--color-primary)] underline underline-offset-2 hover:text-emerald-600">
+                <Play size={13} /> Ver demonstração ao vivo
+              </Link>
+            </p>
           </div>
         </div>
       </section>
@@ -489,6 +489,11 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ═══════════ ADOÇÃO REAL ═══════════ */}
+      <section className="bg-white pb-16">
+        <AdocaoStats />
       </section>
 
       {/* ═══════════ FAQ ═══════════ */}

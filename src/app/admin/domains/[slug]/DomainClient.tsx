@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { SITE_DOMAIN } from "@/lib/site"
 
 interface Props {
   profissional: { id: string; nome: string; slug: string }
@@ -171,7 +172,7 @@ export function DomainClient({ profissional, domain: initialDomain }: Props) {
           </li>
           <li>
             No seu provedor de DNS, crie um registro <strong>CNAME</strong> apontando seu domínio para{" "}
-            <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs">autonexabrasil.com.br</code>
+            <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs">{SITE_DOMAIN}</code>
           </li>
           <li>
             Se solicitado, adicione os registros de <strong>validação SSL</strong> mostrados acima

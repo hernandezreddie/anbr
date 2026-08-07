@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/painel/", "/admin/", "/auth/"],
       },
     ],
-    sitemap: "https://autonexabrasil.com.br/sitemap.xml",
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

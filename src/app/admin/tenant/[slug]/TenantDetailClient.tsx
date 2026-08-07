@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Save, Trash2, Pencil, Shield, ShieldOff, Loader2, Ban, X, KeyRound, Eye, EyeOff } from "lucide-react";
+import { Check, Save, Trash2, Pencil, Shield, ShieldOff, Loader2, Ban, X, KeyRound, Eye, EyeOff, Palette } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Toast } from "@/components/ui/Toast";
 import { PLANOS, type PlanoId } from "@/lib/planos";
+import { FUNDOS } from "@/lib/backgrounds";
 
 type Prof = {
   id: string;
@@ -62,6 +63,11 @@ export function TenantDetailClient({
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [verNovaSenha, setVerNovaSenha] = useState(false);
   const [verConfirmarSenha, setVerConfirmarSenha] = useState(false);
+  const [landingForm, setLandingForm] = useState({
+    template_id: Number(config?.template_id) || 1,
+    fundo_estilo: config?.fundo_estilo || "none",
+    video_fundo: config?.video_fundo || "",
+  });
 
   const notificar = (ok: string) => {
     setMsg(ok);
@@ -140,6 +146,20 @@ export function TenantDetailClient({
     setNovaSenha("");
     setConfirmarSenha("");
     notificar("Senha do tenant trocada");
+  }
+
+  async function salvarLanding() {
+    setBusy("landing");
+    const res = await fetch("/api/admin/tenant/config", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: prof.id, ...landingForm }),
+    });
+    const data = await res.json();
+    setBusy(null);
+    if (!res.ok) return notificarErro(data.error || "Erro ao salvar landing");
+    notificar("Landing do tenant atualizada");
+    router.refresh();
   }
 
   async function eliminar() {
@@ -349,6 +369,47 @@ export function TenantDetailClient({
           </div>
         </div>
       )}
+
+      {/* Landing do prestador */}
+      <div className="mt-6 rounded-2xl border border-line bg-white p-5">
+        <div className="flex items-center gap-2">
+          <Palette size={16} className="text-teal-600" />
+          <h3 className="text-sm font-semibold">Landing do prestador</h3>
+        </div>
+        <p className="mt-1 text-xs text-ink-soft">
+          Plantilla, fundo e vídeo de fundo da página pública. O prestador também pode ajustar no painel.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className="text-xs font-medium text-ink-soft">Plantilla visual</label>
+            <select className={input} value={landingForm.template_id}
+              onChange={(e) => setLandingForm({ ...landingForm, template_id: Number(e.target.value) })}>
+              <option value={1}>Clássico (serifada elegante)</option>
+              <option value={2}>Moderno (minimalista)</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-ink-soft">Fundo</label>
+            <select className={input} value={landingForm.fundo_estilo}
+              onChange={(e) => setLandingForm({ ...landingForm, fundo_estilo: e.target.value })}>
+              {FUNDOS.map((f) => (
+                <option key={f.id} value={f.id}>{f.nome}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-ink-soft">Vídeo de fundo (URL)</label>
+            <input className={input} value={landingForm.video_fundo} placeholder="https://...mp4 (opcional)"
+              onChange={(e) => setLandingForm({ ...landingForm, video_fundo: e.target.value })} />
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button size="sm" onClick={salvarLanding} disabled={busy === "landing"}
+            leftIcon={busy === "landing" ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}>
+            Salvar landing
+          </Button>
+        </div>
+      </div>
 
       {/* Info extra */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

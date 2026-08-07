@@ -8,7 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📋 PROJECT MEMORY — AUTOMATIZACURITIBA26
 **Last updated:** 2026-08-06
-**Status:** ✅ PRODUCTION READY — Fases 0–10 ✅. Sistema completo con seguridad, home pulida, dashboard inteligente y AI Ads MVP.
+**Status:** ✅ PRODUCTION READY — Fases 0–16 ✅. Sistema completo con seguridad, home pulida, dashboard inteligente, AI Ads con IA real, demo pública de conversión, temas por nicho, video de fondo por prestador, fondos animados, Kanban de agendamentos y mejoras CRO en landings.
 
 ---
 
@@ -20,7 +20,12 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 ### 🔑 KEY FILES (actualizados)
 | File | Purpose |
 |------|---------|
-| `src/app/page.tsx` | **Homepage AN.BR** — Copy optimizado CRO + SEO + diseño premium |
+| `src/app/demo/DemoClient.tsx` | **Demo pública del painel** (/demo) — tabs Painel/Site/AI Agent, tour guiado, modal Pix, chat scripted. noindex |
+| `src/app/login/page.tsx` | Redirect `/login` → `/entrar` (fin del 404) |
+| `src/app/admin/layout.tsx` | **Auth gate admin** — pantalla "Área restrita" en vez de redirect silencioso |
+| `src/components/site/Depoimentos.tsx` | Depoimentos reales en home (avaliacoes aprovadas, fallback honesto: se oculta si vacío) |
+| `src/components/site/ChatDemo.tsx` | Chat AI interactivo scripted en hero (chips + typing indicator) |
+| `src/app/page.tsx` | **Homepage AN.BR** — Copy optimizado CRO + SEO + diseño premium + CTA "Ver demo ao vivo" |
 | `src/app/layout.tsx` | SEO metadata + Schema.org + Open Graph |
 | `src/app/(slug)/[slug]/reservar/page.tsx` | Server entry, loads config via `getProfissionalFullConfig(slug)` |
 | `src/app/(slug)/[slug]/reservar/ReservarClient.tsx` | **Main client component** — stepper 6 pasos, URL sync |
@@ -42,6 +47,20 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 | `src/lib/rate-limit.ts` | Rate limiting in-memory (agendamentos 5/min, cadastro 3/min, agent 10/min) |
 | `src/lib/pagamentos/mercadopago.ts` | Gateway PIX dinámico Mercado Pago |
 | `src/lib/webhook-firma.ts` | `validarAssinaturaMeta` — HMAC SHA256 |
+| `src/lib/site.ts` | **SITE_DOMAIN/SITE_URL** — dominio configurable por `NEXT_PUBLIC_SITE_DOMAIN` (fallback autonexabrasil.com.br); usado en layout, sitemap, robots, blog, notificacoes, precos, cadastro, DomainClient, demo |
+| `src/lib/ids.ts` | **Nuevo** — `novoId()` (UUID con fallback http/LAN) + `getMeuProfissionalId()` (profiles RLS) para inserts del painel |
+| `src/lib/temas.ts` | **Nuevo** — `TemaPreset` + `TEMAS_POR_NICHO` (13 categorías) + `getTemaPorNicho(categoria)` |
+| `src/components/landing/MobileCtaBar.tsx` | **Nuevo** — barra CTA sticky inferior solo mobile ("Agendar agora" + WhatsApp) tras 520px de scroll |
+| `src/app/api/admin/tenant/config/route.ts` | **Nuevo** — PATCH landing del prestador desde superadmin (template/fundo/video) |
+| `supabase/migrations_video_fundo.sql` | **Nuevo** — columna `video_fundo` en configuracoes (aplicar en Supabase) |
+| `src/lib/backgrounds.ts` | **Fondos animados** — 10 estilos (mesh/aurora/blobs/grid animados con gradientShift) |
+| `src/components/landing/Hero.tsx` | **Video de fondo** con poster fallback + overlays; `temImagem` incluye video_fundo |
+| `src/app/api/upload/logo/route.ts` | Soporta `destino="video"` (video/*, máx 15MB, actualiza video_fundo) |
+| `src/app/(slug)/[slug]/painel/agendamentos/page.tsx` | **Kanban** — toggle Lista/Quadro con 4 columnas por estado |
+| `src/app/demo/DemoClient.tsx` | Tab "Personalizar" — editor de marca interactivo (6 colores + 2 templates) con preview al vivo |
+| `src/components/site/AdocaoStats.tsx` | **Nuevo** — prueba social real (profissionais ativos + agendamentos) con umbrales honestos; se oculta si hay pocos datos |
+| `src/app/api/estatisticas/route.ts` | **Nuevo** — GET público: count profissionais `ativo` + agendamentos `concluido` (admin client, 503 on error) |
+| `docs/DIAGNOSTICO_QA.md` | **Nuevo — documento maestro** — diagnóstico QA (9 secciones) + estado de reparación por ítem + checklist vivo |
 
 ### 🆕 FASE 8.5–10 NUEVOS FILES
 | File | Purpose |
@@ -120,11 +139,83 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 - [x] **Doc:** `docs/CICLOS_DEL_SISTEMA.md` — 7 ciclos actuales + 5 nuevos propuestos + roadmap de priorización
 - [x] Build 70/70, typecheck limpio
 
+#### 🆕 Fase 11 — Mejoras de Conversión (Agosto 2026, post-auditoría QA)
+- [x] **Demo pública del painel** (`/demo`) — tabs Painel (mock interactivo: confirmar/concluir, modal Pix con QR, stats) / Site do cliente / AI Agent (chat scripted), tour guiado 3 pasos con callouts de valor, CTAs a /cadastro, noindex
+- [x] **Fix /login 404** — redirect → `/entrar`
+- [x] **Fix /admin** — auth gate en layout con pantalla "Área restrita" + CTA (sin redirect silencioso)
+- [x] **Depoimentos reales en home** (`components/site/Depoimentos.tsx`) — avaliacoes aprovadas desde BD, media de estrellas, sección antes del pricing; se oculta si no hay datos (nunca fakes)
+- [x] **Chat AI interactivo en hero** (`components/site/ChatDemo.tsx`) — card clickeable + panel con chips y typing indicator (scripted; el chat real requiere endpoint público + tenant demo, pendiente)
+- [x] **Cadastro mejorado** — barra de progreso animada, "Passo X de 5 · ~N min", trust line bajo "Criar meu sistema"
+- [x] **Hero CTA** → "Ver demo ao vivo" como secundario + link demo en sección pricing
+- [x] Build 72/72 rutas, typecheck limpio, 24/24 tests
+
+#### 🆕 Fase 12 — Demo Personalizable + Dominio por Env (Agosto 2026)
+- [x] **Tab "Personalizar" en /demo** — editor interactivo: 6 colores + 2 templates (Clássico/Escuro) con preview al vivo de la landing (navbar, hero, servicios, CTA se recolorizan al instante)
+- [x] **`src/lib/site.ts`** — dominio centralizado: `SITE_DOMAIN`/`SITE_URL` por env `NEXT_PUBLIC_SITE_DOMAIN` (fallback autonexabrasil.com.br)
+- [x] **21 hardcodes de dominio reemplazados**: layout (metadataBase/OG/twitter/JSON-LD), sitemap, robots, blog ×9, notificacoes (link reagendamiento), precos ×2, cadastro (prefix slug), DomainClient (CNAME), DemoClient (mock), proxy.ts (`ROOT_DOMAIN = process.env.SITE_DOMAIN`)
+- [x] Termos/privacidade quedan literales (texto legal — editar manualmente si cambia el dominio)
+- [x] Build 72/72, typecheck limpio, 24/24 tests
+
+#### 🆕 Fase 13 — Cierre del Diagnóstico QA (Agosto 2026)
+- [x] **`docs/DIAGNOSTICO_QA.md`** — documento maestro con las 9 secciones del QA + estado de reparación por ítem + matices (analista sin info completa) + checklist vivo
+- [x] **P2#10 Métricas de adopción reales** — `GET /api/estatisticas` + `AdocaoStats.tsx` en home (prueba social real con umbrales honestos: ≥10 profissionais y ≥100 agendamentos, redondeo a 10/100; se oculta si no hay datos)
+- [x] **Diagnóstico 10/10 items cerrados** (✅ o 🟡 con deuda documentada). Pendientes = solo acciones manuales: DNS/dominio, video demo, chat AI público real (env DEMO_TENANT_ID), depoimentos de pilotos, Meta App Review
+- [x] **Autosave del cadastro** — `anbr_rascunho` en sessionStorage (paso, categoria, form, servicios, consentimento): volver atrás/recargar ya no pierde nada; se limpia al enviar
+- [x] **Fix "Novo agendamento" manual** — los INSERT del painel no incluían `profissional_id` (RLS 42501) y `crypto.randomUUID()` fallaba en http/LAN (botón colgado en "Salvando…"). `src/lib/ids.ts` (`getMeuProfissionalId` + `novoId` con fallback) aplicado en agendamentos + calendario (4 inserts) con try/catch
+- [x] Build 72/72, typecheck limpio, 24/24 tests
+
+#### 🆕 Fase 14 — Disponibilidad de Agendamiento (Agosto 2026)
+- [x] **Días llenos visibles para el consumidor** — `diaCheio = diaLimite || diaSemHorarios` en `ReservarClient.tsx`: alerta ámbar con AlertCircle al elegir la fecha + select de horario disabled con placeholder "Sem horários livres" y borde ámbar (antes: solo texto chico debajo del select). La API ya blindaba todo en el servidor: límite diario, conflicto por solapamiento de duración y race condition (409s)
+- [x] **Horario de atención configurable por prestador** — antes hardcodeado 08:00–20:00 (y slots fijos 8–18:30):
+  - Migration `supabase/migrations_horarios.sql`: `horario_inicio INT` / `horario_fim INT` (minutos desde 00:00, NULL = padrão) + agregado a `schema_completo.sql`
+  - UI en `/painel/perfil` → "Limites": 2 selects cada 30 min (00:00–23:30) con "Padrão (08:00/20:00)" + hint; persistido por `PATCH /api/config/atualizar` (acepta cualquier campo)
+  - `GET /api/agendamentos` devuelve `horario_inicio`/`horario_fim` → ReservarClient genera slots dinámicos cada 30 min dentro de la faixa y `indisponivel` usa los valores reales (fallback 8–20)
+  - `POST /api/agendamentos` valida "Horário fora do expediente" con los horarios de config (fallback 8–20); constantes `WORK_INICIO/WORK_FIM` eliminadas del route (quedan en ReservarClient como fallback)
+  - Tipo: `horario_inicio?/horario_fim?` en `ConfiguracaoVisual` (src/types/index.ts) + tipo local en perfil
+- [x] **Servicios multi-día (24h+)** — antes cualquier duración > faixa = 400 "Horário fora do expediente" y días siempre "Sem horários livres". Ahora: si `duracao > wFim - wIni` solo puede iniciar al comienzo de la jornada (`inicioMin === wIni`, error con hora formateada) y bloquea el día COMPLETO en cada día que ocupa (tope `MAX_DURACAO_DIAS = 31`). GET consulta rango [data−31, data] y emite bloques `{inicio:"00:00", minutos:1440}` por día afectado; el conflicto POST expande los bloqueos existentes a full-day en sus días (valida ambos sentidos multi-día↔normal). UI: solo el slot wIni disponible + aviso ámbar "Este serviço dura X dia(s) inteiro(s)". Helpers: `ehMultiDia`, `diasDaFaixa`, `somarDiasISO`, `formatarMinuto` en el route
+- [x] **Onboarding con embudo real** — `OnboardingWizard` ya no es un letrero fijo: verifica estado REAL de cada paso (WhatsApp vía `/api/whatsapp/instance` + `connection_status`; página vía configuracoes logo/cor; servicios count; Google vía `calendar_email`) → avanza al primer paso incompleto, pasos hechos en verde "Concluído" + "Continuar" (salta hechos), se auto-oculta si todo está listo, botón "Verificar novamente"
+- [x] **AI Ads con función real y coherentes con el plan** — `POST /api/ads/gerar`: auth, servicio derivado server-side, IA real (key del tenant vía `resolveApiKey` o `OPENAI_API_KEY`, `response_format: json_object` + `validarCopys`) con fallback a templates; prompt con `RecursosPlano` (no promete AI Agent en grátis, avisa límite 30/mes, dominio); UI con banner del plan (grátis → alerta + upgrade; pagado → "incluído"), badge de origen (IA/modelo local) y errores visibles; `GET /api/ads/gerar?profissional_id=` expone el plan a la UI
+- [x] Build 72/72, typecheck limpio, 24/24 tests
+
+#### 🆕 Fase 15 — Temas por Nicho + Selector de Plantilla (Agosto 2026)
+- [x] **`src/lib/temas.ts`** — `TemaPreset` + `TEMAS_POR_NICHO` (13 categorías) + `getTemaPorNicho(categoria)` con fallback: cada nicho con su combinación plantilla + colores + fondo + fuentes (limpeza azul dots, beleza rosa glass, unhas rose mesh, saude esmeralda waves, clinica azul sobrio Inter, personal naranja noise Moderno, automotivo rojo geometric Moderno, veterinario teal dots, artes fucsia aurora Moderno, gastronomia ámbar geometric, fotografia negro premium Moderno, consultoria indigo glass Moderno, outro teal marca)
+- [x] **Painel `/perfil` → "Tema do seu nicho"** — selector de plantilla Clássico/Moderno (antes SOLO se elegía en cadastro: gap cerrado) + 13 tarjetas de tema que aplican TODO en 1 toque (`aplicarTema`), badge "Seu nicho", check por coincidencia de config; `template_id` en tipo local + carga + `salvarTudo` + "Restaurar padrões"
+- [x] **Cadastro** — elegir categoría aplica el `template_id` del preset del nicho automáticamente; tarjetas de plantilla con preview del color del nicho
+- [x] **API cadastro** — `configuracoes` se crea sembrando el preset completo del nicho (template, colores, fondo, fuentes); ya no todos nacen teal
+- [x] **Decisión usuario:** borrado de agendamientos SIN restricción de estado (se revirtió la protección "solo solicitado" — "no me lo bloquees")
+- [x] Build 73/73, typecheck limpio, 24/24 tests
+
+#### 🆕 Fase 16 — Video de Fondo + Fondos Animados + Superadmin Landing + Kanban + CRO Landings (Agosto 2026)
+- [x] **Fondos animados estilo 21.dev** — fix bug latente `@keyframes gradientShift` (se usaba pero nunca se definía en globals.css) + `prefers-reduced-motion` global; 2 fondos nuevos (`blobs`, `grid`) y mesh/aurora animados con drift lento — `src/lib/backgrounds.ts` pasa a 10 estilos (sin costo de servicio externo, reutiliza el motor `fundo_estilo` que ya existía)
+- [x] **Video de fondo por prestador** — migration `supabase/migrations_video_fundo.sql` (ADD COLUMN `video_fundo`; **aplicar en Supabase**) + schema_completo; tipo en `ConfiguracaoVisual`; `Hero.tsx` renderiza `<video muted autoPlay loop playsInline` con poster fallback (foto) + overlays (legibilidad); `/api/upload/logo?destino=video` (video/*, máx 15MB, bucket logos `{id}/video.{ext}`); UI en `/painel/perfil` → "Vídeo de fundo" con preview + quitar. Evidencia: background video = percepción premium (NO conversión directa — esos +80% son de videos explicativos)
+- [x] **Superadmin → Landing del prestador** — `PATCH /api/admin/tenant/config` (auth `isAdminPlataforma`; valida template 1|2, fundo contra FUNDOS, video string|"") + sección "Landing do prestador" en `TenantDetailClient.tsx` (plantilla/fondo/video + "Salvar landing")
+- [x] **Kanban de agendamentos** — `/painel/agendamentos` toggle Lista/Quadro (4 columnas: Solicitar/Confirmado/Concluído/Cancelado) con contadores y acciones por tarjeta
+- [x] **CRM embudo: ya existía** — `/painel/clientes` completo (`obterEtapaCliente`/`HistoricoCliente` en `src/lib/etapas-cliente.ts`) y enlazado en `SidebarClient.tsx`; el `components/painel/Sidebar.tsx` desktop viejo es código muerto (sin imports)
+- [x] **CRO landings** — `MobileCtaBar.tsx` (barra sticky mobile "Agendar agora" + WhatsApp tras 520px, safe-area; WhatsAppFloat se oculta en mobile cuando la barra está visible); duración visible en tarjetas de Servicos (`R$ 80 · 1h30`); smooth scroll + `scroll-margin-top` en `#servicos`
+- [x] **Auto-confirmar agendamientos web (decisión usuario)** — el cliente YA recibía "confirmado" por WhatsApp al reservar (`msg_confirmacao` dice "está confirmado"); el botón Confirmar del painel no enviaba nada. Ahora `POST /api/agendamentos` crea el agendamiento directamente como `confirmado`; "solicitado" queda solo para filas legacy. Kanban conserva 4 columnas
+- [x] **Cancelar avisa al cliente** — `enviarCancelamento()` en `src/lib/notificacoes.ts` (WhatsApp con servicio/fecha/hora + link de remarcar) llamado desde `PATCH /api/agendamentos/[id]/status` (antes cancelar NO notificaba — hueco real cerrado)
+- [x] **Video de fondo off en mobile** — Hero desactiva el `<video>` en <768px y con `prefers-reduced-motion` → color automático (gradiente del `cor_primaria`); desktop sin cambios
+- [x] **Fix título painel** — `generateMetadata` propio en `painel/layout.tsx` ("X — Painel", fallback "Painel", admin client + try/catch) — nunca hereda "Não encontrado | AN.BR" si renderiza
+- [x] **UX reservar mobile** — stepper compacto ("Passo X de N"), autofill (autoComplete name/tel/street-address + inputMode tel), barra sticky inferior de resumen (servicio + total + Continuar/Finalizar), success screen "Horário confirmado!"
+- [x] Build 0 errores (87 líneas de rutas), typecheck limpio, 24/24 tests
+
+#### 🆕 Fase 17 — Fix AI Agent chat (Agosto 2026)
+- [x] **Bug "pensando..." sin respuesta** — `/api/agent/chat` solo trataba errores con `status === 400`; los errores del provider (key inválida, modelo mal escrito, 500) pasaban como 200 con `resposta: undefined` → la UI mostraba silencio total (ni respuesta ni error). Fix: `if (result.error)` → 400/500 con el mensaje real (visible con ⚠️ en el chat)
+- [x] **RAG no-fatal** — `buscarContextoRAG` lanzaba si el servidor no tiene `OPENAI_API_KEY` global (los embeddings ignoran la key del tenant) → mataba el chat entero incluso con key propia de Gemini. Ahora try/catch → el agente responde sin contexto (log warning)
+- [x] **Timeouts** — route: `Promise.race` 60s → 504 "Tempo esgotado..."; SDK OpenAI con `timeout: 60_000, maxRetries: 1`; UI: AbortController 75s → "⚠️ O agente demorou demais..." (nunca más colgado) + fallback cuando la respuesta viene vacía sin error
+- [x] **Diagnóstico guiado** — StatusAgente "Testar conexão" (`/api/agent/status?teste=1`) clasifica: chave_invalida, sem_creditos, modelo_invalido, erro_rede — el primer paso para diagnosticar un tenant es este botón
+- [x] Build: tsc 0 errores, 24/24 tests
+
 ### 📦 NEXT (acciones manuales — usuario)
+- [ ] **Marca vs dominio:** decidir AN.BR vs AutoNexaBrasil → fijar `NEXT_PUBLIC_SITE_DOMAIN` + `SITE_DOMAIN` en Netlify (código ya 100% env-driven via `src/lib/site.ts`; termos/privacidade editar a mano)
+- [ ] **Aplicar `supabase/migrations_video_fundo.sql`** en Supabase (ADD COLUMN `video_fundo`) — sin esto el upload de video falla en producción
+- [ ] **Endpoint chat AI público** para /demo: tenant demo whitelisted + env `DEMO_TENANT_ID` + fallback scripted
+- [ ] **Video demo corto** (30-60s, outcome-led) como asset futuro
+- [ ] Solicitar depoimentos reales a pilotos para que la sección de home se llene
 - [ ] `.env.production` con todos los secrets en Netlify UI (especialmente `MERCADOPAGO_ACCESS_TOKEN`)
 - [ ] DNS: `autonexabrasil.com.br` → Netlify
 - [ ] Google OAuth consent screen → modo producción
-- [ ] Meta App Review: templates `confirmacao_agendamento`, `lembrete_agendamento`, `convite_avaliacao`
+- [ ] Meta App Review: templates `confirmacao_agendamento`, `lembrete_agendamento`, `convite_avaliacao` (+ opcional `cancelamento_agendamento` — hoy el aviso de cancelación va por texto libre)
 - [ ] Alta piloto `bella-beleza` en producción (SQL en `docs/RUNBOOK.md`)
 
 ### 🚀 DEPLOYMENT COMMANDS
@@ -142,10 +233,10 @@ npm run build
 
 ### 🧠 AGENT CONTEXT FOR NEXT SESSION
 - **Working dir:** `D:\CCP\AUTOMATIZACURITIBA26`
-- **Status:** ✅ PRODUCTION READY — Fases 0–10 ✅. Build 70/70 páginas, 0 errores.
+- **Status:** ✅ PRODUCTION READY — Fases 0–16 ✅. Build 0 errores (87 líneas de rutas).
 - **Hosting:** Netlify (conectado via GitHub). Crons: `cron-lembretes` (12:00), `cron-vencidos` (03:00).
 - **Color:** teal `#059669` (Tailwind `primary` variable)
 - **Stack:** Next.js 16, React 19, Framer Motion, Recharts, Supabase, Vitest
 - **Docs:** `docs/PLAN_PRODUCCION.md` (9 fases, ~130/130 completados), `docs/RUNBOOK.md`, `docs/GO_LIVE.md`, `docs/CICLOS_DEL_SISTEMA.md` (7 ciclos + 5 nuevos propuestos)
 - **Lo que falta:** Acciones manuales de go-live (DNS, env vars, OAuth, Meta Review).
-- **NUEVO:** Homepage redesign, API Keys per-tenant, Quick Wins (upsell + reagendamento + alerta abandono), DashboardCharts con recharts, polish landing prestadores.
+- **NUEVO:** Auto-confirmar agendamientos web (nace "confirmado"), aviso de cancelación al cliente (enviarCancelamento), título propio del painel (generateMetadata), video off en mobile con color automático, UX reservar mobile (stepper compacto + autofill + barra sticky), Temas por nicho (src/lib/temas.ts + perfil + cadastro), Video de fondo (migration video_fundo + Hero + upload destino=video), Fondos animados 21.dev (blobs/grid + gradientShift fix), Superadmin landing (PATCH /api/admin/tenant/config), Kanban agendamentos, MobileCtaBar mobile, Homepage redesign, API Keys per-tenant, Quick Wins (upsell + reagendamento + alerta abandono), DashboardCharts con recharts, polish landing prestadores.

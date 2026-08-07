@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Check, ArrowRight, MessageCircle, Palette, ClipboardList, Calendar, X } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { Check, ArrowRight, MessageCircle, Palette, ClipboardList, Calendar, X, RefreshCw, CheckCircle2 } from "lucide-react";
+
+type PassoId = "whatsapp" | "pagina" | "servicos" | "google";
 
 type Passo = {
-  id: string;
+  id: PassoId;
   titulo: string;
   descricao: string;
   icone: React.ReactNode;
@@ -15,19 +18,74 @@ type Passo = {
   concluido: boolean;
 };
 
+const WHATSAPP_CONECTADO = ["connected", "open", "active"];
+
 export function OnboardingWizard({ slug, profissionalId }: { slug: string; profissionalId: string }) {
   const STORAGE_KEY = `anbr_onboarding_${profissionalId}`;
   const [visivel, setVisivel] = useState(false);
   const [passoAtual, setPassoAtual] = useState(0);
+  const [status, setStatus] = useState<Record<PassoId, boolean>>({
+    whatsapp: false,
+    pagina: false,
+    servicos: false,
+    google: false,
+  });
+  const [verificando, setVerificando] = useState(true);
+
+  const verificarStatus = useCallback(async () => {
+    setVerificando(true);
+    const supabase = createClient();
+    const novo: Record<PassoId, boolean> = { whatsapp: false, pagina: false, servicos: false, google: false };
+
+    try {
+      const r = await fetch(`/api/whatsapp/instance?profissional_id=${profissionalId}`);
+      const j = await r.json();
+      novo.whatsapp = j?.configured === true && WHATSAPP_CONECTADO.includes(j?.connection_status);
+    } catch {}
+
+    try {
+      const { data } = await supabase.from("configuracoes").select("cor_primaria, logo_url").single();
+      novo.pagina = !!data?.logo_url || (!!data?.cor_primaria && data.cor_primaria !== "#059669");
+    } catch {}
+
+    try {
+      const { count } = await supabase
+        .from("servicos")
+        .select("id", { count: "exact", head: true })
+        .eq("ativo", true);
+      novo.servicos = (count || 0) > 0;
+    } catch {}
+
+    try {
+      const { data } = await supabase.from("profissionais").select("calendar_email").single();
+      novo.google = !!data?.calendar_email;
+    } catch {}
+
+    setStatus(novo);
+
+    const todas = Object.values(novo).every(Boolean);
+    if (todas) {
+      localStorage.setItem(STORAGE_KEY, "completo");
+      setVisivel(false);
+    } else {
+      // Embudo: avanza al primer paso que el profesional todavía no completó
+      const ordem: PassoId[] = ["whatsapp", "pagina", "servicos", "google"];
+      const primeiroIncompleto = ordem.findIndex((id) => !novo[id]);
+      if (primeiroIncompleto >= 0) {
+        setPassoAtual(primeiroIncompleto);
+        localStorage.setItem(STORAGE_KEY, String(primeiroIncompleto));
+      }
+    }
+    setVerificando(false);
+  }, [STORAGE_KEY, profissionalId]);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved !== "completo") {
-      const current = saved ? parseInt(saved, 10) : 0;
-      setPassoAtual(current);
       setVisivel(true);
+      verificarStatus();
     }
-  }, [STORAGE_KEY]);
+  }, [STORAGE_KEY, verificarStatus]);
 
   const passos: Passo[] = [
     {
@@ -37,7 +95,7 @@ export function OnboardingWizard({ slug, profissionalId }: { slug: string; profi
       icone: <MessageCircle size={20} />,
       link: `/${slug}/painel/agente`,
       linkLabel: "Configurar WhatsApp",
-      concluido: false,
+      concluido: status.whatsapp,
     },
     {
       id: "pagina",
@@ -46,7 +104,7 @@ export function OnboardingWizard({ slug, profissionalId }: { slug: string; profi
       icone: <Palette size={20} />,
       link: `/${slug}/painel/perfil`,
       linkLabel: "Personalizar página",
-      concluido: false,
+      concluido: status.pagina,
     },
     {
       id: "servicos",
@@ -55,7 +113,7 @@ export function OnboardingWizard({ slug, profissionalId }: { slug: string; profi
       icone: <ClipboardList size={20} />,
       link: `/${slug}/painel/perfil`,
       linkLabel: "Cadastrar serviços",
-      concluido: false,
+      concluido: status.servicos,
     },
     {
       id: "google",
@@ -64,7 +122,7 @@ export function OnboardingWizard({ slug, profissionalId }: { slug: string; profi
       icone: <Calendar size={20} />,
       link: `/${slug}/painel/agente`,
       linkLabel: "Conectar Google",
-      concluido: false,
+      concluido: status.google,
     },
   ];
 
@@ -78,7 +136,8 @@ export function OnboardingWizard({ slug, profissionalId }: { slug: string; profi
   };
 
   const avancar = () => {
-    const next = passoAtual + 1;
+    let next = passoAtual + 1;
+    while (next < passos.length && passos[next].concluido) next++;
     if (next >= passos.length) {
       localStorage.setItem(STORAGE_KEY, "completo");
       setVisivel(false);
@@ -103,7 +162,7 @@ export function OnboardingWizard({ slug, profissionalId }: { slug: string; profi
         <div className="absolute top-0 left-0 right-0 h-1">
           <div
             className="h-full bg-[var(--color-primary)] transition-all duration-500"
-            style={{ width: `${((passoAtual + 1) / passos.length) * 100}%` }}
+            style={{ width: `${(passos.filter((p) => p.concluido).length / passos.length) * 100}%` }}
           />
         </div>
 
@@ -117,12 +176,23 @@ export function OnboardingWizard({ slug, profissionalId }: { slug: string; profi
 
         <div className="p-6 pt-7">
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
-              {passo.icone}
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                passo.concluido
+                  ? "bg-emerald-100 text-emerald-600"
+                  : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
+              }`}
+            >
+              {passo.concluido ? <CheckCircle2 size={20} /> : passo.icone}
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-primary)]">
                 Passo {passoAtual + 1} de {passos.length}
+                {passo.concluido && (
+                  <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-emerald-700">
+                    Concluído
+                  </span>
+                )}
               </p>
               <h3 className="text-lg font-semibold text-ink">{passo.titulo}</h3>
             </div>
@@ -130,40 +200,72 @@ export function OnboardingWizard({ slug, profissionalId }: { slug: string; profi
 
           <p className="text-sm text-ink-soft leading-relaxed">{passo.descricao}</p>
 
-          <div className="mt-5 flex items-center gap-3">
-            <Link
-              href={passo.link}
-              className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110"
-            >
-              {passo.linkLabel}
-              <ArrowRight size={16} />
-            </Link>
-            <button
-              onClick={avancar}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-line)] bg-white px-4 py-2.5 text-sm font-medium text-ink-soft transition-all hover:bg-[var(--color-bg)]"
-            >
-              <Check size={15} />
-              Já fiz isso
-            </button>
-          </div>
+          {verificando ? (
+            <div className="mt-5 flex items-center gap-2 text-sm text-ink-soft/60">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-200 border-t-[var(--color-primary)]" />
+              Verificando sua configuração...
+            </div>
+          ) : passo.concluido ? (
+            <div className="mt-5 flex items-center gap-3">
+              <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700">
+                <CheckCircle2 size={16} />
+                Já está tudo pronto
+              </div>
+              <button
+                onClick={avancar}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110"
+              >
+                Continuar
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          ) : (
+            <div className="mt-5 flex items-center gap-3">
+              <Link
+                href={passo.link}
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110"
+              >
+                {passo.linkLabel}
+                <ArrowRight size={16} />
+              </Link>
+              <button
+                onClick={avancar}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-line)] bg-white px-4 py-2.5 text-sm font-medium text-ink-soft transition-all hover:bg-[var(--color-bg)]"
+              >
+                <Check size={15} />
+                Já fiz isso
+              </button>
+            </div>
+          )}
 
           <div className="mt-4 flex items-center justify-between">
             <div className="flex gap-1.5">
-              {passos.map((_, i) => (
+              {passos.map((p, i) => (
                 <div
                   key={i}
                   className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                    i <= passoAtual ? "bg-[var(--color-primary)]" : "bg-[var(--color-line)]"
+                    p.concluido || i <= passoAtual
+                      ? "bg-[var(--color-primary)]"
+                      : "bg-[var(--color-line)]"
                   }`}
                 />
               ))}
             </div>
-            <button
-              onClick={pular}
-              className="text-xs font-medium text-ink-soft/50 hover:text-ink-soft transition-colors"
-            >
-              Pular tour
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={verificarStatus}
+                className="flex items-center gap-1 text-xs font-medium text-ink-soft/50 hover:text-ink-soft transition-colors"
+              >
+                <RefreshCw size={12} />
+                Verificar novamente
+              </button>
+              <button
+                onClick={pular}
+                className="text-xs font-medium text-ink-soft/50 hover:text-ink-soft transition-colors"
+              >
+                Pular tour
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>

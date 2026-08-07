@@ -6,6 +6,13 @@ import { getCopyEfetivo } from "@/lib/copys-padrao";
 import { accento } from "@/lib/cores";
 import type { ProfissionalConfig } from "@/types";
 
+const fmtDuracao = (min: number) => {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h === 0) return `${m}min`;
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
+};
+
 export function Servicos({ config }: { config: ProfissionalConfig }) {
   const { profissional, servicos, configuracao } = config;
   const primary = configuracao.cor_primaria;
@@ -64,7 +71,14 @@ export function Servicos({ config }: { config: ProfissionalConfig }) {
                 <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{s.descricao}</p>
                 <div className="mt-auto pt-4 flex flex-col gap-1.5">
                   {s.tipo_preco === "fixo" ? (
-                    <span className="text-sm font-semibold" style={{ color: accento(primary) }}>R$ {s.preco_fixo?.toFixed(2).replace(".", ",")}</span>
+                    <span className="flex items-center gap-2 text-sm font-semibold" style={{ color: accento(primary) }}>
+                      R$ {s.preco_fixo?.toFixed(2).replace(".", ",")}
+                      {s.duracao_minutos ? (
+                        <span className="flex items-center gap-1 text-xs font-normal text-ink-soft">
+                          <Clock size={12} />{fmtDuracao(s.duracao_minutos)}
+                        </span>
+                      ) : null}
+                    </span>
                   ) : (
                     <>
                       <span className="text-sm font-semibold" style={{ color: accento(primary) }}>R$ {s.valor_hora.toFixed(2).replace(".", ",")}/h</span>

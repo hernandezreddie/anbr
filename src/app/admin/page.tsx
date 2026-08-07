@@ -1,21 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { redirect } from "next/navigation";
 import { AdminClient } from "./AdminClient";
 import { PlanosAdmin } from "./PlanosAdmin";
 import { PLANOS } from "@/lib/planos";
-import { isAdminPlataforma } from "@/lib/auth-roles";
 
 export default async function AdminPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) redirect("/");
-
-  if (!(await isAdminPlataforma())) {
-    redirect("/");
-  }
-
   const adminDb = createAdminClient();
 
   const [profissionais, profiles, servicos, agendamentos, domains] = await Promise.all([

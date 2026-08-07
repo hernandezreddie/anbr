@@ -26,6 +26,7 @@ export interface ConfiguracaoVisual {
   fonte_corpo: string
   logo_url: string
   foto_fundo: string
+  video_fundo?: string | null
   slogan: string
   fundo_estilo: string
   instagram?: string | null
@@ -34,6 +35,8 @@ export interface ConfiguracaoVisual {
   copy_variante?: number
   msg_variante?: number
   max_agendamentos_dia?: number | null
+  horario_inicio?: number | null
+  horario_fim?: number | null
   textos_personalizados?: Record<string, any> | null
 }
 

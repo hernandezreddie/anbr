@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, ArrowRight, Check, ChevronRight, User, Globe, Eye, EyeOff,
+  ArrowLeft, ArrowRight, Check, ChevronRight, User, Globe, Eye, EyeOff, Clock,
   Wrench, Scissors, Stethoscope, Dumbbell, Brush, ChefHat, Camera,
   MonitorSmartphone, Sparkles, Briefcase, Hand, HeartPulse, Car, PawPrint,
 } from "lucide-react";
 import { getServicosPadrao, getSloganPadrao, type CategoriaId } from "@/lib/servicos-padrao";
+import { getTemaPorNicho } from "@/lib/temas";
 import { getCopyPadrao } from "@/lib/copys-padrao";
+import { SITE_DOMAIN } from "@/lib/site";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -56,6 +58,8 @@ const steps = [
   { num: 5, label: "Finalizar", icone: <Check size={16} /> },
 ];
 
+const RASCUNHO_KEY = "anbr_rascunho";
+
 export default function CadastroPage() {
   const [passo, setPasso] = useState(1);
   const [categoria, setCategoria] = useState<CategoriaId | "">("");
@@ -72,14 +76,40 @@ export default function CadastroPage() {
   const [verSenha, setVerSenha] = useState(false);
   const [consentimento, setConsentimento] = useState(false);
 
+  // Restaurar rascunho al montar (si el usuario volvió atrás / recargó)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(RASCUNHO_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (typeof d.passo === "number") setPasso(d.passo);
+      if (d.categoria) setCategoria(d.categoria);
+      if (d.form) setForm({ ...form, ...d.form });
+      if (Array.isArray(d.servicos)) setServicos(d.servicos);
+      if (typeof d.copyVariante === "number") setCopyVariante(d.copyVariante);
+      if (typeof d.slugEditado === "boolean") setSlugEditado(d.slugEditado);
+      if (typeof d.consentimento === "boolean") setConsentimento(d.consentimento);
+    } catch { /* rascunho inválido — ignora */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Autosave en cada cambio (atrás del navegador ya no pierde nada)
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(RASCUNHO_KEY, JSON.stringify({
+        passo, categoria, form, copyVariante, slugEditado, servicos, consentimento,
+      }));
+    } catch { /* storage lleno/indisponible — ignora */ }
+  }, [passo, categoria, form, copyVariante, slugEditado, servicos, consentimento]);
+
   const slugFromNome = (nome: string) =>
     nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
 
-  const updateField = (field: string, value: string) => {
+  const updateField = (field: string, value: string | number) => {
     const next = { ...form, [field]: value };
     if (field === "nome" && !slugEditado)
-      next.slug = slugFromNome(value);
+      next.slug = slugFromNome(String(value));
     if (field === "slug" && value !== slugFromNome(form.nome))
       setSlugEditado(true);
     setForm(next);
@@ -119,6 +149,7 @@ export default function CadastroPage() {
     if (!res.ok) { setErro(data.error || "Erro ao criar sistema"); return; }
     try {
       sessionStorage.setItem("anbr_credenciais", JSON.stringify({ email: form.email, senha: form.senha }));
+      sessionStorage.removeItem(RASCUNHO_KEY);
     } catch { /* ignora */ }
     router.push(`/cadastro/sucesso?slug=${data.slug}`);
   };
@@ -180,6 +211,19 @@ export default function CadastroPage() {
                 </div>
               ))}
             </div>
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--color-line)]/60">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-[var(--color-primary)] to-emerald-500"
+                  initial={false}
+                  animate={{ width: `${(passo / steps.length) * 100}%` }}
+                  transition={{ duration: 0.35 }}
+                />
+              </div>
+              <p className="shrink-0 text-xs font-medium text-ink-soft">
+                Passo {passo} de {steps.length} · <Clock size={11} className="inline -mt-0.5" /> ~{passo === 1 ? "4" : passo === 2 ? "3" : passo === 3 ? "2" : passo === 4 ? "1" : "0"} min restantes
+              </p>
+            </div>
           </div>
 
           {/* Title */}
@@ -214,6 +258,7 @@ export default function CadastroPage() {
   const padrao = getServicosPadrao(cat.id);
   setServicos(padrao.map((s, i) => ({ ...s, ordem: i + 1 })));
   updateField("slogan", getSloganPadrao(cat.id));
+  updateField("template_id", getTemaPorNicho(cat.id).template_id);
 }}
                       whileTap={{ scale: 0.95 }}
                       animate={{ scale: selected ? 1.03 : 1 }}
@@ -300,7 +345,7 @@ export default function CadastroPage() {
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-ink">Seu link</label>
                     <div className="flex items-center gap-2 rounded-xl border border-[var(--color-line)] bg-white px-4 has-[input:focus]:border-[var(--color-primary)]">
-                      <span className="text-sm text-ink-soft shrink-0">autonexabrasil.com.br/</span>
+                      <span className="text-sm text-ink-soft shrink-0">{SITE_DOMAIN}/</span>
                       <input type="text" placeholder="seu-negocio" value={form.slug}
                         onChange={(e) => updateField("slug", e.target.value)}
                         className="flex-1 py-3 text-sm outline-none bg-transparent" />
@@ -490,10 +535,11 @@ export default function CadastroPage() {
                     <label className="text-sm text-ink-soft mb-3 block font-medium">Template visual</label>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { id: 1, nome: "Clássico", desc: "Verde elegante", bg: "from-teal-50 to-white", accent: "bg-teal-600" },
-                        { id: 2, nome: "Moderno", desc: "Minimalista", bg: "from-neutral-50 to-white", accent: "bg-ink" },
+                        { id: 1, nome: "Clássico", desc: "Serifada elegante" },
+                        { id: 2, nome: "Moderno", desc: "Minimalista" },
                       ].map((t) => {
                         const selected = form.template_id === t.id;
+                        const preset = getTemaPorNicho(categoria);
                         return (
                           <motion.button
                             key={t.id}
@@ -516,8 +562,8 @@ export default function CadastroPage() {
                                 <Check size={15} className="text-white" />
                               </motion.div>
                             )}
-                            <div className={`h-20 bg-gradient-to-br ${t.bg} p-4 flex flex-col justify-end`}>
-                              <div className={`h-5 w-24 rounded ${t.accent} opacity-80`} />
+                            <div className="h-20 p-4 flex flex-col justify-end" style={{ background: `linear-gradient(135deg, ${preset.cor_primaria}33, white)` }}>
+                              <div className="h-5 w-24 rounded opacity-80" style={{ background: preset.cor_primaria }} />
                               <div className="mt-1 h-2 w-32 rounded bg-[var(--color-line)]/50" />
                             </div>
                             <div className="p-4">
@@ -564,6 +610,11 @@ export default function CadastroPage() {
                   {enviando ? "Criando sistema..." : "Criar meu sistema"}
                   {!enviando && <ChevronRight size={16} />}
                 </Button>
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-ink-soft">
+                  <span className="flex items-center gap-1"><Check size={13} className="text-[var(--color-primary)]" /> Grátis · 30 agendamentos/mês</span>
+                  <span className="flex items-center gap-1"><Check size={13} className="text-[var(--color-primary)]" /> Sem cartão de crédito</span>
+                  <span className="flex items-center gap-1"><Check size={13} className="text-[var(--color-primary)]" /> Cancele quando quiser</span>
+                </div>
               </Card>
               <div className="mt-6">
                 <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto" onClick={() => setPasso(4)}>

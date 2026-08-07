@@ -1,7 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { fundoStyle, type FundoEstilo } from "@/lib/backgrounds";
 import { PainelAuthGate } from "./PainelAuthGate";
 import { PainelPrimaryProvider } from "./primary-context";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const { data: prof } = await createAdminClient()
+      .from("profissionais")
+      .select("nome, slogan")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (prof?.nome) {
+      return { title: `${prof.nome} — Painel`, description: prof.slogan || undefined };
+    }
+  } catch {
+    // best-effort: nunca bloquear el título del painel
+  }
+  return { title: "Painel" };
+}
 
 export default async function PainelLayout({
   children,

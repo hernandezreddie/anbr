@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X, Filter, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { Check, X, Filter, Search, Plus, Pencil, Trash2, List, Columns3 } from "lucide-react";
 import { Dica } from "@/components/painel/Dica";
+import { novoId, getMeuProfissionalId } from "@/lib/ids";
 
 type Agendamento = {
   id: string;
@@ -84,6 +85,7 @@ export default function AgendamentosPage() {
   const [maxDia, setMaxDia] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState("todos");
+  const [vista, setVista] = useState<"lista" | "quadro">("lista");
   const [busca, setBusca] = useState("");
   const [form, setForm] = useState<FormState | null>(null);
   const [confirmarDel, setConfirmarDel] = useState<Agendamento | null>(null);
@@ -204,13 +206,30 @@ export default function AgendamentosPage() {
       observacoes: form.observacoes || null,
     };
 
-    const res = form.id
-      ? await supabase.from("agendamentos").update(patch).eq("id", form.id)
-      : await supabase.from("agendamentos").insert({
-          ...patch,
-          origem: "manual",
-          token_avaliacao: crypto.randomUUID(),
-        });
+    if (!form.id) {
+      const profissional_id = await getMeuProfissionalId(supabase);
+      if (!profissional_id) {
+        setBusy(false);
+        flash("Sessão expirada. Entre novamente no painel.");
+        return;
+      }
+      patch.profissional_id = profissional_id;
+      patch.token_avaliacao = novoId();
+    }
+
+    let res;
+    try {
+      res = form.id
+        ? await supabase.from("agendamentos").update(patch).eq("id", form.id)
+        : await supabase.from("agendamentos").insert({
+            ...patch,
+            origem: "manual",
+          });
+    } catch {
+      setBusy(false);
+      flash("Erro ao salvar. Tente de novo.");
+      return;
+    }
     setBusy(false);
     if (res.error) {
       flash("Erro ao salvar. Tente de novo.");
@@ -293,7 +312,21 @@ export default function AgendamentosPage() {
             placeholder="Buscar por nome…"
             className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-teal-500" />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 rounded-xl border border-neutral-200 bg-white p-1">
+            <button onClick={() => setVista("lista")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                vista === "lista" ? "bg-teal-600 text-white" : "text-neutral-500 hover:text-neutral-800"
+              }`}>
+              <List size={14} /> Lista
+            </button>
+            <button onClick={() => setVista("quadro")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                vista === "quadro" ? "bg-teal-600 text-white" : "text-neutral-500 hover:text-neutral-800"
+              }`}>
+              <Columns3 size={14} /> Quadro
+            </button>
+          </div>
           {(["todos", "solicitado", "confirmado", "concluido", "cancelado"] as const).map((s) => (
             <button key={s} onClick={() => setFiltro(s)}
               className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-all border ${
@@ -322,6 +355,66 @@ export default function AgendamentosPage() {
           <p className="mt-3 text-sm text-neutral-400">
             {busca ? "Nenhum resultado para essa busca." : "Nenhum agendamento encontrado."}
           </p>
+        </div>
+      ) : vista === "quadro" ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {(["solicitado", "confirmado", "concluido", "cancelado"] as const).map((s) => {
+            const cards = filtrados.filter((a) => a.status === s);
+            return (
+              <div key={s} className="rounded-2xl border border-neutral-100 bg-neutral-50/60 p-3">
+                <div className="mb-3 flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-full ${statusDot[s] || "bg-neutral-300"}`} />
+                    <p className="text-xs font-bold uppercase tracking-wide text-neutral-600">{statusBadge[s]?.label || s}</p>
+                  </div>
+                  <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-neutral-500">{cards.length}</span>
+                </div>
+                <div className="space-y-2.5">
+                  {cards.length === 0 ? (
+                    <div className="rounded-xl border-2 border-dashed border-neutral-200 py-6 text-center text-xs text-neutral-400">
+                      Sem agendamentos
+                    </div>
+                  ) : cards.map((a) => (
+                    <div key={a.id} className="rounded-xl border border-neutral-100 bg-white p-3 shadow-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="truncate text-sm font-semibold text-neutral-900">{a.cliente_nome}</p>
+                        <span className="shrink-0 text-sm font-bold text-neutral-900">{fmtR$(a.valor)}</span>
+                      </div>
+                      <p className="mt-0.5 truncate text-xs text-neutral-500">
+                        {a.servico_nome ?? "Serviço"}
+                        {a.horas ? ` · ${a.horas}h` : ""}
+                      </p>
+                      <p className="mt-1 text-xs text-neutral-400">{fmtData(a.data)}{a.hora ? ` · ${a.hora.slice(0, 5)}` : ""}</p>
+                      <div className="mt-2.5 flex items-center gap-1.5">
+                        {nextStatus(a.status) && (
+                          <button onClick={() => alterarStatus(a.id, nextStatus(a.status)!)}
+                            className="flex items-center gap-1 rounded-lg bg-teal-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition-all hover:bg-teal-700">
+                            <Check size={12} /> {nextStatus(a.status) === "confirmado" ? "Confirmar" : "Concluir"}
+                          </button>
+                        )}
+                        {a.status !== "cancelado" && a.status !== "concluido" && (
+                          <button onClick={() => alterarStatus(a.id, "cancelado")}
+                            className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-[11px] text-neutral-500 transition-all hover:bg-red-50 hover:text-red-600">
+                            <X size={12} /> Cancelar
+                          </button>
+                        )}
+                        <div className="ml-auto flex gap-1">
+                          <button onClick={() => abrirEditar(a)} title="Editar"
+                            className="rounded-lg border border-neutral-200 bg-white p-1.5 text-neutral-400 transition-all hover:text-neutral-700">
+                            <Pencil size={12} />
+                          </button>
+                          <button onClick={() => setConfirmarDel(a)} title="Excluir"
+                            className="rounded-lg border border-neutral-200 bg-white p-1.5 text-neutral-400 transition-all hover:text-red-600">
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">

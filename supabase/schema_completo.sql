@@ -1085,6 +1085,12 @@ ALTER TABLE configuracoes ADD COLUMN IF NOT EXISTS copy_variante INT DEFAULT 0;
 ALTER TABLE configuracoes ADD COLUMN IF NOT EXISTS foto_fundo TEXT DEFAULT '';
 
 
+-- ============ migrations_video_fundo.sql ============
+-- Video de fundo da landing (opcional, com prioridade sobre foto_fundo)
+ALTER TABLE configuracoes ADD COLUMN IF NOT EXISTS video_fundo TEXT;
+
+
+
 -- ============ migrations_redes.sql ============
 -- Rode no Supabase SQL Editor.
 -- Links das redes sociais que aparecem no rodapé da landing de cada profissional.
@@ -1100,6 +1106,11 @@ ALTER TABLE configuracoes ADD COLUMN IF NOT EXISTS textos_personalizados JSONB;
 
 COMMENT ON COLUMN configuracoes.textos_personalizados IS
   'JSON perfil de textos da landing editados manualmente. Sobrescreve getCopyPadrao por campo.';
+
+-- ============ migrations_horarios.sql ============
+-- Horário de atendimento (minutos desde 00:00; NULL = padrão 08:00–20:00)
+ALTER TABLE configuracoes ADD COLUMN IF NOT EXISTS horario_inicio INT DEFAULT NULL;
+ALTER TABLE configuracoes ADD COLUMN IF NOT EXISTS horario_fim INT DEFAULT NULL;
 
 -- ============ migrations_api_keys_por_tenant.sql ============
 -- ============================================

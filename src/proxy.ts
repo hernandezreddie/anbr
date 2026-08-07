@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
-const ROOT_DOMAIN = "autonexabrasil.com.br"
+const ROOT_DOMAIN = process.env.SITE_DOMAIN || "autonexabrasil.com.br"
 const CUSTOM_DOMAIN_CACHE = new Map<string, string | undefined>()
 
 const WEBHOOK_PATHS = [

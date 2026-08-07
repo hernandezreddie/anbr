@@ -16,7 +16,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const { data: agendamento } = await supabase
     .from("agendamentos")
-    .select("profissional_id")
+    .select("profissional_id, cliente_whatsapp, servico_nome, data, hora")
     .eq("id", id)
     .single();
 
@@ -38,6 +38,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .eq("id", id);
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  if (status === "cancelado") {
+    try {
+      const { enviarCancelamento } = await import("@/lib/notificacoes");
+      await enviarCancelamento({
+        profissional_id: agendamento.profissional_id,
+        cliente_whatsapp: agendamento.cliente_whatsapp,
+        servico_nome: agendamento.servico_nome,
+        data: agendamento.data,
+        hora: agendamento.hora,
+      });
+    } catch (err) {
+      console.warn("Aviso de cancelamento não enviado:", err);
+    }
+  }
 
   if (status === "concluido") {
     try {

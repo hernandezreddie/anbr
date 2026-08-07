@@ -3,17 +3,18 @@ import Link from "next/link";
 import { posts } from "@/lib/blog/posts";
 import { ArrowRight, CalendarDays, Tag } from "lucide-react";
 import { SiteNav } from "@/components/site/SiteNav";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Blog | AN.BR — Dicas para Profissionais Autônomos",
   description:
     "Artigos sobre agendamento online, redução de faltas, marketing digital e tecnologia para profissionais autônomos.",
-  alternates: { canonical: "https://autonexabrasil.com.br/blog" },
+  alternates: { canonical: `${SITE_URL}/blog` },
   openGraph: {
     title: "Blog | AN.BR",
     description:
       "Artigos sobre agendamento online, redução de faltas, marketing digital e tecnologia para autônomos.",
-    url: "https://autonexabrasil.com.br/blog",
+    url: `${SITE_URL}/blog`,
     siteName: "AN.BR",
     locale: "pt_BR",
     type: "website",
@@ -31,14 +32,14 @@ export default function BlogIndex() {
     "@context": "https://schema.org",
     "@type": "Blog",
     name: "Blog AN.BR",
-    url: "https://autonexabrasil.com.br/blog",
+    url: `${SITE_URL}/blog`,
     inLanguage: "pt-BR",
     description:
       "Artigos sobre agendamento online, redução de faltas, marketing digital e tecnologia para profissionais autônomos.",
     publisher: {
       "@type": "Organization",
       name: "AN.BR",
-      url: "https://autonexabrasil.com.br",
+      url: SITE_URL,
     },
   };
 

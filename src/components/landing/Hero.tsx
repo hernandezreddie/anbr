@@ -14,7 +14,7 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
   const reduce = useReducedMotion();
   const primary = configuracao.cor_primaria;
   const heroRef = useRef<HTMLDivElement>(null);
-  const temImagem = !!(configuracao.foto_fundo || configuracao.logo_url);
+  const temImagem = !!(configuracao.foto_fundo || configuracao.video_fundo || configuracao.logo_url);
   const sombraTexto = temImagem ? { textShadow: "0 2px 18px rgba(0,0,0,0.30)" } : undefined;
 
   const copy = getCopyEfetivo(
@@ -83,7 +83,26 @@ export function Hero({ config }: { config: ProfissionalConfig }) {
   return (
     <section ref={heroRef} className="relative overflow-hidden pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-16">
       <div className="absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        {configuracao.foto_fundo ? (
+        {configuracao.video_fundo ? (
+          <>
+            <div
+              className="absolute inset-0 md:hidden"
+              style={{ background: `linear-gradient(160deg, ${primary}2E 0%, var(--color-bg) 60%)` }}
+            />
+            <video
+              src={configuracao.video_fundo}
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster={configuracao.foto_fundo || undefined}
+              className={`absolute inset-0 h-full w-full object-cover ${reduce ? "hidden" : "hidden md:block"}`}
+            />
+            <div className="absolute inset-0 bg-[var(--color-bg)]/55 hidden md:block" />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--color-bg)] to-transparent hidden md:block" />
+            <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[var(--color-bg)]/80 to-transparent hidden md:block" />
+          </>
+        ) : configuracao.foto_fundo ? (
           <>
             <img src={configuracao.foto_fundo} alt="" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-0 bg-[var(--color-bg)]/60" />

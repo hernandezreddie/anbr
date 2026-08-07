@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ocorrenciasRecorrentes } from "@/lib/agenda";
 import { Plus, X, Check } from "lucide-react";
 import { Dica } from "@/components/painel/Dica";
+import { novoId, getMeuProfissionalId } from "@/lib/ids";
 
 type Servico = { id: number; nome: string; valor: number; ativo: boolean };
 type Agendamento = {
@@ -219,13 +220,30 @@ export default function CalendarioPage() {
       observacoes: form.observacoes || null,
     };
 
-    const res = form.id
-      ? await supabase.from("agendamentos").update(patch).eq("id", form.id)
-      : await supabase.from("agendamentos").insert({
-          ...patch,
-          origem: "manual",
-          token_avaliacao: crypto.randomUUID(),
-        });
+    if (!form.id) {
+      const profissional_id = await getMeuProfissionalId(supabase);
+      if (!profissional_id) {
+        setBusy(false);
+        flash("Sessão expirada. Entre novamente no painel.");
+        return;
+      }
+      patch.profissional_id = profissional_id;
+      patch.token_avaliacao = novoId();
+    }
+
+    let res;
+    try {
+      res = form.id
+        ? await supabase.from("agendamentos").update(patch).eq("id", form.id)
+        : await supabase.from("agendamentos").insert({
+            ...patch,
+            origem: "manual",
+          });
+    } catch {
+      setBusy(false);
+      flash("Erro ao salvar. Tente de novo.");
+      return;
+    }
     setBusy(false);
     if (res.error) {
       flash("Erro ao salvar. Tente de novo.");
@@ -251,6 +269,12 @@ export default function CalendarioPage() {
   async function moverExcecao() {
     if (!moverPrev || !moverData) return;
     setBusy(true);
+    const profissional_id = await getMeuProfissionalId(supabase);
+    if (!profissional_id) {
+      setBusy(false);
+      flash("Sessão expirada. Entre novamente no painel.");
+      return;
+    }
     const a = moverPrev.base;
     const { error } = await supabase.from("agendamentos").insert({
       cliente_nome: a.cliente_nome,
@@ -266,7 +290,8 @@ export default function CalendarioPage() {
       observacoes: a.observacoes,
       serie_id: a.id,
       data_original: moverPrev.dataOriginal,
-      token_avaliacao: crypto.randomUUID(),
+      profissional_id,
+      token_avaliacao: novoId(),
     });
     setBusy(false);
     setMoverPrev(null);
@@ -278,6 +303,12 @@ export default function CalendarioPage() {
   async function cancelarExcecaoDia() {
     if (!cancelarPrev) return;
     setBusy(true);
+    const profissional_id = await getMeuProfissionalId(supabase);
+    if (!profissional_id) {
+      setBusy(false);
+      flash("Sessão expirada. Entre novamente no painel.");
+      return;
+    }
     const a = cancelarPrev.base;
     const { error } = await supabase.from("agendamentos").insert({
       cliente_nome: a.cliente_nome,
@@ -287,6 +318,7 @@ export default function CalendarioPage() {
       origem: "manual",
       serie_id: a.id,
       data_original: cancelarPrev.dataOriginal,
+      profissional_id,
     });
     setBusy(false);
     setCancelarPrev(null);

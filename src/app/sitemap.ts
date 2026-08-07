@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { posts } from "@/lib/blog/posts";
+import { SITE_URL } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://autonexabrasil.com.br";
+  const base = SITE_URL;
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: base, changeFrequency: "weekly", priority: 1 },

@@ -44,10 +44,25 @@ export async function POST(req: NextRequest) {
     if (semCota) return NextResponse.json({ error: semCota.error }, { status: semCota.status });
 
     const { chatComAgente } = await import("@/lib/ai/agent");
-    const result = await chatComAgente(profissional_id, mensagem, historico || []);
 
-    if (result.status === 400) {
-      return NextResponse.json(result, { status: 400 });
+    // Timeout de segurança: nenhuma chamada de IA deve ficar pendurada
+    const TIMEOUT_MS = 60_000;
+    let result;
+    try {
+      result = await Promise.race([
+        chatComAgente(profissional_id, mensagem, historico || []),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Tempo esgotado ao consultar a IA (60s). Tente novamente.")), TIMEOUT_MS)
+        ),
+      ]);
+    } catch (e: any) {
+      console.error("[agent/chat] chamada de IA falhou:", e?.message || e);
+      return NextResponse.json({ error: e?.message || "Erro ao consultar a IA" }, { status: 504 });
+    }
+
+    if (result.error) {
+      console.error("[agent/chat] erro do agente:", result.error);
+      return NextResponse.json({ error: result.error }, { status: result.status || 500 });
     }
     let convId = conversation_id;
 
@@ -110,7 +125,11 @@ export async function POST(req: NextRequest) {
       model: result.model,
       conversation_id: convId,
     });
-  } catch {
-    return NextResponse.json({ error: "Erro interno ao processar mensagem" }, { status: 500 });
+  } catch (err: any) {
+    console.error("[agent/chat] erro interno:", err?.message || err);
+    return NextResponse.json(
+      { error: err?.message ? `Erro interno: ${err.message}` : "Erro interno ao processar mensagem" },
+      { status: 500 }
+    );
   }
 }

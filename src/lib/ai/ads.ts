@@ -152,10 +152,29 @@ export function gerarCopysAnuncio(brief: CampanhaBrief): CopysAnuncio {
   };
 }
 
+export type RecursosPlano = {
+  plano: string;
+  agendamentoOnline: boolean;
+  agenteWhatsApp: boolean;
+  dominioProprio: boolean;
+  limiteMensalGratis: number | null;
+};
+
 export function gerarCopysParaAI(
   brief: CampanhaBrief,
+  recursosPlano?: RecursosPlano,
   conversaAnterior: AIMessage[] = []
 ): AIMessage[] {
+  const recursos = recursosPlano
+    ? `
+Recursos que o profissional TEM no plano "${recursosPlano.plano}":
+${recursosPlano.agenteWhatsApp ? "- Atendimento automático via WhatsApp (AI Agent) 24h" : "- SEM AI Agent: não prometa resposta automática 24h"}
+- Agendamento online no site (todos os planos)
+${recursosPlano.dominioProprio ? "- Domínio próprio" : "- Site em subdomínio gratuito"}
+${recursosPlano.limiteMensalGratis ? `- ATENÇÃO: plano grátis limita a ${recursosPlano.limiteMensalGratis} agendamentos/mês — não prometa capacidade ilimitada` : "- Capacidade mensal sem limite de agendamentos"}
+Os claims do anúncio DEVEM ser verdadeiros com base nos recursos acima.`
+    : "";
+
   const systemPrompt: AIMessage = {
     role: "system",
     content: `Você é um especialista em anúncios para profissionais autônomos no Brasil. 
@@ -164,22 +183,74 @@ Gere copys de anúncios para Meta Ads (Facebook/Instagram) e Google Ads.
 Contexto do profissional:
 - Serviço principal: ${brief.servicoPrincipal}
 - Preço: ${brief.preco}
+- Duração: ${brief.duracao}
 - Categoria: ${brief.categoria}
 - Cidade: ${brief.cidade}
 - Diferencial: ${brief.diferencial}
 - Objetivo da campanha: ${brief.objetivo}
+${recursos}
 
 Regras:
 - Headlines: máximo 40 caracteres (Meta) ou 30 (Google)
 - Tom: profissional mas próximo, brasileiro, direto
 - Foco em benefício e resultado, não em característica
-- Inclua um CTA claro`,
+- Inclua um CTA claro
+- Faça claims apenas do que o plano do profissional permite (seção Recursos)
+
+Responda APENAS com um JSON válido, sem texto extra, neste formato exato:
+{"headlines": ["5 headlines entre 15 e 40 caracteres cada"], "primaryText": "texto principal de 1 a 3 frases com o CTA", "cta": "texto do botão", "segmentacao": {"idade": "ex: 25-55", "interesses": ["4 a 6 interesses do Meta Ads"], "raioKm": 15, "genero": "todos|feminino|masculino"}, "orcamento": {"diario": "ex: R$ 15 a R$ 30", "totalEstimado": "ex: R$ 450 a R$ 900 (30 dias)", "cpcMedio": "ex: R$ 0,50 a R$ 1,50 (estimativa Brasil)"}, "dicas": ["5 dicas práticas"]}`,
   };
 
   const userPrompt: AIMessage = {
     role: "user",
-    content: `Gere 5 headlines, 1 texto principal e 1 CTA para um anúncio com objetivo "${brief.objetivo}"`,
+    content: `Gere o JSON com 5 headlines, 1 texto principal, 1 CTA, segmentação, orçamento e 5 dicas para um anúncio com objetivo "${brief.objetivo}" do serviço ${brief.servicoPrincipal}.`,
   };
 
   return [systemPrompt, userPrompt, ...conversaAnterior];
+}
+
+export function validarCopys(json: unknown): CopysAnuncio | null {
+  const j = json as Record<string, any> | null;
+  if (!j || typeof j !== "object") return null;
+  const headlines = Array.isArray(j.headlines)
+    ? j.headlines.filter((h: unknown): h is string => typeof h === "string" && h.length > 0).slice(0, 5)
+    : null;
+  const dicas = Array.isArray(j.dicas)
+    ? j.dicas.filter((d: unknown): d is string => typeof d === "string" && d.length > 0).slice(0, 6)
+    : null;
+  const interesses = Array.isArray(j.segmentacao?.interesses)
+    ? j.segmentacao.interesses.filter((i: unknown): i is string => typeof i === "string")
+    : null;
+  if (
+    !headlines || headlines.length < 3 ||
+    typeof j.primaryText !== "string" || !j.primaryText ||
+    typeof j.cta !== "string" || !j.cta ||
+    typeof j.segmentacao?.idade !== "string" || !interesses || interesses.length < 3 ||
+    typeof j.segmentacao?.raioKm !== "number" ||
+    typeof j.segmentacao?.genero !== "string" ||
+    typeof j.orcamento?.diario !== "string" ||
+    typeof j.orcamento?.totalEstimado !== "string" ||
+    typeof j.orcamento?.cpcMedio !== "string" ||
+    !dicas || dicas.length < 3
+  ) {
+    return null;
+  }
+  return {
+    objetivo: j.cta,
+    headlines,
+    primaryText: j.primaryText,
+    cta: j.cta,
+    segmentacao: {
+      idade: j.segmentacao.idade,
+      interesses,
+      raioKm: j.segmentacao.raioKm,
+      genero: j.segmentacao.genero,
+    },
+    orcamento: {
+      diario: j.orcamento.diario,
+      totalEstimado: j.orcamento.totalEstimado,
+      cpcMedio: j.orcamento.cpcMedio,
+    },
+    dicas,
+  };
 }

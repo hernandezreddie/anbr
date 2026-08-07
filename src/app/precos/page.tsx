@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { SiteNav } from "@/components/site/SiteNav";
 import { Logo } from "@/components/Logo";
+import { SITE_DOMAIN } from "@/lib/site";
 import {
   Check, X, Sparkles, HelpCircle, ArrowRight, ChevronRight, Bell, Globe, Palette,
   Calendar, BarChart3, MessageCircle, Bot, Shield, Zap,
@@ -36,7 +37,7 @@ const planos: Plano[] = [
     features: [
       { nome: "30 agendamentos por mês", incluido: true },
       { nome: "Página pública de agendamento", incluido: true },
-      { nome: "Link: autonexabrasil.com.br/seu-slug", incluido: true },
+      { nome: `Link: ${SITE_DOMAIN}/seu-slug`, incluido: true },
       { nome: "Receba pagamento via Pix", incluido: true },
       { nome: "Marca AN.BR visível", incluido: true },
       { nome: "Notificação push de novo agendamento", incluido: true, detalhe: "no navegador" },
@@ -60,7 +61,7 @@ const planos: Plano[] = [
     features: [
       { nome: "Agendamentos ilimitados", incluido: true },
       { nome: "Página pública de agendamento", incluido: true },
-      { nome: "Link: autonexabrasil.com.br/seu-slug", incluido: true },
+      { nome: `Link: ${SITE_DOMAIN}/seu-slug`, incluido: true },
       { nome: "Conecte seu próprio domínio", incluido: true, detalhe: "ex: suaempresa.com.br — nós configuramos o DNS para você" },
       { nome: "Receba pagamento via Pix", incluido: true },
       { nome: "Sem marca AN.BR", incluido: true },

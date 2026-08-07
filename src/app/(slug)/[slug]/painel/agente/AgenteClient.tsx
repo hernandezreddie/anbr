@@ -77,6 +77,8 @@ function ChatView({ profissionalId }: { profissionalId: string }) {
     setLoading(true);
 
     try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 75_000);
       const res = await fetch("/api/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,15 +87,28 @@ function ChatView({ profissionalId }: { profissionalId: string }) {
           mensagem: userMsg,
           historico: history.filter((h) => h.role !== "system"),
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       const data = await res.json();
       if (data.resposta) {
         setHistory((h) => [...h, { role: "assistant", content: data.resposta }]);
       } else if (data.error) {
         setHistory((h) => [...h, { role: "assistant", content: `⚠️ ${data.error}` }]);
+      } else {
+        setHistory((h) => [...h, { role: "assistant", content: "⚠️ O agente não retornou resposta. Verifique a chave de API em Status do Agente." }]);
       }
-    } catch {
-      setHistory((h) => [...h, { role: "assistant", content: "⚠️ Erro ao conectar com o agente" }]);
+    } catch (e: any) {
+      setHistory((h) => [
+        ...h,
+        {
+          role: "assistant",
+          content:
+            e?.name === "AbortError"
+              ? "⚠️ O agente demorou demais para responder. Tente novamente."
+              : "⚠️ Erro ao conectar com o agente",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
