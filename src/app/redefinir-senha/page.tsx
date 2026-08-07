@@ -19,13 +19,41 @@ export default function RedefinirSenhaPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        setErro("Link inválido ou expirado. Solicite um novo link de recuperação.");
-      } else {
-        setPronto(true);
+    let retryCount = 0;
+    const maxRetries = 5;
+    
+    const checkSession = async () => {
+      try {
+        // Force session refresh from storage/cookies
+        await supabase.auth.getSession();
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (!userError && user) {
+            // Check if this is a recovery session (has the recovery token)
+            setPronto(true);
+          } else {
+            setErro("Link inválido ou expirado. Solicite um nuevo link de recuperação.");
+          }
+        } else if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(checkSession, 1000);
+        } else {
+          setErro("Link inválido ou expirado. Solicite um nuevo link de recuperação.");
+        }
+      } catch (e) {
+        retryCount++;
+        if (retryCount < maxRetries) {
+          setTimeout(checkSession, 1000);
+        } else {
+          setErro("Link inválido ou expirado. Solicite un nuevo link de recuperação.");
+        }
       }
-    });
+    };
+
+    checkSession();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

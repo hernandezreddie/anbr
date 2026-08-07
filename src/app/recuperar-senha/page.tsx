@@ -18,7 +18,8 @@ export default function RecuperarSenhaPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const redirectTo = `${window.location.origin}/auth/callback?next=/redefinir-senha`;
+    const siteDomain = process.env.NEXT_PUBLIC_SITE_DOMAIN || "autonexabrasil.com.br";
+    const redirectTo = `https://${siteDomain}/auth/callback?next=/redefinir-senha`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     setLoading(false);

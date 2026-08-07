@@ -8,11 +8,20 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createRouteClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error, data } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
+      console.error("Auth callback error:", error.message);
       return NextResponse.redirect(`${origin}/entrar?erro=callback`);
+    }
+    // Verify session was established
+    if (!data?.session) {
+      return NextResponse.redirect(`${origin}/entrar?erro=sin_sesion`);
     }
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  // Add a query param to force client to fetch fresh session
+  const redirectUrl = new URL(`${origin}${next}`);
+  redirectUrl.searchParams.set("from_auth_callback", "true");
+  
+  return NextResponse.redirect(redirectUrl.toString());
 }
