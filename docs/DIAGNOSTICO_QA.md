@@ -160,3 +160,27 @@ Restan solo **acciones manuales** (no código):
 - [x] P2-8 Editor personalización en demo
 - [x] P2-9 Planos (ya existía)
 - [x] P2-10 Métricas de adopción reales
+
+---
+
+## Auditoría de Seguridad (2026-08-07)
+
+**Puntuación de salud de seguridad:** 6.1 / 10 → **Correcciones aplicadas en commit `e88bbdf`** ✅
+
+| Módulo | Hallazgo | Severidad | Estado |
+|--------|----------|-----------|--------|
+| 1.1 | IDOR en `is_admin_or_owner()` — `owner` podía acceder a otros tenants | 🔴 P0 | ✅ **CORREGIDO** — solo `role='admin'` (migrations_planos.sql:84) |
+| 1.1 | DELETE no protegido en profissionais | 🔴 P0 | ✅ **VERIFICADO** — denegado por defecto, admins usan service role |
+| 1.2 | Logout inseguro — `setAll` vacío en server.ts | 🟡 P1 | ✅ **CORREGIDO** — httpOnly, secure, sameSite, maxAge 7d |
+| 2.1 | Filtración de errores DB (5 endpoints) | 🔴 P0 | ✅ **CORREGIDO** — sanitizados en 5 archivos, logs internos |
+| 2.2 | No validación inputs en /api/cadastro | 🔴 P0 | ✅ **CORREGIDO** — Schema Zod completo |
+| 3.2 | Bypass de límites de plan | 🟡 P1 | ✅ **VERIFICADO** — `verificarAcessoProfissional` protege cross-tenant |
+| 4.1 | N+1 queries en agendamentos GET | 🟡 P1 | 🟢 OK en código — índices existentes |
+| 4.1 | Falta índice en avaliacoes(token) | 🟡 P1 | ✅ **CORREGIDO** — `idx_avaliacoes_token` + `idx_agendamentos_token_avaliacao` |
+| 4.2 | XSS en agendamentos (cliente_nome, endereco) | 🟡 P1 | ✅ **CORREGIDO** — función `sanitizeTexto()` |
+
+### Estado pendiente (acciónes manuales)
+- [ ] Google OAuth consent screen → modo producción
+- [ ] Meta App Review → templates aprobados
+- [ ] Endpoint chat público para `/demo` (DEMO_TENANT_ID)
+- [ ] Aplicar migración `migrations_video_fundo.sql` en Supabase (ya aplicada por usuario)

@@ -249,11 +249,25 @@ npm run test          # vitest run (24 tests passing)
 npm run build         # Next.js build (74+ routes)
 ```
 
-### 🧠 AGENT CONTEXT FOR NEXT SESSION
-- **Working dir:** `D:\CCP\AUTOMATIZACURITIBA26`
-- **Status:** ✅ **EN PRODUCCIÓN EN VERCEL** — Deploy automático desde GitHub (push a `main` → build + deploy). Dominio `autonexabrasil.com.br` + `www` conectados y activos. SSL válido. Build limpio, typecheck 0 errores, 24/24 tests. **No hay acciones de infraestructura pendientes.**
-- **Color:** teal `#059669` (Tailwind `primary` variable)
-- **Stack:** Next.js 16, React 19, Framer Motion, Recharts, Supabase, Vitest
-- **Docs:** `MIGRACION_CLOUDFLARE.md` (maestro migración - ahora histórico), `docs/PLAN_PRODUCCION.md` (9 fases, ~130/130 completados), `docs/RUNBOOK.md`, `docs/GO_LIVE.md`, `docs/CICLOS_DEL_SISTEMA.md` (7 ciclos + 5 nuevos propuestos), `deploy/README-deploy.md` (backup VPS)
-- **Lo que queda:** Solo acciones manuales de producto/marketing: Google OAuth producción, Meta App Review, migración Supabase `video_fundo`, piloto `bella-beleza`, demo video, depoimentos.
-- **NUEVO:** Middleware unificado `src/middleware.ts` (ex proxy.ts, fetch REST edge-compatible, whitelist 127.0.0.1). Build limpio 74+ rutas, typecheck 0 errores, 24/24 tests.
+### 🔒 AUDITORÍA DE SEGURIDAD (Post-lanzamiento)
+**Realizada:** 2026-08-07 por Equipo de Seguridad (PSH + Cloud Architect + CTO)  
+**Puntuación de salud:** 6.1 / 10 → **Correcciones aplicadas en commit `e88bbdf`** ✅
+
+#### 🔴 P0 - Bloqueadores críticos (CORREGIDOS)
+1. **IDOR en `profiles`** → `is_admin_or_owner()` corregido: solo `role='admin'` (no `'owner'`). VER: `schema_completo.sql:1005`
+2. **Filtración de errores DB** → 5 endpoints sanitizados: `tenant/route.ts`, `config/atualizar/route.ts`, `agendamentos/[id]/status/route.ts`, `agent/chat/route.ts`, `webhooks/mercadopago/route.ts`. Ahora usan `console.error` interno + mensajes genéricos al cliente.
+3. **Validación inputs en cadastro** → Schema Zod completo: email válido, slug alfanumérico, senha mínimo 6, consentimento obligatorio. VER: `src/app/api/cadastro/route.ts`
+4. **XSS en agendamentos** → Función `sanitizeTexto()` elimina `<`, `>`, `javascript:` y límite a 500 chars. Aplicada a `cliente_nome`, `cliente_endereco`, `observacoes`. VER: `src/app/api/agendamentos/route.ts:11-17`
+5. **Cookies de sesión** → `setAll` implementado con `httpOnly`, `secure`, `sameSite: 'lax'`, 7d expiry. VER: `src/lib/supabase/server.ts:16-24`
+
+#### 🟡 P1 - Alto riesgo (CORREGIDOS)
+1. **Índice faltante** → `idx_avaliacoes_token` + `idx_agendamentos_token_avaliacao` + DELETE policy. VER: `supabase/migrations_avaliacoes.sql`
+
+#### 🟢 P2 - Mejoradas
+1. Rate limiting → en memoria (best-effort en serverless)
+2. Validación inputs → Zod en cadastro, validation en agendamentos existente
+
+#### ⚠️ Pendientes (requieren acción manual)
+- Google OAuth → consent screen producción
+- Meta App Review → templates aprobados
+- Endpoint chat público para `/demo` (DEMO_TENANT_ID)

@@ -143,3 +143,22 @@ Se `status` = "degraded", verificar o campo `detail` de cada check.
 - Vercel: vercel.com → Support
 - Meta Developer: developers.facebook.com → App Dashboard
 - Mercado Pago: dashboard.mercadopago.com
+
+---
+
+## Segurança (Auditoría 2026-08-07)
+
+### Estado actual
+- **IDOR**: `is_admin_or_owner()` corregido → solo `role='admin'` pode acceeder a outros tenants
+- **Filtración de errores**: 5 endpoints sanitizados (error.message → "Erro interno...")
+- **Validación inputs**: Zod en `/api/cadastro`, validation existente en agendamentos
+- **Cookies**: `httpOnly`, `secure`, `sameSite: "lax"`, 7d expiry
+- **Rate limiting**: in-memory (5/min agendamentos, 3/min cadastro, 10/min agente) — best-effort en serverless
+- **RLS**: 10/10 políticas revisadas ✓
+- **CSRF**: middleware con Origin/Referer validation + whitelist webhooks/crons ✓
+- **CSP/Security Headers**: configurados en `middleware.ts` + `next.config.ts` ✓
+
+### Ações pendentes (manual)
+- [ ] Google OAuth consent screen → modo producción
+- [ ] Meta App Review → templates aprobados
+- [ ] Endpoint chat público para `/demo` (DEMO_TENANT_ID)

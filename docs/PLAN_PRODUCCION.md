@@ -638,6 +638,8 @@ Verificación: health check 200, deploy exitoso, un ciclo piloto completo docume
 
 **Objetivo:** Cerrar vulnerabilidades detectadas en auditoría: CSRF, CSP, credenciales expuestas, webhooks vulnerables.
 
+**Estado:** ✅ **COMPLETA** — Todas las correcciones aplicadas en commit `e88bbdf`
+
 ## Checklist
 
 ### 8.5.1 Rotación de credenciales (CRÍTICA)
@@ -665,6 +667,14 @@ Verificación: health check 200, deploy exitoso, un ciclo piloto completo docume
 - [x] Agregar Bearer `CRON_SECRET` a `/api/health`
 - [x] Agregar rate-limit a `POST /api/cadastro` (3/min)
 - [x] Estandarizar `verificarAcessoProfissional` en routes inconsistentes
+
+### 8.5.5 Correcciones de auditoría (commit `e88bbdf`)
+- [x] **IDOR en `is_admin_or_owner()`** → corregido a solo `role='admin'` (ya estaba en migrations_planos.sql, se documentó)
+- [x] **Filtración de errores DB** → sanitizados 5 endpoints (tenant:64,101; config/atualizar:35; agendamentos/[id]/status:40; agent/chat:60; mercadopago:85)
+- [x] **Validación Zod en `/api/cadastro`** → schema completo agregado (email, slug, senha, consentimiento)
+- [x] **Cookies `setAll` implementado** → `httpOnly`, `secure`, `sameSite: "lax"`, 7d expiry en `server.ts:16-24`
+- [x] **Índices DB faltantes** → `idx_avaliacoes_token` + `idx_agendamentos_token_avaliacao` + DELETE policy en `migrations_avaliacoes.sql`
+- [x] **Sanitización XSS** → función `sanitizeTexto()` en `agendamentos/route.ts:11-17`, aplicada a cliente_nombre, cliente_endereco, observacoes
 
 ## Criterios de aceptación
 - `git check-ignore CREDENTIAL_VAULT.md` → OK
