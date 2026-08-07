@@ -274,6 +274,21 @@
   - src/lib/ai/agent.ts (RAG no-fatal + timeout SDK)
   - src/app/(slug)/[slug]/painel/agente/AgenteClient.tsx (abort 75s + mensajes de error claros)
 
+### Phase 9.10: AI Agent com ações reais + prompts humanizados por nicho (2026-08-06)
+- **Status:** complete
+- Actions taken:
+  - **Análise pré-deploy (pedido do usuário)**: BD verificada — colunas horario_inicio/horario_fim/video_fundo OK, RPC match_knowledge_chunks OK, RPC upsert_agent_usage OK (testada com ON CONFLICT real), tabelas agent_* e buckets OK. Único bloqueante real: código antigo no Netlify (fixes do chat não desplegados). Modelo do DogDayCare trocado de `laguna-s-2.1:free` (rate limit 20 RPM) para `deepseek/deepseek-chat` na BD
+  - **4 tools de ação novas** (`tool-definitions.ts` + `acao-agendamentos.ts` + `executarToolPorNome`): `buscar_horarios_disponiveis` (slots de 30min com expediente/conflitos/limite real), `criar_agendamento` (MESMAS validações do booking web: expediente, conflito por sobreposição, limite diário, plano grátis; nasce confirmado; dispara WhatsApp), `atualizar_status_agendamento` (confirmado/concluido/cancelado + notificações automáticas), `consultar_cliente` (histórico por nome/WhatsApp)
+  - **Prompts humanizados por nicho** (`src/lib/ai/prompts.ts` reescrito): PERFIL_POR_NICHO (13 nichos) com apresentação ("Quem você é"), OBJETIVO claro do trabalho, personalidade de atendimento; `montarPromptSistema` injeta contexto DINÂMICO server-side (nome, cidade, slogan, serviços com preços/duração, expediente) + regras não-negociáveis. Se o dono definiu prompt custom → vira "A ordem do dono do negócio" (prioridade máxima). Prompt final validado com tenant real DogDayCare (catálogo real + expediente + slogan)
+  - Admin: descrição da tool database atualizada ("Acessar dados do negócio" — consultar + agendar/cancelar/concluir)
+  - Verificação: tsc 0, build 0, 24/24 tests + teste real de montarPromptSistema contra a BD
+- Files created/modified:
+  - src/lib/ai/prompts.ts (rewrite — perfil por nicho humanizado + contexto dinâmico)
+  - src/lib/ai/acao-agendamentos.ts (created — 4 ações com validações do booking)
+  - src/lib/ai/tool-definitions.ts (4 tools de ação novas)
+  - src/lib/ai/agent.ts (montarPromptSistema + executarToolPorNome ampliado)
+  - src/app/admin/agent/[slug]/AgentConfigClient.tsx (descrição database)
+
 ## Test Results
 | Test | Input | Expected | Actual | Status |
 |------|-------|----------|--------|--------|
@@ -300,6 +315,10 @@
 | tests (9.8) | npx vitest run | 24 passed | 24 passed (3 files) | ✓ |
 | typecheck (9.9) | npx tsc --noEmit | 0 errores | 0 errores | ✓ |
 | tests (9.9) | npx vitest run | 24 passed | 24 passed (3 files) | ✓ |
+| typecheck (9.10) | npx tsc --noEmit | 0 errores | 0 errores | ✓ |
+| build (9.10) | npm run build | 0 errores | 0 errores | ✓ |
+| tests (9.10) | npx vitest run | 24 passed | 24 passed (3 files) | ✓ |
+| prompt real (9.10) | vitest + BD DogDayCare | prompt humanizado con contexto real | generado OK | ✓ |
 
 ## Error Log
 | Timestamp | Error | Attempt | Resolution |

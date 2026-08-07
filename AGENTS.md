@@ -204,6 +204,8 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 - [x] **RAG no-fatal** — `buscarContextoRAG` lanzaba si el servidor no tiene `OPENAI_API_KEY` global (los embeddings ignoran la key del tenant) → mataba el chat entero incluso con key propia de Gemini. Ahora try/catch → el agente responde sin contexto (log warning)
 - [x] **Timeouts** — route: `Promise.race` 60s → 504 "Tempo esgotado..."; SDK OpenAI con `timeout: 60_000, maxRetries: 1`; UI: AbortController 75s → "⚠️ O agente demorou demais..." (nunca más colgado) + fallback cuando la respuesta viene vacía sin error
 - [x] **Diagnóstico guiado** — StatusAgente "Testar conexão" (`/api/agent/status?teste=1`) clasifica: chave_invalida, sem_creditos, modelo_invalido, erro_rede — el primer paso para diagnosticar un tenant es este botón
+- [x] **Tools de acción** — el agente ya no solo consulta: `buscar_horarios_disponiveis` (slots reales), `criar_agendamento` (mismas validaciones del booking: expediente/conflito/limite/plano, nace confirmado, notifica por WhatsApp), `atualizar_status_agendamento` (confirmar/concluir/cancelar + avisos), `consultar_cliente` (historial) — `src/lib/ai/acao-agendamentos.ts`
+- [x] **Prompts humanizados por nicho** — `src/lib/ai/prompts.ts`: PERFIL_POR_NICHO (13 nichos: quien eres + objetivo del trabajo + personalidad) + contexto DINÁMICO server-side (nombre, ciudad, slogan, servicios con precios/duración, expediente) + reglas no negociables; prompt custom del dueño → "A ordem do dono" (prioridad máxima)
 - [x] Build: tsc 0 errores, 24/24 tests
 
 ### 📦 NEXT (acciones manuales — usuario)

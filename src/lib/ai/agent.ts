@@ -146,9 +146,10 @@ export async function chatComAgente(
     });
   }
 
-  const systemPrompt = config.system_prompt || `Você é um assistente de agendamento profissional.
-Ajude clientes a agendar serviços, tirar dúvidas sobre horários e preços.
-Seja educado e objetivo. Responda em português.`;
+  // Prompt = plantilla del nicho + contexto REAL del negocio (serviços, preços,
+  // expediente) + misión personalizada si el dueño definió una.
+  const { montarPromptSistema } = await import("./prompts");
+  const systemPrompt = await montarPromptSistema(profissionalId, undefined, config.system_prompt);
 
   const systemPromptFinal = contextoRAG
     ? `${systemPrompt}\n\n## Base de Conhecimento\nUse as informações abaixo para responder. Se não encontrar algo relevante, diga que não sabe.\n\n${contextoRAG}`
@@ -326,6 +327,50 @@ export async function executarToolPorNome(
         .eq("profissional_id", profissionalId)
         .eq("ativo", true);
       return { name: "consultar_servicos", result: JSON.stringify(data || []) };
+    }
+
+    case "buscar_horarios_disponiveis": {
+      try {
+        const { buscarHorariosDisponiveis } = await import("./acao-agendamentos");
+        const result = await buscarHorariosDisponiveis(profissionalId, args.servico_id, args.data);
+        return { name: "buscar_horarios_disponiveis", result };
+      } catch (e: any) {
+        return { name: "buscar_horarios_disponiveis", result: `Erro: ${e.message}` };
+      }
+    }
+
+    case "criar_agendamento": {
+      try {
+        const { criarAgendamento } = await import("./acao-agendamentos");
+        const result = await criarAgendamento(profissionalId, args);
+        return { name: "criar_agendamento", result };
+      } catch (e: any) {
+        return { name: "criar_agendamento", result: `Erro: ${e.message}` };
+      }
+    }
+
+    case "atualizar_status_agendamento": {
+      try {
+        const { atualizarStatusAgendamento } = await import("./acao-agendamentos");
+        const result = await atualizarStatusAgendamento(
+          profissionalId,
+          args.agendamento_id,
+          args.novo_status
+        );
+        return { name: "atualizar_status_agendamento", result };
+      } catch (e: any) {
+        return { name: "atualizar_status_agendamento", result: `Erro: ${e.message}` };
+      }
+    }
+
+    case "consultar_cliente": {
+      try {
+        const { consultarCliente } = await import("./acao-agendamentos");
+        const result = await consultarCliente(profissionalId, args.nome, args.whatsapp);
+        return { name: "consultar_cliente", result };
+      } catch (e: any) {
+        return { name: "consultar_cliente", result: `Erro: ${e.message}` };
+      }
     }
 
     case "verificar_disponibilidade": {

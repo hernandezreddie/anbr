@@ -41,6 +41,61 @@ export function buildAgentTools(toolsEnabled: string[]): AgentToolDef[] {
       description: "Lista os serviços disponíveis do profissional com preços.",
       parameters: { type: "object", properties: {}, required: [] },
     });
+    tools.push({
+      name: "buscar_horarios_disponiveis",
+      description:
+        "Busca os horários livres de um serviço em uma data específica. USE SEMPRE antes de sugerir ou criar um agendamento. Retorna slots de 30min livres, considerando expediente, limites e conflitos.",
+      parameters: {
+        type: "object",
+        properties: {
+          servico_id: { type: "string", description: "ID do serviço (obtenha com consultar_servicos)" },
+          data: { type: "string", description: "Data no formato AAAA-MM-DD" },
+        },
+        required: ["servico_id", "data"],
+      },
+    });
+    tools.push({
+      name: "criar_agendamento",
+      description:
+        "Cria um agendamento CONFIRMADO para o cliente. Use somente depois de o cliente confirmar explicitamente nome, WhatsApp com DDD, serviço, data e hora. Dispara a confirmação por WhatsApp automaticamente.",
+      parameters: {
+        type: "object",
+        properties: {
+          servico_id: { type: "string", description: "ID do serviço (obtenha com consultar_servicos)" },
+          data: { type: "string", description: "Data no formato AAAA-MM-DD (futura)" },
+          hora: { type: "string", description: "Hora no formato HH:MM (dentro do expediente)" },
+          cliente_nome: { type: "string", description: "Nome completo do cliente" },
+          cliente_whatsapp: { type: "string", description: "WhatsApp com DDD, somente dígitos (ex: 41999999999)" },
+          cliente_endereco: { type: "string", description: "Endereço (se o serviço for no local)" },
+        },
+        required: ["servico_id", "data", "hora", "cliente_nome", "cliente_whatsapp"],
+      },
+    });
+    tools.push({
+      name: "atualizar_status_agendamento",
+      description:
+        "Altera o status de um agendamento existente: confirmado, concluido ou cancelado. Ao cancelar, o cliente é avisado por WhatsApp automaticamente; ao concluir, o cliente recebe convite de avaliação e reagendamento.",
+      parameters: {
+        type: "object",
+        properties: {
+          agendamento_id: { type: "string", description: "ID do agendamento (obtenha com consultar_agendamentos)" },
+          novo_status: { type: "string", enum: ["confirmado", "concluido", "cancelado"] },
+        },
+        required: ["agendamento_id", "novo_status"],
+      },
+    });
+    tools.push({
+      name: "consultar_cliente",
+      description: "Busca um cliente pelo nome (parcial) ou WhatsApp e retorna seu histórico de agendamentos.",
+      parameters: {
+        type: "object",
+        properties: {
+          nome: { type: "string", description: "Nome ou parte do nome" },
+          whatsapp: { type: "string", description: "WhatsApp com DDD, somente dígitos" },
+        },
+        required: [],
+      },
+    });
   }
 
   if (toolsEnabled.includes("google_calendar")) {

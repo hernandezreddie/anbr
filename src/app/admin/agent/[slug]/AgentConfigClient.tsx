@@ -439,7 +439,7 @@ export function AgentConfigClient({ profissional, config: initialConfig, docs: i
                 <p className="mt-1 text-sm text-gray-500">Escolha as permissões — quanto mais, mais útil, mas também mais poderoso.</p>
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
                   {[
-                    { id: "database", label: "Consultar sua agenda", desc: "Ver agendamentos, serviços e clientes para responder" },
+                    { id: "database", label: "Acessar dados do negócio", desc: "Consultar agendamentos, serviços e clientes + agendar, cancelar e concluir (com as mesmas validações do site)" },
                     { id: "google_calendar", label: "Usar Google Calendar", desc: "Verificar horários livres e criar eventos automaticamente" },
                     { id: "knowledge_base", label: "Responder com documentos", desc: "Buscar respostas nos documentos que você enviar" },
                   ].map((tool) => (
