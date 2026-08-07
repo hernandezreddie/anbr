@@ -48,11 +48,17 @@ export function PainelAuthGate({
               router.replace(`/${slug}/painel/login`);
               return;
             }
+            // Admins can access any tenant's panel without redirect
+            if (profile.role === "admin" || profile.role === "plataforma") {
+              setReady(true);
+              return;
+            }
+            // Non-admin owners can only access their own panel
             const prof = Array.isArray(profile.profissionais)
               ? profile.profissionais[0]
               : profile.profissionais;
             if (prof && prof.slug !== slug) {
-              router.replace(`/${prof.slug}/painel`);
+              router.replace(`${prof.slug}/painel`);
               return;
             }
             setReady(true);

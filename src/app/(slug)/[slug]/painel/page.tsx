@@ -68,6 +68,7 @@ type Profissional = {
   nome: string;
   whatsapp: string;
   plano?: string | null;
+  categoria?: string | null;
 };
 
 type Pagamento = {
@@ -554,6 +555,7 @@ export default function PainelPage() {
   const params = useParams();
   const slug = params.slug as string;
   const supabase = createClient();
+  
   const [items, setItems] = useState<Agendamento[]>([]);
   const [profissional, setProfissional] = useState<Profissional | null>(null);
   const [categoria, setCategoria] = useState<string | null>(null);
@@ -593,11 +595,82 @@ export default function PainelPage() {
     setGuiaAberto(false);
   };
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const load = useCallback(async () => {
+    // Check if user is admin (platform-level access)
+    if (!isAdmin) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        setIsAdmin(profile?.role === 'admin' || profile?.role === 'plataforma');
+      }
+    }
+
+    if (isAdmin) {
+      // Admin: use server-side API with service role to bypass RLS
+      const resp = await fetch(`/api/admin/painel/${slug}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        const lista = (data.agendamentos || []) as Agendamento[];
+        const pgList = (data.pagamentos || []) as Pagamento[];
+        const prof = (data.profissional || null) as Profissional | null;
+        const cfg = data.config || null;
+
+        setItems(lista);
+        setProfissional(prof);
+        setCategoria(prof?.categoria ?? null);
+        setMsgVariante(Number(cfg?.msg_variante) || 0);
+
+        const idsPagos = new Set(
+          pgList.filter((p) => p.status === "pago").map((p) => p.agendamento_id).filter((id): id is string => !!id)
+        );
+        setPagoIds(idsPagos);
+        setPgList(pgList);
+
+        const soma = (xs: { valor: number }[]) => xs.reduce((s, p) => s + Number(p.valor), 0);
+        const mes = HOJE().slice(0, 7);
+        const pagos = pgList.filter((p) => p.status === "pago" && (p.pago_em ?? "").startsWith(mes));
+        setGanho(soma(pagos));
+        setNPagos(pagos.length);
+
+        const pendentes = lista.filter((a) => a.status === "concluido" && !idsPagos.has(a.id));
+        setAReceber(soma(pendentes));
+        setNAReceber(pendentes.length);
+
+        const fim = isoLocal(new Date(Date.now() + 7 * 86400000));
+        const semana = lista.filter(
+          (a) => a.status === "confirmado" && a.data && a.data >= HOJE() && a.data <= fim
+        );
+        setSemanaValor(soma(semana));
+        setSemanaN(semana.length);
+
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Non-admin: use client with RLS (filtered by auth.uid)
+    // Get the profissional_id from slug to scope data correctly
+    const { data: profData } = await supabase
+      .from("profissionais")
+      .select("id")
+      .eq("slug", slug)
+      .single();
+    const profissionalId = profData?.id;
+
     const [ag, pg, prof, cfg] = await Promise.all([
-      supabase.from("agendamentos").select("*").order("created_at", { ascending: false }),
-      supabase.from("pagamentos").select("valor, pago_em, status, agendamento_id"),
-      supabase.from("profissionais").select("*").single(),
+      profissionalId
+        ? supabase.from("agendamentos").select("*").eq("profissional_id", profissionalId).order("created_at", { ascending: false })
+        : { data: [], error: null },
+      profissionalId
+        ? supabase.from("pagamentos").select("valor, pago_em, status, agendamento_id").eq("profissional_id", profissionalId)
+        : { data: [], error: null },
+      supabase.from("profissionais").select("*").eq("slug", slug).single(),
       supabase.from("configuracoes").select("msg_variante").single(),
     ]);
     const lista = (ag.data as Agendamento[]) ?? [];
@@ -631,17 +704,32 @@ export default function PainelPage() {
     setSemanaN(semana.length);
 
     setLoading(false);
-  }, [supabase]);
+   }, [supabase, isAdmin, slug]);
 
   useEffect(() => {
-    load();
+    const checkAdminAndLoad = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        const admin = profile?.role === 'admin' || profile?.role === 'plataforma';
+        if (admin !== isAdmin) {
+          setIsAdmin(admin);
+        }
+      }
+      load();
+    };
+    checkAdminAndLoad();
     const canal = supabase
       .channel("painel-agendamentos")
       .on("postgres_changes", { event: "*", schema: "public", table: "agendamentos" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "pagamentos" }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(canal); };
-  }, [load, supabase]);
+   }, [load, supabase, isAdmin]);
 
   const flash = (m: string) => {
     setAviso(m);
@@ -665,7 +753,15 @@ export default function PainelPage() {
 
   async function salvarQuando(id: string, data: string, hora: string) {
     setBusy(id);
-    await supabase.from("agendamentos").update({ data: data || null, hora: hora || null }).eq("id", id);
+    if (isAdmin) {
+      await fetch(`/api/admin/painel/${slug}?action=update_agendamento`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, data: data || null, hora: hora || null }),
+      });
+    } else {
+      await supabase.from("agendamentos").update({ data: data || null, hora: hora || null }).eq("id", id);
+    }
     await load();
     setBusy(null);
     flash("Data/horário atualizado ✔");
@@ -673,12 +769,20 @@ export default function PainelPage() {
 
   async function marcarPago(a: Agendamento) {
     setBusy(a.id);
-    await supabase.from("pagamentos").insert({
-      agendamento_id: a.id,
-      valor: a.valor,
-      status: "pago",
-      pago_em: new Date().toISOString(),
-    });
+    if (isAdmin) {
+      await fetch(`/api/admin/painel/${slug}?action=marcar_pago`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agendamento_id: a.id, valor: a.valor }),
+      });
+    } else {
+      await supabase.from("pagamentos").insert({
+        agendamento_id: a.id,
+        valor: a.valor,
+        status: "pago",
+        pago_em: new Date().toISOString(),
+      });
+    }
     await load();
     setBusy(null);
     flash("Pagamento registrado ✔");

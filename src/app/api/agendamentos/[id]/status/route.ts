@@ -1,9 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest } from "next/server";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = await createServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return Response.json({ error: "Não autorizado" }, { status: 401 });
@@ -14,7 +15,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return Response.json({ error: "Status inválido" }, { status: 400 });
   }
 
-  const { data: agendamento } = await supabase
+  // Check if user is platform admin (uses auth user context)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const admin = profile?.role === 'admin' || profile?.role === 'plataforma';
+
+  // Use admin client to bypass RLS when user is admin
+  const client = admin ? createAdminClient() : supabase;
+
+  const { data: agendamento } = await client
     .from("agendamentos")
     .select("profissional_id, cliente_whatsapp, servico_nome, data, hora")
     .eq("id", id)
@@ -22,17 +35,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   if (!agendamento) return Response.json({ error: "Agendamento não encontrado" }, { status: 404 });
 
-  const { data: profissional } = await supabase
-    .from("profissionais")
-    .select("id")
-    .eq("email", user.email)
-    .single();
+  // Non-admin: verify the profissional belongs to the user
+  if (!admin) {
+    const { data: profissional } = await supabase
+      .from("profissionais")
+      .select("id")
+      .eq("email", user.email)
+      .single();
 
-  if (!profissional || profissional.id !== agendamento.profissional_id) {
-    return Response.json({ error: "Sem permissão" }, { status: 403 });
+    if (!profissional || profissional.id !== agendamento.profissional_id) {
+      return Response.json({ error: "Sem permissão" }, { status: 403 });
+    }
   }
 
-  const { error } = await supabase
+  const { error } = await client
     .from("agendamentos")
     .update({ status })
     .eq("id", id);
