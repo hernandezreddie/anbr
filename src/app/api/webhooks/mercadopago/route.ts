@@ -82,6 +82,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, status });
   } catch (err: any) {
     console.error("[webhooks/mercadopago] erro:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: "Erro interno no processamento do webhook" }, { status: 500 });
   }
 }

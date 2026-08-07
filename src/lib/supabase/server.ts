@@ -12,8 +12,21 @@ export async function createClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll() {
-          // Cookies are set via Route Handlers or Server Functions only
+        setAll(cookiesToSet) {
+          try {
+            for (const { name, value, options } of cookiesToSet) {
+              cookieStore.set(name, value, {
+                ...options,
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                path: "/",
+                maxAge: 60 * 60 * 24 * 7, // 7 days
+              });
+            }
+          } catch {
+            // Called from middleware or React render - ignore
+          }
         },
       },
     },

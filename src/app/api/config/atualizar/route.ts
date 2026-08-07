@@ -32,7 +32,10 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  if (error) return Response.json({ error: error.message }, { status: 500 });
+   if (error) {
+    console.error("[config/atualizar] Error updating config:", error);
+    return Response.json({ error: "Erro interno ao salvar configuração" }, { status: 500 });
+  }
 
   return Response.json({ success: true });
 }

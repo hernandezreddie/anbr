@@ -37,7 +37,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .update({ status })
     .eq("id", id);
 
-  if (error) return Response.json({ error: error.message }, { status: 500 });
+   if (error) {
+    console.error("[agendamentos/status] Error updating status:", error);
+    return Response.json({ error: "Erro interno ao actualizar estado" }, { status: 500 });
+  }
 
   if (status === "cancelado") {
     try {

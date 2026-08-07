@@ -26,7 +26,8 @@ export async function PATCH(req: NextRequest) {
     }
     const { error: authErr } = await adminDb.auth.admin.updateUserById(profile.id, { password: senha });
     if (authErr) {
-      return NextResponse.json({ error: `Falha ao trocar senha: ${authErr.message}` }, { status: 400 });
+      console.error("[admin/tenant] Error updating password:", authErr);
+      return NextResponse.json({ error: "Falha ao atualizar senha" }, { status: 400 });
     }
     return NextResponse.json({ success: true });
   }
@@ -53,7 +54,8 @@ export async function PATCH(req: NextRequest) {
       if (profile) {
         const { error: authErr } = await adminDb.auth.admin.updateUserById(profile.id, { email });
         if (authErr) {
-          return NextResponse.json({ error: `Falha ao atualizar e-mail: ${authErr.message}` }, { status: 400 });
+          console.error("[admin/tenant] Error updating email:", authErr);
+          return NextResponse.json({ error: "Falha ao atualizar e-mail" }, { status: 400 });
         }
       }
       updates.email = email;
@@ -61,7 +63,10 @@ export async function PATCH(req: NextRequest) {
   }
 
   const { error } = await adminDb.from("profissionais").update(updates).eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[admin/tenant] Error updating profissional:", error);
+    return NextResponse.json({ error: "Erro interno ao actualizar profissional" }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true });
 }
@@ -83,7 +88,8 @@ export async function DELETE(req: NextRequest) {
 
   const { data: authUsers, error: authListErr } = await adminDb.auth.admin.listUsers({ page: 1, perPage: 1000 });
   if (authListErr) {
-    return NextResponse.json({ error: authListErr.message }, { status: 500 });
+    console.error("[admin/tenant] Error listing users:", authListErr);
+    return NextResponse.json({ error: "Erro interno ao listar usuários" }, { status: 500 });
   }
 
   const emails = new Set(
@@ -99,7 +105,10 @@ export async function DELETE(req: NextRequest) {
   }
 
   const { error } = await adminDb.from("profissionais").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[admin/tenant] Error deleting profissional:", error);
+    return NextResponse.json({ error: "Erro interno ao eliminar profissional" }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true });
 }

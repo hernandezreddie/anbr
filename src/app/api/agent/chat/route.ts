@@ -57,12 +57,12 @@ export async function POST(req: NextRequest) {
       ]);
     } catch (e: any) {
       console.error("[agent/chat] chamada de IA falhou:", e?.message || e);
-      return NextResponse.json({ error: e?.message || "Erro ao consultar a IA" }, { status: 504 });
+      return NextResponse.json({ error: "Erro ao consultar a IA. Tente novamente." }, { status: 504 });
     }
 
     if (result.error) {
       console.error("[agent/chat] erro do agente:", result.error);
-      return NextResponse.json({ error: result.error }, { status: result.status || 500 });
+      return NextResponse.json({ error: "Erro ao processar mensagem da IA" }, { status: result.status || 500 });
     }
     let convId = conversation_id;
 
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error("[agent/chat] erro interno:", err?.message || err);
     return NextResponse.json(
-      { error: err?.message ? `Erro interno: ${err.message}` : "Erro interno ao processar mensagem" },
+      { error: "Erro interno ao processar mensagem" },
       { status: 500 }
     );
   }

@@ -9,3 +9,9 @@ binding = "ASSETS"
 
 [vars]
 NODEJS_COMPAT_DATE = "2024-09-23"
+# Dominio raiz en runtime (usado por src/middleware.ts:ROOT_DOMAIN)
+SITE_DOMAIN = "autonexabrasil.com.br"
+
+[triggers]
+# Crons (antes en Netlify): lembretes 12:00 UTC, vencidos 03:00 UTC
+crons = ["0 12 * * *", "0 3 * * *"]

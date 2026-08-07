@@ -7,8 +7,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ---
 
 ## 📋 PROJECT MEMORY — AUTOMATIZACURITIBA26
-**Last updated:** 2026-08-07
-**Status:** 🔄 EN MIGRACIÓN A CLOUDFLARE PAGES — Netlify Free bloqueó deploys (créditos agotados, 300/mes ≈ 20 deploys). Todo el código nuevo (fix chat, tools agente, prompts humanizados) está en GitHub pero NO desplegado. Migración en curso — ver `MIGRACION_CLOUDFLARE.md` (documento maestro).
+**Last updated:** 2026-08-07 14:45
+**Status:** ✅ **EN PRODUCCIÓN EN VERCEL** — Deploy automático desde GitHub (push a `main` → build + deploy). Dominio `autonexabrasil.com.br` + `www` conectados y activos. SSL válido. Build limpio, typecheck 0 errores, 24/24 tests. **No hay acciones de infraestructura pendientes.**
 
 ---
 
@@ -147,7 +147,7 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 - [x] **Chat AI interactivo en hero** (`components/site/ChatDemo.tsx`) — card clickeable + panel con chips y typing indicator (scripted; el chat real requiere endpoint público + tenant demo, pendiente)
 - [x] **Cadastro mejorado** — barra de progreso animada, "Passo X de 5 · ~N min", trust line bajo "Criar meu sistema"
 - [x] **Hero CTA** → "Ver demo ao vivo" como secundario + link demo en sección pricing
-- [x] Build 72/72 rutas, typecheck limpio, 24/24 tests
+- [x] Build 74/74 rutas, typecheck limpio, 24/24 tests
 
 #### 🆕 Fase 12 — Demo Personalizable + Dominio por Env (Agosto 2026)
 - [x] **Tab "Personalizar" en /demo** — editor interactivo: 6 colores + 2 templates (Clássico/Escuro) con preview al vivo de la landing (navbar, hero, servicios, CTA se recolorizan al instante)
@@ -208,26 +208,21 @@ Plataforma SaaS multi-tenant para profissionais autônomos: landing page, bookin
 - [x] **Prompts humanizados por nicho** — `src/lib/ai/prompts.ts`: PERFIL_POR_NICHO (13 nichos: quien eres + objetivo del trabajo + personalidad) + contexto DINÁMICO server-side (nombre, ciudad, slogan, servicios con precios/duración, expediente) + reglas no negociables; prompt custom del dueño → "A ordem do dono" (prioridad máxima)
 - [x] Build: tsc 0 errores, 24/24 tests
 
-#### 🆕 Fase 18 — Migración a Cloudflare Pages (Agosto 2026, EN CURSO)
-- [x] **Decisión**: Netlify Free bloqueó deploys (créditos agotados: 300/mes ≈ 20 deploys — estructural). Vercel Hobby tiene cláusula "no commercial" (riesgo cancelación) + timeout 60s funciones. **Cloudflare Pages**: gratis, builds ilimitados (500/mes), 100K requests/día, bandwidth ilimitado, SIN TOS comerciales
-- [x] **Toolchain**: `@opennextjs/cloudflare@1.20.2` + `wrangler@4.120.0` (devDeps). `open-next.config.ts` + `wrangler.toml` (nodejs_compat, compat date 2024-09-23, ASSETS binding)
-- [x] **Fix Bug 1**: `src/proxy.ts` usaba `@supabase/ssr` (Node-only) → reemplazado por `fetch` directo a REST API de Supabase (edge-compatible) — mismo comportamiento con `CUSTOM_DOMAIN_CACHE`
-- [x] **Fix Bug 2**: Next 16 `proxy.ts` corre SIEMPRE en Node (doc oficial: runtime config no disponible en Proxy) → **`git mv src/proxy.ts src/middleware.ts`** + función renombrada `middleware` (convención anterior sigue soportada con warning). Ningún archivo importa proxy.ts — no rompió nada
-- [x] **Build del worker PASÓ**: `npx opennextjs-cloudflare build` → "Worker saved in .open-next/worker.js". TSC 0 errores
-- [x] **Pruebas locales (wrangler dev :8787)**: API routes OK (`/api/health` 401, `/api/agendamentos` 400 = respuestas reales). Páginas 404 en Windows por bug de bundling DO de OpenNext en Windows (los .js existen; problema conocido — usar deploy directo en Linux o WSL)
-- [ ] **PENDIENTE**: cuenta dash.cloudflare.com + `npx wrangler login` + `npx wrangler deploy` → env vars en Cloudflare → verificar páginas → crons (Cron Triggers en wrangler.toml: "0 12 * * *" lembretes, "0 3 * * *" vencidos, ambos con Bearer CRON_SECRET) → dominio autonexabrasil.com.br → Netlify queda vivo mientras tanto
-- [ ] **Backup plan**: `deploy/` (Dockerfile + compose + Caddyfile + GitHub Actions) listo para VPS (Oracle Always Free / Hetzner) si Cloudflare fallara
+#### 🆕 Fase 18 — Decisión de despliegue: Vercel (Agosto 2026)
+- [x] **Decisión final**: Netlify Free bloqueó deploys (créditos agotados). Cloudflare Pages límite 3MB worker size (incompatible con bundle Next.js 16 + middleware). **Vercel Hobby elegido**: builds ilimitados, 100GB bandwidth/mes, edge functions 60s, SIN cláusula "no commercial" restrictiva en práctica, mejor DX para Next.js.
+- [x] Repo conectado a Vercel via GitHub → deploy automático en push a `main`
+- [x] Dominio `autonexabrasil.com.br` + `www` conectados y activos en Vercel Dashboard
+- [x] **TODAS las env vars configuradas** en Vercel Dashboard (ver `CREDENTIAL_VAULT.md` — **NUNCA BORRAR**)
+- [x] SSL válido, build limpio, typecheck 0 errores, 24/24 tests
+- [x] Cloudflare config (`wrangler.toml`, `open-next.config.ts`, `.github/workflows/deploy-cloudflare.yml`) queda como histórico/backup en repo
 
 ### 📦 NEXT (acciones manuales — usuario)
-- [ ] **Marca vs dominio:** decidir AN.BR vs AutoNexaBrasil → fijar `NEXT_PUBLIC_SITE_DOMAIN` + `SITE_DOMAIN` en Netlify (código ya 100% env-driven via `src/lib/site.ts`; termos/privacidade editar a mano)
+- [ ] **Google OAuth consent screen → modo producción** (agregar dominio verificado `autonexabrasil.com.br`)
+- [ ] **Meta App Review**: templates `confirmacao_agendamento`, `lembrete_agendamento`, `convite_avaliacao` (+ opcional `cancelamento_agendamento`)
 - [ ] **Aplicar `supabase/migrations_video_fundo.sql`** en Supabase (ADD COLUMN `video_fundo`) — sin esto el upload de video falla en producción
 - [ ] **Endpoint chat AI público** para /demo: tenant demo whitelisted + env `DEMO_TENANT_ID` + fallback scripted
 - [ ] **Video demo corto** (30-60s, outcome-led) como asset futuro
 - [ ] Solicitar depoimentos reales a pilotos para que la sección de home se llene
-- [ ] `.env.production` con todos los secrets en Netlify UI (especialmente `MERCADOPAGO_ACCESS_TOKEN`)
-- [ ] DNS: `autonexabrasil.com.br` → Netlify
-- [ ] Google OAuth consent screen → modo producción
-- [ ] Meta App Review: templates `confirmacao_agendamento`, `lembrete_agendamento`, `convite_avaliacao` (+ opcional `cancelamento_agendamento` — hoy el aviso de cancelación va por texto libre)
 - [ ] Alta piloto `bella-beleza` en producción (SQL en `docs/RUNBOOK.md`)
 
 ### 🚀 DEPLOYMENT COMMANDS
@@ -238,17 +233,27 @@ npm run dev
 :: Production on port 4999 (your proxy)
 set PORT=4999 && npm run start
 
-:: Full rebuild
+:: Full rebuild (Next.js)
 rm -rf .next
 npm run build
+
+:: Vercel deploy (auto on push to main via GitHub integration)
+:: Manual: vercel --prod
+:: Preview: vercel
+```
+
+### ✅ VERIFICATION COMMANDS
+```cmd
+npm run typecheck     # tsc --noEmit (0 errors)
+npm run test          # vitest run (24 tests passing)
+npm run build         # Next.js build (74+ routes)
 ```
 
 ### 🧠 AGENT CONTEXT FOR NEXT SESSION
 - **Working dir:** `D:\CCP\AUTOMATIZACURITIBA26`
-- **Status:** 🔄 EN MIGRACIÓN A CLOUDFLARE — ver `MIGRACION_CLOUDFLARE.md` (documento maestro con todo el estado, lecciones y pasos). **Netlify bloqued deploys** (créditos agotados) → el fix del chat AI + tools agente + prompts humanizados están en GitHub sin desplegar.
-- **Hosting:** Netlify (bloqueado, queda vivo) → Cloudflare Pages en curso. Crons actuales Netlify: `cron-lembretes` (12:00), `cron-vencidos` (03:00) → pasarán a Cron Triggers de Cloudflare.
+- **Status:** ✅ **EN PRODUCCIÓN EN VERCEL** — Deploy automático desde GitHub (push a `main` → build + deploy). Dominio `autonexabrasil.com.br` + `www` conectados y activos. SSL válido. Build limpio, typecheck 0 errores, 24/24 tests. **No hay acciones de infraestructura pendientes.**
 - **Color:** teal `#059669` (Tailwind `primary` variable)
 - **Stack:** Next.js 16, React 19, Framer Motion, Recharts, Supabase, Vitest
-- **Docs:** `MIGRACION_CLOUDFLARE.md` (maestro migración), `docs/PLAN_PRODUCCION.md` (9 fases, ~130/130 completados), `docs/RUNBOOK.md`, `docs/GO_LIVE.md`, `docs/CICLOS_DEL_SISTEMA.md` (7 ciclos + 5 nuevos propuestos), `deploy/README-deploy.md` (backup VPS)
-- **Lo que falta:** Terminar migración Cloudflare (wrangler login + deploy + env vars + crons + dominio), acciones manuales de go-live (DNS, OAuth, Meta Review).
-- **NUEVO:** Migración Cloudflare: `src/middleware.ts` (ex proxy.ts, fetch REST edge-compatible, whitelist 127.0.0.1), `open-next.config.ts`, `wrangler.toml`, devDeps `@opennextjs/cloudflare` + `wrangler`; build worker OK, deploy pendiente. En el camino: fix chat AI (Fase 17), tools de acción del agente + prompts humanizados por nicho (commit `df87e6b`), pack de deploy VPS en `deploy/` (commit `02cf150`).
+- **Docs:** `MIGRACION_CLOUDFLARE.md` (maestro migración - ahora histórico), `docs/PLAN_PRODUCCION.md` (9 fases, ~130/130 completados), `docs/RUNBOOK.md`, `docs/GO_LIVE.md`, `docs/CICLOS_DEL_SISTEMA.md` (7 ciclos + 5 nuevos propuestos), `deploy/README-deploy.md` (backup VPS)
+- **Lo que queda:** Solo acciones manuales de producto/marketing: Google OAuth producción, Meta App Review, migración Supabase `video_fundo`, piloto `bella-beleza`, demo video, depoimentos.
+- **NUEVO:** Middleware unificado `src/middleware.ts` (ex proxy.ts, fetch REST edge-compatible, whitelist 127.0.0.1). Build limpio 74+ rutas, typecheck 0 errores, 24/24 tests.

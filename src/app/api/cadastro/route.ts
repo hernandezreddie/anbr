@@ -10,6 +10,37 @@ import type { CategoriaId } from "@/lib/servicos-padrao";
 import { getTemaPorNicho } from "@/lib/temas";
 import { gerarLogoSVG } from "@/lib/logo-padrao";
 import { rateLimitar, ipDoRequest } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const schema = z.object({
+  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(100),
+  email: z.string().email("E-mail inválido"),
+  senha: z.string().min(6, "Senha deve ter pelo menos 6 caracteres").max(128),
+  slug: z.string().min(3, "Slug deve ter pelo menos 3 caracteres").max(50).regex(/^[a-z0-9-]+$/, "Slug solo puede contener letras, números y guiones"),
+  whatsapp: z.string().optional(),
+  cidade: z.string().max(100).optional(),
+  pix_chave: z.string().max(100).optional(),
+  servicos: z.array(z.object({
+    nome: z.string(),
+    descricao: z.string().optional(),
+    descricao_curta: z.string().optional(),
+    horas_base: z.number().optional(),
+    valor_hora: z.number().optional(),
+    horas_minimas: z.number().optional(),
+    tipo_preco: z.enum(["por_hora", "fixo"]).optional(),
+    preco_fixo: z.number().optional(),
+    duracao_minutos: z.number().optional(),
+    ordem: z.number().optional(),
+  })).optional(),
+  slogan: z.string().max(200).optional(),
+  template_id: z.coerce.number().int().min(1).max(2).optional(),
+  categoria: z.string().max(50).optional(),
+  copy_variante: z.coerce.number().int().min(0).max(2).optional(),
+  msg_variante: z.coerce.number().int().min(0).max(2).optional(),
+  consentimento: z.boolean().refine((val) => val === true, {
+    message: "Debes aceptar los términos y privacidad (LGPD)",
+  }),
+});
 
 export async function POST(request: Request) {
   const ip = ipDoRequest(request);
@@ -22,7 +53,13 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { nome, email, senha, slug, whatsapp, cidade, pix_chave, servicos, slogan, template_id, categoria, copy_variante, msg_variante, consentimento } = body;
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const erros = result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join("; ");
+    return Response.json({ error: "Dados inválidos", detalhes: erros }, { status: 400 });
+  }
+
+  const { nome, email, senha, slug, whatsapp, cidade, pix_chave, servicos, slogan, template_id, categoria, copy_variante, msg_variante, consentimento } = result.data;
 
   if (!nome || !email || !senha || !slug) {
     return Response.json({ error: "Campos obrigatórios faltando" }, { status: 400 });

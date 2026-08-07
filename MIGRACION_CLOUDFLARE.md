@@ -1,13 +1,37 @@
-# MIGRACIÓN A CLOUDFLARE PAGES — ESTADO (2026-08-07)
+# MIGRACIÓN A CLOUDFLARE — ESTADO (2026-08-07)
 
-> Documento vivo: actualizar al avanzar. Último estado: fase de validación/deploy pendiente.
+> Documento vivo: actualizar al avanzar. Último estado: repo configurado + workflow GitHub Actions listo; pendiente: limpieza del dashboard, secrets y deploy.
 
 ## 📌 POR QUÉ MIGRAMOS
 
 Netlify Free pasó a sistema de **créditos (300/mes, ~20 deploys)** → bloquea production deploys
 cada ciclo. Vercel Hobby tiene cláusula "no commercial" (riesgo de cancelación) y timeout de
-funciones 60s. **Cloudflare Pages**: gratis, builds ilimitados (500/mes), 100K requests/día,
+funciones 60s. **Cloudflare Workers**: gratis, builds ilimitados, 100K requests/día,
 bandwidth ilimitado, **sin TOS comerciales** → no puede cancelar por vender.
+
+## 🏗️ ARQUITECTURA OBJETIVO (TODO EN CLOUDFLARE, LIMPIO)
+
+```
+registrar.com.br (registrador — NS apunta a Cloudflare)
+  └── Zona DNS: autonexabrasil.com.br   (1 sola zona, en Cloudflare)
+        └── CNAME @ , www , * → Worker `anbr` (autogestionado por "Custom Domains")
+              └── Worker `anbr` = Next.js 16 via @opennextjs/cloudflare
+                    ├── Env vars no secretas → [vars] en wrangler.toml
+                    ├── Secrets → dashboard del worker (Settings → Variables)
+                    ├── Cron Triggers: lembretes 12:00 / vencidos 03:00
+                    └── Auto-deploy: GitHub Actions (workflow del repo)
+
+Netlify → se mantiene VIVO (DNS viejo) hasta verificar Cloudflare, luego baja
+GitHub → repo publica en main → workflow build+deploy → worker anbr
+```
+
+**Decisiones tomadas:**
+- **Workers, NO Pages**: el adaptador oficial `@opennextjs/cloudflare` y la doc de Next.js 2026
+  recomiendan Workers. Pages solo sirve estáticos. Cualquier proyecto Pages creado en el
+  dashboard (intento previo conectando GitHub) se ELIMINA.
+- **Auto-deploy: GitHub Actions** (no Workers Builds): build en Linux (evita el bug de
+  bundling de Windows), reproducible, secrets en GitHub.
+- **Netlify vivo** hasta que `https://autonexabrasil.com.br` responda OK desde Cloudflare.
 
 ## ✅ YA HECHO (validado)
 
@@ -61,35 +85,70 @@ npx opennextjs-cloudflare build
     `.open-next/.build/durable-objects/`) — problema conocido de OpenNext en Windows
     (avisa "not fully compatible with Windows, use WSL")
 
-## 🔜 SIGUIENTES PASOS (en orden)
+## 🔜 PLAN DE EJECUCIÓN (en orden)
 
-1. **Deploy directo a Cloudflare** (el build ya está validado; el bundling de wrangler
-   corre en sus servidores Linux, donde este bug de Windows no existe):
-   ```
-   npx wrangler login                      # navegador → cuenta Cloudflare
-   npx wrangler deploy                     # o wrangler pages deploy
-   ```
-   - Necesario: cuenta en dash.cloudflare.com (el usuario debe crearla)
-   - El worker se llama `anbr` (wrangler.toml)
-2. **Env vars en Cloudflare**: TODAS las de `.env.local` (Supabase URL+keys, META_*,
-   GOOGLE_*, OPENAI_*, OPENROUTER_*, WHATSAPP_*, CRON_SECRET, NEXT_PUBLIC_DOMAIN, etc.)
-   - En OpenNext: server-side vars via `[vars]` en wrangler.toml o dashboard;
-     las NEXT_PUBLIC_* se inyectan en build time (el build ya las tiene embebidas del .env.local)
-3. **Páginas en producción**: verificar `/`, `/dogdaycare-br`, `/reservar`, `/painel`
-4. **Crons** (los 2 de Netlify): Cloudflare usa **Cron Triggers** en wrangler.toml
-   (gratis, hasta 5 por cuenta):
-   ```toml
-   [triggers]
-   crons = ["0 12 * * *", "0 3 * * *"]
-   ```
-   - Endpoints: `/api/agendamentos/lembretes` (12:00) y `/api/planos/vencidos` (03:00)
-   - Ambos autentican con header `Authorization: Bearer $CRON_SECRET`
-5. **Dominio**: agregar `autonexabrasil.com.br` como custom domain de Pages
-   (DNS via Cloudflare → mover NS o registrar zona)
-6. **Mantener Netlify vivo** mientras tanto (sitio sigue online, solo pausados los deploys)
-7. **Backup plan (deploy/)**: `deploy/Dockerfile` + `docker-compose.yml` + `Caddyfile`
-   + `.github/workflows/deploy-vps.yml` → listo para VPS (Oracle Always Free / Hetzner)
-   si Cloudflare tuviera algún problema
+### Paso 1 — Limpiar el dashboard de Cloudflare (manual, ~10 min)
+1. **Workers & Pages** (dash.cloudflare.com → Workers & Pages):
+   - Borrar TODOS los proyectos **Pages** (el sitio viejo y el intento reciente con GitHub).
+     ⚠️ Solo se borran proyectos/hosts, NO los DNS de la zona — seguro.
+   - Borrar cualquier **Worker viejo** que sobre (web anterior). El worker `anbr`
+     se creará solo en el primer deploy.
+2. **Zonas** (dash.cloudflare.com → Your profile → Domains / Add zone):
+   - Verificar que exista EXACTAMENTE UNA zona `autonexabrasil.com.br`.
+   - Si hay duplicadas → eliminar las extra.
+   - Si NO existe ninguna → crearla (plan Free) y en registrar.com.br apuntar los
+     NS del dominio a los NS de Cloudflare que indica la zona.
+3. **DNS de la zona** (antes del cutover): los registros actuales apuntan a Netlify
+   (CNAME → *.netlify.app o similar). NO borrarlos aún: se reemplazarán en el Paso 6.
+
+### Paso 2 — Secrets de GitHub (manual, ~5 min)
+GitHub → repo → Settings → Secrets and variables → Actions → New repository secret:
+`CLOUDFLARE_API_TOKEN` (dash → My Profile → API Tokens → Create Token → template
+"Edit Cloudflare Workers") y `CLOUDFLARE_ACCOUNT_ID` (sidebar derecha del dashboard).
+Luego TODAS las demás variables de `.env.local` (mismos nombres), incluidos
+`NEXT_PUBLIC_*` (build-time) y las server-side. El workflow
+`.github/workflows/deploy-cloudflare.yml` ya mapea todas.
+
+### Paso 3 — Secrets del worker (manual, 1 vez — persisten entre deploys)
+Worker `anbr` → Settings → Variables and Secrets → Add → (Secret), o por CLI:
+```
+npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npx wrangler secret put CRON_SECRET
+... (OPENAI_API_KEY, GOOGLE_CLIENT_ID/SECRET, META_APP_ID/SECRET,
+     WHATSAPP_ACCESS_TOKEN, WHATSAPP_WEBHOOK_VERIFY_TOKEN, META_WEBHOOK_VERIFY_TOKEN,
+     VAPID_PRIVATE_KEY, VAPID_CONTACT, OPENROUTER_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY)
+```
+No secretas ya en `wrangler.toml [vars]`: `SITE_DOMAIN`, `NODEJS_COMPAT_DATE`.
+
+### Paso 4 — Deploy (git push a main)
+```
+git add -A && git commit -m "feat: Cloudflare Workers CD (GitHub Actions) + crons" && git push
+```
+→ GitHub Actions corre `npx opennextjs-cloudflare build` (Linux) + `npx wrangler deploy`
+→ worker `anbr` creado. Verificar en Workers & Pages → anbr → el deployment.
+
+### Paso 5 — Dominio en el worker
+Worker `anbr` → Settings → Domains & Routes → Add custom domain:
+`autonexabrasil.com.br` y `www.autonexabrasil.com.br` (Cloudflare crea los CNAME
+automáticamente). Si se quieren subdominios tipo `slug.autonexabrasil.com.br`,
+agregar también un CNAME `*` manual apuntando a `anbr.<ACCOUNT>.workers.dev`.
+
+### Paso 6 — Cutover DNS + verificación
+1. En la zona, reemplazar los registros hacia Netlify por los que creó Cloudflare
+   en el Paso 5 (o usar el toggle DNS-only/Proxy — DNS-only si Netlify aún responde).
+2. Verificar: `https://autonexabrasil.com.br` (home), `/login`, un slug (`/dogdaycare-br`),
+   `/reservar`, y una API (`/api/health` → 401 esperado).
+3. Probar los 2 crons manualmente con `Authorization: Bearer $CRON_SECRET`.
+4. Test end-to-end: crear un agendamiento real en un slug.
+
+### Paso 7 — Baja de Netlify
+1. Netlify → Site → Settings → Danger Zone → Delete site.
+2. Guardar nada más — el código ya está en GitHub.
+
+### Paso 8 — Post-migración
+- [ ] Meta App Review: actualizar whitelist de URLs del webhook → `https://autonexabrasil.com.br/api/...`
+- [ ] Google OAuth: redirect URI ya apunta al dominio (env `GOOGLE_REDIRECT_URI`)
+- [ ] Backup plan (deploy/): Dockerfile + compose + Caddyfile + GH Actions listos para VPS
 
 ## 🧠 LECCIONES APRENDIDAS
 

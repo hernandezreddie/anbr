@@ -10,6 +10,15 @@ const VALID_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 const VALID_WHATSAPP = /^\d{10,13}$/;
 const round05 = (n: number) => Math.round(n * 2) / 2;
 
+const sanitizeTexto = (txt: string | undefined | null): string => {
+  if (!txt) return "";
+  return txt
+    .trim()
+    .replace(/[<>]/g, "")
+    .replace(/javascript:/gi, "")
+    .slice(0, 500);
+};
+
 const horaParaMin = (h: string) => {
   const [hh, mm] = h.split(":").map(Number);
   return hh * 60 + mm;
@@ -433,9 +442,9 @@ export async function POST(request: NextRequest) {
         cliente_id: clienteId,
         servico_id: servico_id || null,
         servico_nome: servico.nome,
-        cliente_nome: cliente_nome.trim(),
+        cliente_nome: sanitizeTexto(cliente_nome),
         cliente_whatsapp: whatsapp,
-        cliente_endereco: cliente_endereco || null,
+        cliente_endereco: sanitizeTexto(cliente_endereco) || null,
         data,
         hora,
         horas,
@@ -443,6 +452,7 @@ export async function POST(request: NextRequest) {
         status: "confirmado",
         adicionais: Array.isArray(adicionais) ? adicionais : [],
         recorrencia: frequenciaDb?.slug || null,
+        observacoes: sanitizeTexto(body.observacoes),
         token_avaliacao: crypto.randomUUID(),
         consentimento_lgpd: true,
         consentimento_data: new Date().toISOString(),

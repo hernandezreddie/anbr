@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS avaliacoes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_avaliacoes_profissional ON avaliacoes (profissional_id);
+CREATE INDEX IF NOT EXISTS idx_avaliacoes_token ON avaliacoes (token);
+CREATE INDEX IF NOT EXISTS idx_agendamentos_token_avaliacao ON agendamentos (token_avaliacao);
 
 -- ===== RLS (obrigatório: sem isso a anon key pública permite inserir avaliações falsas direto pela REST) =====
 ALTER TABLE avaliacoes ENABLE ROW LEVEL SECURITY;
@@ -39,3 +41,11 @@ CREATE POLICY "avaliacoes_tenant_all" ON avaliacoes
   ));
 
 -- NÃO há policy de INSERT para anon: criação só via API (/api/avaliacoes usa service role, que faz bypass do RLS)
+
+-- Exclusão: apenas admin da plataforma ou o próprio owner do tenant
+DROP POLICY IF EXISTS "avaliacoes_admin_delete" ON avaliacoes;
+CREATE POLICY "avaliacoes_admin_delete" ON avaliacoes
+  FOR DELETE TO authenticated
+  USING (public.is_admin_or_owner() OR (
+    SELECT profissional_id FROM profiles WHERE id = auth.uid()
+  ) = profissional_id);
