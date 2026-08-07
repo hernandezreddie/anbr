@@ -337,3 +337,21 @@
 | What have I done? | 9 fases + 9.1–9.8, build limpio, tests 24/24, diagnóstico cerrado |
 
 *Update after completing each phase or encountering errors*
+
+## Session: 2026-08-07 — Migración a Cloudflare Pages
+
+### Phase 18: Migración hosting (en curso)
+- **Status:** in_progress
+- Actions taken:
+  - Investigado hosting 2026: Netlify Free = créditos 300/mes (~20 deploys, bloquea); Vercel Hobby = TOS no-comercial + 60s timeout + sin crons; Cloudflare Pages = gratis, builds ilimitados, SIN TOS comercial → elegido
+  - Alternativas documentadas: Oracle Always Free (4 OCPU/24GB ARM gratis, aprobación aleatoria), Hetzner CX22 US\.90, Cloudflare Tunnel (PC propia)
+  - Instalado @opennextjs/cloudflare@1.20.2 + wrangler@4.120.0 (devDeps)
+  - Creado open-next.config.ts (wrapper cloudflare-node + converter edge + middleware external + edgeExternals node:crypto) y wrangler.toml (nodejs_compat, compat 2024-09-23, ASSETS binding)
+  - FIX Bug 1: src/proxy.ts usaba @supabase/ssr (Node-only) → fetch directo REST Supabase (edge-compatible)
+  - FIX Bug 2: Next 16 proxy.ts corre SIEMPRE en Node (doc oficial) → git mv a src/middleware.ts (convención soportada con warning)
+  - Build worker PASÓ: .open-next/worker.js generado; TSC 0
+  - Pruebas wrangler dev :8787: API OK (health 401, agendamentos 400); páginas 404 en Windows (bug conocido DO bundling de OpenNext en Windows — usar deploy Linux/WSL)
+  - Fix middleware: whitelist host agregado 127.0.0.1 (dev local)
+  - Creado MIGRACION_CLOUDFLARE.md (documento maestro) + pack deploy/ (Dockerfile, compose, Caddyfile, GitHub Actions, README)
+- Pending: wrangler login + deploy + env vars + crons (Cron Triggers) + dominio + verificar páginas en prod
+

@@ -169,3 +169,21 @@ Phase 1
 - Re-read this plan before major decisions
 - Log ALL errors — they help avoid repetition
 - Documento vivo del usuario = task_plan.md + findings.md + progress.md + AGENTS.md (al final)
+
+## Task Plan — Migración Cloudflare (sesión 2026-08-07, sigue en otro chat)
+- [x] Investigar hosting gratis 2026 (Netlify/Vercel/Cloudflare/Oracle/Hetzner)
+- [x] Instalar @opennextjs/cloudflare + wrangler
+- [x] open-next.config.ts + wrangler.toml
+- [x] Fix middleware edge (fetch REST en vez de @supabase/ssr)
+- [x] Renombrar proxy.ts → middleware.ts (Next 16 Node-only proxy)
+- [x] Build worker OK
+- [x] Probar API routes en wrangler dev
+- [x] Documentar MIGRACION_CLOUDFLARE.md + AGENTS.md + progress/findings
+- [ ] wrangler login (usuario crea cuenta dash.cloudflare.com)
+- [ ] wrangler deploy
+- [ ] Env vars en Cloudflare (todas las de .env.local)
+- [ ] Verificar páginas en prod (/, /dogdaycare-br, /reservar, /painel)
+- [ ] Crons: Cron Triggers en wrangler.toml (0 12 * * * lembretes, 0 3 * * * vencidos)
+- [ ] Dominio autonexabrasil.com.br → Cloudflare
+- [ ] Mantener Netlify vivo como fallback
+

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@supabase/ssr"
 
 const ROOT_DOMAIN = process.env.SITE_DOMAIN || "autonexabrasil.com.br"
 const CUSTOM_DOMAIN_CACHE = new Map<string, string | undefined>()
@@ -97,7 +96,7 @@ function validateCSRF(req: NextRequest): NextResponse | null {
   return null
 }
 
-export default async function proxy(req: NextRequest) {
+export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   const csrfResponse = validateCSRF(req)
@@ -117,38 +116,47 @@ export default async function proxy(req: NextRequest) {
     return response
   }
 
-  if (!hostname.includes(ROOT_DOMAIN) && !hostname.includes("localhost")) {
+  if (!hostname.includes(ROOT_DOMAIN) && !hostname.includes("localhost") && !hostname.includes("127.0.0.1")) {
     let slug = CUSTOM_DOMAIN_CACHE.get(hostname)
 
     if (!slug) {
       try {
-        const supabase = createServerClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          { cookies: { getAll: () => [], setAll: () => {} } }
-        )
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        if (supabaseUrl && supabaseAnon) {
+          const headers = {
+            apikey: supabaseAnon,
+            Authorization: `Bearer ${supabaseAnon}`,
+          }
+          const { data: domain } = await fetch(
+            `${supabaseUrl}/rest/v1/custom_domains?domain=eq.${encodeURIComponent(hostname)}&select=profissional_id`,
+            { headers }
+          ).then((r) => r.json())
 
-        const { data: domain } = await supabase
-          .from("custom_domains")
-          .select("profissional_id")
-          .eq("domain", hostname)
-          .single()
+          const pid = Array.isArray(domain) ? domain[0]?.profissional_id : domain?.profissional_id
 
-        if (domain) {
-          const { data: prof } = await supabase
-            .from("profissionais")
-            .select("slug")
-            .eq("id", domain.profissional_id)
-            .single()
+          if (pid) {
+            const prof = await fetch(
+              `${supabaseUrl}/rest/v1/profissionais?id=eq.${pid}&select=slug`,
+              { headers }
+            ).then((r) => r.json())
+            const slugProf = Array.isArray(prof) ? prof[0]?.slug : prof?.slug
 
-          if (prof?.slug) {
-            CUSTOM_DOMAIN_CACHE.set(hostname, prof.slug)
-            slug = prof.slug
+            if (slugProf) {
+              CUSTOM_DOMAIN_CACHE.set(hostname, slugProf)
+              slug = slugProf
+            } else {
+              slug = ""
+            }
           } else {
             slug = ""
           }
+        } else {
+          slug = ""
         }
-      } catch {}
+      } catch {
+        slug = ""
+      }
     }
 
     if (slug) {

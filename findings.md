@@ -150,3 +150,14 @@
 - src/lib/auth-roles.ts (isAdminPlataforma)
 - src/app/(slug)/[slug]/painel/PainelAuthGate.tsx (gate painel)
 - supabase/seed.sql (tenant demo)
+
+## 2026-08-07 — Hallazgos migración Cloudflare
+- Netlify Free 2026: sistema de CRÉDITOS (300/mes, deploy = 15 créditos, ~20 deploys). Bloquea production deploys cada ciclo — estructural, no se puede evitar sin pagar
+- Vercel Hobby: 6000 min build/mes (20x Netlify) pero TOS 'personal, non-commercial only' — riesgoso para SaaS con planes de pago; sin Vercel Cron en Hobby
+- Cloudflare Workers Free: 100K requests/día + 10ms CPU/request (wall-time SIN límite para HTTP) — el chat del agente (I/O-bound, espera LLM) funciona gratis; SOLO CPU pesado es problema
+- Oracle Always Free (2026): 2-4 OCPU ARM + 12-24GB RAM gratis para siempre; aprobación de cuenta aleatoria; región no cambiable; instancias idle reclamadas
+- OpenNext (adaptador Cloudflare): build funciona en Windows, pero wrangler dev falla al resolver Durable Objects (queue.js, sharded-tag-cache.js, bucket-cache-purge.js) — problema conocido, usar deploy directo (Linux) o WSL
+- Next 16: proxy.ts (ex middleware) corre SIEMPRE en Node y no acepta runtime config — para edge (Cloudflare) hay que usar convención middleware.ts (deprecada pero soportada)
+- @supabase/ssr en middleware fuerza Node runtime → en edge usar fetch directo a REST API con headers apikey/Authorization
+- Validación open-next.config.ts (ensure-cf-config.js): exige wrapper cloudflare-node + converter edge + proxyExternalRequest fetch + caches (dummy|function) + edgeExternals node:crypto + middleware external con wrapper cloudflare-edge
+
